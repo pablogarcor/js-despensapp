@@ -2,6 +2,7 @@ node_modules/
 dist/
 coverage/
 .idea/
+AGENTS.md
 .env
 .env.*
 !.env.example
