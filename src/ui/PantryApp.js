@@ -193,10 +193,29 @@ export class PantryApp {
 
       if (form.matches('[data-form="plan-week"]')) {
         const data = new FormData(form);
-        const result = await this.service.planNextWeek({ servings: data.get('servings') });
+        const mode = event.submitter?.dataset.planMode ?? 'reset';
+        const result =
+          mode === 'complete'
+            ? await this.service.completeWeekPlan({ servings: data.get('servings') })
+            : await this.service.planNextWeek({ servings: data.get('servings') });
         const skippedMessage =
           result.missingSlots.length > 0 ? ` ${result.missingSlots.length} huecos sin receta compatible.` : '';
-        this.showToast(`Semana planificada.${skippedMessage}`);
+        const createdMessage =
+          mode === 'complete'
+            ? `${result.plannedMeals.length} huecos completados.`
+            : 'Semana planificada.';
+        this.showToast(`${createdMessage}${skippedMessage}`);
+      }
+
+      if (form.matches('[data-form="planned-meal"]')) {
+        const data = new FormData(form);
+        await this.service.createPlannedMeal({
+          date: data.get('date'),
+          mealType: data.get('mealType'),
+          recipeId: data.get('recipeId'),
+          servings: data.get('servings'),
+        });
+        this.showToast('Comida anadida al plan.');
       }
 
       await this.refresh();
@@ -589,7 +608,8 @@ export class PantryApp {
             Raciones por comida
             <input name="servings" type="number" inputmode="decimal" min="0.5" step="0.5" value="1" required />
           </label>
-          <button class="button" type="submit">Planificar semana</button>
+          <button class="button" type="submit" data-plan-mode="reset">Planificar semana</button>
+          <button class="button ghost" type="submit" data-plan-mode="complete">Completar huecos</button>
           <button class="button ghost" type="button" data-action="clear-plan">Vaciar plan</button>
         </form>
       </section>
@@ -647,6 +667,10 @@ export class PantryApp {
    * @returns {string} HTML.
    */
   renderPlanGroups(dashboard) {
+    if (dashboard.plannedMeals.length === 0) {
+      return '';
+    }
+
     const groups = new Map();
 
     for (const meal of dashboard.plannedMeals) {
@@ -657,11 +681,22 @@ export class PantryApp {
       groups.get(meal.date).push(meal);
     }
 
+    for (const slot of dashboard.missingPlanSlots) {
+      if (!groups.has(slot.date)) {
+        groups.set(slot.date, []);
+      }
+    }
+
     return [...groups.entries()]
+      .sort(([leftDate], [rightDate]) => leftDate.localeCompare(rightDate))
       .map(([date, meals]) => `
         <section class="day-group">
           <h3>${formatDate(date)}</h3>
           ${meals.map((meal) => this.renderPlannedMeal(meal, dashboard.recipes)).join('')}
+          ${dashboard.missingPlanSlots
+            .filter((slot) => slot.date === date)
+            .map((slot) => this.renderMissingMealSlot(slot, dashboard.recipes))
+            .join('')}
         </section>
       `)
       .join('');
@@ -688,6 +723,48 @@ export class PantryApp {
           x
         </button>
       </article>
+    `;
+  }
+
+  /**
+   * Renderiza un hueco libre para anadir una comida compatible.
+   *
+   * @param {import('../domain/types.js').MealSlot} slot Hueco sin comida.
+   * @param {import('../domain/types.js').Recipe[]} recipes Recetas disponibles.
+   * @returns {string} HTML.
+   */
+  renderMissingMealSlot(slot, recipes) {
+    const compatibleRecipes = recipes.filter((recipe) => recipe.mealTypes.includes(slot.mealType));
+
+    if (compatibleRecipes.length === 0) {
+      return `
+        <article class="missing-meal-card">
+          <div>
+            <span>${MEAL_TYPE_LABELS[slot.mealType]}</span>
+            <strong>Sin receta compatible</strong>
+          </div>
+        </article>
+      `;
+    }
+
+    return `
+      <form class="missing-meal-card" data-form="planned-meal">
+        <input type="hidden" name="date" value="${escapeAttribute(slot.date)}" />
+        <input type="hidden" name="mealType" value="${escapeAttribute(slot.mealType)}" />
+        <label>
+          ${MEAL_TYPE_LABELS[slot.mealType]}
+          <select name="recipeId" required>
+            ${compatibleRecipes.map((recipe) => `
+              <option value="${escapeAttribute(recipe.id)}">${escapeHtml(recipe.name)}</option>
+            `).join('')}
+          </select>
+        </label>
+        <label>
+          Raciones
+          <input name="servings" type="number" inputmode="decimal" min="0.5" step="0.5" value="1" required />
+        </label>
+        <button class="button small" type="submit">Anadir</button>
+      </form>
     `;
   }
 

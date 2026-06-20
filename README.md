@@ -51,6 +51,8 @@ Las reglas viven en `src/services/pantryService.js`:
 
 - No se puede borrar un alimento si alguna receta lo usa.
 - No se puede borrar una receta si esta planificada.
+- No puede haber dos comidas planificadas en la misma fecha y momento del dia.
+- Una comida manual solo puede usar recetas compatibles con su momento del dia.
 - Una receta no puede repetir el mismo alimento.
 - Una comida hecha descuenta `cantidad por racion * raciones`.
 - La despensa no baja de cero si se confirma una comida aunque falten alimentos.
@@ -104,8 +106,10 @@ npm test         # tests de negocio con node:test
 2. En **Recetas**, crea recetas usando solo alimentos existentes. Cada ingrediente representa cantidad por racion.
 3. En **Plan**, indica raciones y pulsa **Planificar semana**.
 4. La app rellena los proximos 7 dias y calcula si falta algo.
-5. Si falta comida, aparece una **lista de la compra** agregada por alimento y unidad.
-6. Cuando una comida ya paso, la app la muestra como pendiente: si marcas **Hecha**, descuenta ingredientes; si marcas **No hecha**, solo elimina la planificacion.
+5. Si eliminas una comida del plan, el hueco aparece dentro de su dia con un selector de recetas compatibles para anadirla manualmente.
+6. Pulsa **Completar huecos** para rellenar automaticamente los huecos restantes sin borrar las comidas ya planificadas.
+7. Si falta comida, aparece una **lista de la compra** agregada por alimento y unidad.
+8. Cuando una comida ya paso, la app la muestra como pendiente: si marcas **Hecha**, descuenta ingredientes; si marcas **No hecha**, solo elimina la planificacion.
 
 ## Limitaciones conscientes del MVP
 

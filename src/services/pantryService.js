@@ -1,8 +1,11 @@
 import { DomainError } from '../domain/errors.js';
 import {
+  buildRandomMealsForSlots,
   buildRandomWeekPlan,
   calculateShoppingList,
   createId,
+  findMissingMealSlots,
+  getNextSevenDates,
   normalizeName,
   roundQuantity,
   sortPlannedMeals,
@@ -44,12 +47,17 @@ export class PantryService {
     const today = toISODate(this.now());
     const plannedMeals = sortPlannedMeals(allMeals.filter((meal) => meal.date >= today));
     const pendingMeals = sortPlannedMeals(allMeals.filter((meal) => meal.date < today));
+    const missingPlanSlots = findMissingMealSlots({
+      plannedMeals,
+      referenceDate: this.now(),
+    });
 
     return {
       pantryItems: sortByName(pantryItems),
       recipes: sortByName(recipes),
       plannedMeals,
       pendingMeals,
+      missingPlanSlots,
       shoppingList: calculateShoppingList({ pantryItems, recipes, plannedMeals }),
     };
   }
@@ -223,6 +231,107 @@ export class PantryService {
 
     await this.database.bulkPut('plannedMeals', result.plannedMeals);
     return result;
+  }
+
+  /**
+   * Rellena aleatoriamente los huecos de los proximos siete dias sin borrar el plan actual.
+   *
+   * @param {Object} params Datos de entrada.
+   * @param {number} params.servings Raciones para cada comida nueva.
+   * @returns {Promise<{plannedMeals: import('../domain/types.js').PlannedMeal[], missingSlots: import('../domain/types.js').MealSlot[]}>}
+   * Comidas creadas y huecos que no se pudieron completar por falta de receta compatible.
+   */
+  async completeWeekPlan({ servings }) {
+    const parsedServings = parsePositiveQuantity(servings, 'Las raciones deben ser mayores que cero.');
+    const [recipes, allMeals] = await Promise.all([
+      this.database.getAll('recipes'),
+      this.database.getAll('plannedMeals'),
+    ]);
+
+    if (recipes.length === 0) {
+      throw new DomainError('Necesitas al menos una receta para completar el plan.', 'NO_RECIPES');
+    }
+
+    const today = toISODate(this.now());
+    const plannedMeals = allMeals.filter((meal) => meal.date >= today);
+    const slots = findMissingMealSlots({
+      plannedMeals,
+      referenceDate: this.now(),
+    });
+
+    if (slots.length === 0) {
+      return { plannedMeals: [], missingSlots: [] };
+    }
+
+    const result = buildRandomMealsForSlots({
+      recipes,
+      slots,
+      servings: parsedServings,
+      random: this.random,
+    });
+
+    await this.database.bulkPut('plannedMeals', result.plannedMeals);
+    return result;
+  }
+
+  /**
+   * Anade una comida manual a un hueco libre de la semana planificada.
+   *
+   * @param {Object} params Datos de entrada.
+   * @param {string} params.date Fecha YYYY-MM-DD.
+   * @param {import('../domain/types.js').MealType} params.mealType Franja del dia.
+   * @param {string} params.recipeId Receta seleccionada.
+   * @param {number} params.servings Raciones.
+   * @returns {Promise<import('../domain/types.js').PlannedMeal>} Comida creada.
+   */
+  async createPlannedMeal({ date, mealType, recipeId, servings }) {
+    const cleanDate = cleanText(date);
+    const cleanMealType = cleanText(mealType);
+    const cleanRecipeId = cleanText(recipeId);
+    const parsedServings = parsePositiveQuantity(servings, 'Las raciones deben ser mayores que cero.');
+    const allowedDates = getNextSevenDates(this.now());
+
+    if (!allowedDates.includes(cleanDate)) {
+      throw new DomainError('Solo puedes anadir comidas dentro de los proximos siete dias.', 'DATE_OUT_OF_PLAN');
+    }
+
+    if (!MEAL_TYPES.includes(cleanMealType)) {
+      throw new DomainError('La franja de comida no es valida.', 'MEAL_TYPE_INVALID');
+    }
+
+    const [recipe, plannedMeals] = await Promise.all([
+      this.database.get('recipes', cleanRecipeId),
+      this.database.getAll('plannedMeals'),
+    ]);
+
+    if (!recipe) {
+      throw new DomainError('La receta no existe.', 'RECIPE_NOT_FOUND');
+    }
+
+    if (!recipe.mealTypes.includes(cleanMealType)) {
+      throw new DomainError('La receta no esta indicada para esa franja.', 'RECIPE_NOT_COMPATIBLE');
+    }
+
+    const occupiedMeal = plannedMeals.find(
+      (meal) => meal.date === cleanDate && meal.mealType === cleanMealType,
+    );
+
+    if (occupiedMeal) {
+      throw new DomainError('Ya existe una comida planificada para ese hueco.', 'PLANNED_MEAL_DUPLICATED');
+    }
+
+    const now = this.now().toISOString();
+    const plannedMeal = {
+      id: createId('meal'),
+      date: cleanDate,
+      mealType: cleanMealType,
+      recipeId: cleanRecipeId,
+      servings: parsedServings,
+      createdAt: now,
+      updatedAt: now,
+    };
+
+    return this.database.put('plannedMeals', plannedMeal);
   }
 
   /**

@@ -63,13 +63,80 @@ test('resolver comida hecha descuenta ingredientes y borra la planificacion', as
   assert.equal(updatedRice.quantity, 400);
 });
 
+test('permite anadir una comida manual en un hueco libre', async () => {
+  const { service, recipe } = await createServiceWithRecipe();
+
+  const meal = await service.createPlannedMeal({
+    date: '2026-06-21',
+    mealType: 'breakfast',
+    recipeId: recipe.id,
+    servings: 1.5,
+  });
+  const dashboard = await service.getDashboard();
+
+  assert.equal(meal.date, '2026-06-21');
+  assert.equal(meal.mealType, 'breakfast');
+  assert.equal(meal.servings, 1.5);
+  assert.equal(dashboard.plannedMeals.length, 1);
+  assert.equal(dashboard.missingPlanSlots.length, 20);
+});
+
+test('impide anadir dos comidas en el mismo dia y franja', async () => {
+  const { service, recipe } = await createServiceWithRecipe();
+  const plannedMeal = {
+    date: '2026-06-21',
+    mealType: 'breakfast',
+    recipeId: recipe.id,
+    servings: 1,
+  };
+
+  await service.createPlannedMeal(plannedMeal);
+
+  await assert.rejects(
+    () => service.createPlannedMeal(plannedMeal),
+    /Ya existe una comida planificada/,
+  );
+});
+
+test('impide anadir una receta incompatible con la franja', async () => {
+  const { service, recipe } = await createServiceWithRecipe(['breakfast']);
+
+  await assert.rejects(
+    () =>
+      service.createPlannedMeal({
+        date: '2026-06-21',
+        mealType: 'lunch',
+        recipeId: recipe.id,
+        servings: 1,
+      }),
+    /no esta indicada/,
+  );
+});
+
+test('completa solo los huecos libres del plan actual', async () => {
+  const { service } = await createServiceWithRecipe();
+  await service.planNextWeek({ servings: 1 });
+  const before = await service.getDashboard();
+
+  await service.deletePlannedMeal(before.plannedMeals[0].id);
+  const completion = await service.completeWeekPlan({ servings: 2 });
+  const after = await service.getDashboard();
+
+  assert.equal(completion.plannedMeals.length, 1);
+  assert.equal(completion.missingSlots.length, 0);
+  assert.equal(after.plannedMeals.length, 21);
+  assert.equal(after.missingPlanSlots.length, 0);
+  assert.equal(completion.plannedMeals[0].servings, 2);
+});
+
 /**
  * Prepara una base en memoria con una receta compatible con cualquier comida.
  *
+ * @param {import('../src/domain/types.js').MealType[]} [mealTypes] Franjas compatibles de la receta.
  * @returns {Promise<{service: PantryService, rice: import('../src/domain/types.js').PantryItem, recipe: import('../src/domain/types.js').Recipe}>}
  * Dependencias de test.
  */
-async function createServiceWithRecipe() {
+async function createServiceWithRecipe(mealTypes = [...MEAL_TYPES]) {
   const database = new MemoryDatabase();
   const service = new PantryService(database, {
     now: () => fixedDate,
@@ -78,7 +145,7 @@ async function createServiceWithRecipe() {
   const rice = await service.createPantryItem({ name: 'Arroz', quantity: 500, unit: 'g' });
   const recipe = await service.createRecipe({
     name: 'Arroz basico',
-    mealTypes: [...MEAL_TYPES],
+    mealTypes,
     ingredients: [{ pantryItemId: rice.id, quantity: 100 }],
   });
 

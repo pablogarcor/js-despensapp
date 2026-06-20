@@ -41,6 +41,12 @@
  */
 
 /**
+ * @typedef {Object} MealSlot
+ * @property {string} date Fecha en formato YYYY-MM-DD.
+ * @property {MealType} mealType Momento del dia.
+ */
+
+/**
  * @typedef {Object} ShoppingListItem
  * @property {string} pantryItemId Identificador del alimento que falta.
  * @property {string} name Nombre visible del alimento.
@@ -54,6 +60,7 @@
  * @property {Recipe[]} recipes Recetas ordenadas por nombre.
  * @property {PlannedMeal[]} plannedMeals Comidas futuras o de hoy.
  * @property {PlannedMeal[]} pendingMeals Comidas pasadas pendientes de confirmar.
+ * @property {MealSlot[]} missingPlanSlots Huecos de los proximos siete dias sin comida.
  * @property {ShoppingListItem[]} shoppingList Compra necesaria para el plan activo.
  */
 

@@ -1,7 +1,5 @@
 import { MEAL_TYPES } from './types.js';
 
-const DAY_IN_MS = 24 * 60 * 60 * 1000;
-
 /**
  * Convierte una fecha a formato YYYY-MM-DD en horario local.
  *
@@ -133,6 +131,81 @@ export function calculateShoppingList({ pantryItems, recipes, plannedMeals }) {
 }
 
 /**
+ * Construye una clave estable para una fecha y franja de comida.
+ *
+ * @param {string} date Fecha YYYY-MM-DD.
+ * @param {import('./types.js').MealType} mealType Franja del dia.
+ * @returns {string} Clave compuesta.
+ */
+export function getMealSlotKey(date, mealType) {
+  return `${date}__${mealType}`;
+}
+
+/**
+ * Devuelve los huecos sin comida dentro de los proximos siete dias.
+ *
+ * @param {Object} params Parametros.
+ * @param {import('./types.js').PlannedMeal[]} params.plannedMeals Comidas existentes.
+ * @param {Date} [params.referenceDate=new Date()] Fecha que se considera hoy.
+ * @returns {import('./types.js').MealSlot[]} Huecos ordenados por fecha y franja.
+ */
+export function findMissingMealSlots({ plannedMeals, referenceDate = new Date() }) {
+  const occupiedSlots = new Set(
+    plannedMeals.map((meal) => getMealSlotKey(meal.date, meal.mealType)),
+  );
+
+  return getNextSevenDates(referenceDate).flatMap((date) =>
+    MEAL_TYPES
+      .filter((mealType) => !occupiedSlots.has(getMealSlotKey(date, mealType)))
+      .map((mealType) => ({ date, mealType })),
+  );
+}
+
+/**
+ * Genera comidas aleatorias para una lista concreta de huecos.
+ *
+ * @param {Object} params Parametros.
+ * @param {import('./types.js').Recipe[]} params.recipes Recetas candidatas.
+ * @param {import('./types.js').MealSlot[]} params.slots Huecos a rellenar.
+ * @param {number} [params.servings=1] Raciones por comida.
+ * @param {() => number} [params.random=Math.random] Fuente de aleatoriedad.
+ * @returns {{ plannedMeals: import('./types.js').PlannedMeal[], missingSlots: import('./types.js').MealSlot[] }}
+ * Comidas generadas y huecos que no tienen receta compatible.
+ */
+export function buildRandomMealsForSlots({
+  recipes,
+  slots,
+  servings = 1,
+  random = Math.random,
+}) {
+  const plannedMeals = [];
+  const missingSlots = [];
+
+  for (const slot of slots) {
+    const candidates = recipes.filter((recipe) => recipe.mealTypes.includes(slot.mealType));
+
+    if (candidates.length === 0) {
+      missingSlots.push(slot);
+      continue;
+    }
+
+    const selectedRecipe = candidates[Math.floor(random() * candidates.length)];
+    const now = new Date().toISOString();
+    plannedMeals.push({
+      id: createId('meal'),
+      date: slot.date,
+      mealType: slot.mealType,
+      recipeId: selectedRecipe.id,
+      servings,
+      createdAt: now,
+      updatedAt: now,
+    });
+  }
+
+  return { plannedMeals, missingSlots };
+}
+
+/**
  * Genera una planificacion aleatoria para los siete dias siguientes.
  *
  * @param {Object} params Parametros de generacion.
@@ -149,34 +222,11 @@ export function buildRandomWeekPlan({
   servings = 1,
   random = Math.random,
 }) {
-  const dates = getNextSevenDates(referenceDate);
-  const plannedMeals = [];
-  const missingSlots = [];
+  const slots = getNextSevenDates(referenceDate).flatMap((date) =>
+    MEAL_TYPES.map((mealType) => ({ date, mealType })),
+  );
 
-  for (const date of dates) {
-    for (const mealType of MEAL_TYPES) {
-      const candidates = recipes.filter((recipe) => recipe.mealTypes.includes(mealType));
-
-      if (candidates.length === 0) {
-        missingSlots.push({ date, mealType });
-        continue;
-      }
-
-      const selectedRecipe = candidates[Math.floor(random() * candidates.length)];
-      const now = new Date().toISOString();
-      plannedMeals.push({
-        id: createId('meal'),
-        date,
-        mealType,
-        recipeId: selectedRecipe.id,
-        servings,
-        createdAt: now,
-        updatedAt: now,
-      });
-    }
-  }
-
-  return { plannedMeals, missingSlots };
+  return buildRandomMealsForSlots({ recipes, slots, servings, random });
 }
 
 /**

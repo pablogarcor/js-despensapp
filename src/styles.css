@@ -257,6 +257,7 @@ button:focus-visible {
 
 .list-card,
 .meal-card,
+.missing-meal-card,
 .pending-card {
   display: flex;
   align-items: center;
@@ -381,6 +382,7 @@ button:focus-visible {
 }
 
 .meal-card span,
+.missing-meal-card span,
 .meal-card small,
 .pending-card span {
   display: block;
@@ -391,6 +393,21 @@ button:focus-visible {
 .meal-card strong {
   display: block;
   margin: 2px 0;
+}
+
+.missing-meal-card {
+  align-items: end;
+  flex-wrap: wrap;
+  border-style: dashed;
+  background: #f8fbf9;
+}
+
+.missing-meal-card label:first-of-type {
+  flex: 1 1 170px;
+}
+
+.missing-meal-card label:last-of-type {
+  flex: 0 0 92px;
 }
 
 .pending-list {
@@ -440,7 +457,7 @@ button:focus-visible {
   }
 
   .plan-actions {
-    grid-template-columns: 1fr auto auto;
+    grid-template-columns: 1fr auto auto auto;
     align-items: end;
   }
 }
