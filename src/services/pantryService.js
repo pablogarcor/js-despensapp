@@ -1,0 +1,416 @@
+import { DomainError } from '../domain/errors.js';
+import {
+  buildRandomWeekPlan,
+  calculateShoppingList,
+  createId,
+  normalizeName,
+  roundQuantity,
+  sortPlannedMeals,
+  toISODate,
+} from '../domain/planning.js';
+import { MEAL_TYPES } from '../domain/types.js';
+
+/**
+ * Servicio de aplicacion que concentra reglas de negocio y restricciones.
+ *
+ * La UI no toca IndexedDB directamente: siempre pasa por este servicio para
+ * mantener en un unico lugar las reglas de integridad entre tablas.
+ */
+export class PantryService {
+  /**
+   * @param {import('../storage/indexedDbClient.js').IndexedDbClient | import('../storage/memoryDatabase.js').MemoryDatabase} database
+   * Persistencia compatible.
+   * @param {Object} [options] Opciones para tests y escenarios deterministas.
+   * @param {() => Date} [options.now] Proveedor de fecha actual.
+   * @param {() => number} [options.random] Proveedor de aleatoriedad.
+   */
+  constructor(database, options = {}) {
+    this.database = database;
+    this.now = options.now ?? (() => new Date());
+    this.random = options.random ?? Math.random;
+  }
+
+  /**
+   * Devuelve todos los datos necesarios para pintar la pantalla.
+   *
+   * @returns {Promise<import('../domain/types.js').DashboardSnapshot>} Snapshot agregado.
+   */
+  async getDashboard() {
+    const [pantryItems, recipes, allMeals] = await Promise.all([
+      this.database.getAll('pantryItems'),
+      this.database.getAll('recipes'),
+      this.database.getAll('plannedMeals'),
+    ]);
+    const today = toISODate(this.now());
+    const plannedMeals = sortPlannedMeals(allMeals.filter((meal) => meal.date >= today));
+    const pendingMeals = sortPlannedMeals(allMeals.filter((meal) => meal.date < today));
+
+    return {
+      pantryItems: sortByName(pantryItems),
+      recipes: sortByName(recipes),
+      plannedMeals,
+      pendingMeals,
+      shoppingList: calculateShoppingList({ pantryItems, recipes, plannedMeals }),
+    };
+  }
+
+  /**
+   * Crea un alimento de despensa validando duplicados por nombre.
+   *
+   * @param {Object} params Datos de entrada.
+   * @param {string} params.name Nombre.
+   * @param {number} params.quantity Cantidad inicial.
+   * @param {string} params.unit Unidad.
+   * @returns {Promise<import('../domain/types.js').PantryItem>} Alimento creado.
+   */
+  async createPantryItem({ name, quantity, unit }) {
+    const pantryItems = await this.database.getAll('pantryItems');
+    const cleanName = cleanText(name);
+    const cleanUnit = cleanText(unit);
+    const parsedQuantity = parseNonNegativeQuantity(quantity, 'La cantidad del alimento no es valida.');
+
+    if (!cleanName) {
+      throw new DomainError('El alimento necesita un nombre.', 'PANTRY_NAME_REQUIRED');
+    }
+
+    if (!cleanUnit) {
+      throw new DomainError('El alimento necesita una unidad.', 'PANTRY_UNIT_REQUIRED');
+    }
+
+    if (pantryItems.some((item) => normalizeName(item.name) === normalizeName(cleanName))) {
+      throw new DomainError('Ya existe un alimento con ese nombre.', 'PANTRY_DUPLICATED');
+    }
+
+    const now = this.now().toISOString();
+    const item = {
+      id: createId('item'),
+      name: cleanName,
+      quantity: parsedQuantity,
+      unit: cleanUnit,
+      createdAt: now,
+      updatedAt: now,
+    };
+
+    return this.database.put('pantryItems', item);
+  }
+
+  /**
+   * Elimina un alimento si no aparece como ingrediente de ninguna receta.
+   *
+   * @param {string} pantryItemId Identificador del alimento.
+   * @returns {Promise<void>}
+   */
+  async deletePantryItem(pantryItemId) {
+    const [pantryItem, recipes] = await Promise.all([
+      this.database.get('pantryItems', pantryItemId),
+      this.database.getAll('recipes'),
+    ]);
+
+    if (!pantryItem) {
+      throw new DomainError('El alimento no existe.', 'PANTRY_NOT_FOUND');
+    }
+
+    const blockingRecipe = recipes.find((recipe) =>
+      recipe.ingredients.some((ingredient) => ingredient.pantryItemId === pantryItemId),
+    );
+
+    if (blockingRecipe) {
+      throw new DomainError(
+        `No puedes borrar "${pantryItem.name}" porque se usa en "${blockingRecipe.name}".`,
+        'PANTRY_IN_USE',
+      );
+    }
+
+    await this.database.delete('pantryItems', pantryItemId);
+  }
+
+  /**
+   * Crea una receta con ingredientes existentes en la despensa.
+   *
+   * @param {Object} params Datos de entrada.
+   * @param {string} params.name Nombre.
+   * @param {import('../domain/types.js').MealType[]} params.mealTypes Tipos de comida.
+   * @param {import('../domain/types.js').RecipeIngredient[]} params.ingredients Ingredientes por racion.
+   * @returns {Promise<import('../domain/types.js').Recipe>} Receta creada.
+   */
+  async createRecipe({ name, mealTypes, ingredients }) {
+    const [pantryItems, recipes] = await Promise.all([
+      this.database.getAll('pantryItems'),
+      this.database.getAll('recipes'),
+    ]);
+    const cleanName = cleanText(name);
+
+    if (!cleanName) {
+      throw new DomainError('La receta necesita un nombre.', 'RECIPE_NAME_REQUIRED');
+    }
+
+    if (recipes.some((recipe) => normalizeName(recipe.name) === normalizeName(cleanName))) {
+      throw new DomainError('Ya existe una receta con ese nombre.', 'RECIPE_DUPLICATED');
+    }
+
+    const normalizedMealTypes = normalizeMealTypes(mealTypes);
+    const normalizedIngredients = normalizeIngredients(ingredients, pantryItems);
+
+    const now = this.now().toISOString();
+    const recipe = {
+      id: createId('recipe'),
+      name: cleanName,
+      mealTypes: normalizedMealTypes,
+      ingredients: normalizedIngredients,
+      createdAt: now,
+      updatedAt: now,
+    };
+
+    return this.database.put('recipes', recipe);
+  }
+
+  /**
+   * Elimina una receta solo si no esta planificada.
+   *
+   * @param {string} recipeId Identificador de la receta.
+   * @returns {Promise<void>}
+   */
+  async deleteRecipe(recipeId) {
+    const [recipe, plannedMeals] = await Promise.all([
+      this.database.get('recipes', recipeId),
+      this.database.getAll('plannedMeals'),
+    ]);
+
+    if (!recipe) {
+      throw new DomainError('La receta no existe.', 'RECIPE_NOT_FOUND');
+    }
+
+    const blockingMeal = plannedMeals.find((meal) => meal.recipeId === recipeId);
+
+    if (blockingMeal) {
+      throw new DomainError(
+        `No puedes borrar "${recipe.name}" porque esta planificada.`,
+        'RECIPE_IN_USE',
+      );
+    }
+
+    await this.database.delete('recipes', recipeId);
+  }
+
+  /**
+   * Genera una nueva planificacion para los siete dias siguientes.
+   *
+   * Borra primero las comidas de hoy en adelante para que la tabla no acumule
+   * semanas antiguas. Las comidas pasadas se conservan hasta que el usuario las
+   * confirme como hechas o no hechas.
+   *
+   * @param {Object} params Datos de entrada.
+   * @param {number} params.servings Raciones por comida.
+   * @returns {Promise<{plannedMeals: import('../domain/types.js').PlannedMeal[], missingSlots: Array<{date: string, mealType: import('../domain/types.js').MealType}>}>}
+   * Resultado de la planificacion.
+   */
+  async planNextWeek({ servings }) {
+    const parsedServings = parsePositiveQuantity(servings, 'Las raciones deben ser mayores que cero.');
+    const recipes = await this.database.getAll('recipes');
+
+    if (recipes.length === 0) {
+      throw new DomainError('Necesitas al menos una receta para planificar.', 'NO_RECIPES');
+    }
+
+    await this.clearCurrentAndFutureMeals();
+
+    const result = buildRandomWeekPlan({
+      recipes,
+      referenceDate: this.now(),
+      servings: parsedServings,
+      random: this.random,
+    });
+
+    await this.database.bulkPut('plannedMeals', result.plannedMeals);
+    return result;
+  }
+
+  /**
+   * Elimina una comida planificada.
+   *
+   * @param {string} plannedMealId Identificador de la comida.
+   * @returns {Promise<void>}
+   */
+  async deletePlannedMeal(plannedMealId) {
+    const plannedMeal = await this.database.get('plannedMeals', plannedMealId);
+
+    if (!plannedMeal) {
+      throw new DomainError('La comida planificada no existe.', 'PLANNED_MEAL_NOT_FOUND');
+    }
+
+    await this.database.delete('plannedMeals', plannedMealId);
+  }
+
+  /**
+   * Borra todas las comidas desde hoy en adelante.
+   *
+   * @returns {Promise<number>} Numero de comidas eliminadas.
+   */
+  async clearCurrentAndFutureMeals() {
+    const today = toISODate(this.now());
+    return this.database.deleteWhere('plannedMeals', (meal) => meal.date >= today);
+  }
+
+  /**
+   * Resuelve una comida pasada y, si se hizo, descuenta ingredientes.
+   *
+   * @param {string} plannedMealId Identificador de la comida.
+   * @param {boolean} wasCooked Indica si finalmente se preparo.
+   * @returns {Promise<void>}
+   */
+  async resolvePastMeal(plannedMealId, wasCooked) {
+    const meal = await this.database.get('plannedMeals', plannedMealId);
+
+    if (!meal) {
+      throw new DomainError('La comida planificada no existe.', 'PLANNED_MEAL_NOT_FOUND');
+    }
+
+    if (wasCooked) {
+      await this.consumeRecipeIngredients(meal.recipeId, meal.servings);
+    }
+
+    await this.database.delete('plannedMeals', plannedMealId);
+  }
+
+  /**
+   * Descuenta ingredientes de la despensa para una receta.
+   *
+   * @param {string} recipeId Identificador de receta.
+   * @param {number} servings Raciones cocinadas.
+   * @returns {Promise<void>}
+   */
+  async consumeRecipeIngredients(recipeId, servings) {
+    const [recipe, pantryItems] = await Promise.all([
+      this.database.get('recipes', recipeId),
+      this.database.getAll('pantryItems'),
+    ]);
+
+    if (!recipe) {
+      throw new DomainError('La receta no existe.', 'RECIPE_NOT_FOUND');
+    }
+
+    const pantryById = new Map(pantryItems.map((item) => [item.id, item]));
+    const now = this.now().toISOString();
+    const updatedItems = recipe.ingredients.map((ingredient) => {
+      const pantryItem = pantryById.get(ingredient.pantryItemId);
+
+      if (!pantryItem) {
+        throw new DomainError('La receta contiene un alimento que ya no existe.', 'PANTRY_NOT_FOUND');
+      }
+
+      return {
+        ...pantryItem,
+        quantity: roundQuantity(Math.max(0, pantryItem.quantity - ingredient.quantity * servings)),
+        updatedAt: now,
+      };
+    });
+
+    await this.database.bulkPut('pantryItems', updatedItems);
+  }
+}
+
+/**
+ * Ordena entidades que tienen nombre visible.
+ *
+ * @template T
+ * @param {(T & {name: string})[]} records Registros.
+ * @returns {T[]} Nueva lista ordenada.
+ */
+function sortByName(records) {
+  return [...records].sort((left, right) => left.name.localeCompare(right.name, 'es'));
+}
+
+/**
+ * Limpia texto de formularios.
+ *
+ * @param {unknown} value Valor de entrada.
+ * @returns {string} Texto normalizado.
+ */
+function cleanText(value) {
+  return String(value ?? '').trim().replace(/\s+/g, ' ');
+}
+
+/**
+ * Parsea una cantidad mayor o igual que cero.
+ *
+ * @param {unknown} value Valor de entrada.
+ * @param {string} errorMessage Mensaje si falla.
+ * @returns {number} Cantidad.
+ */
+function parseNonNegativeQuantity(value, errorMessage) {
+  const parsedValue = Number(value);
+
+  if (!Number.isFinite(parsedValue) || parsedValue < 0) {
+    throw new DomainError(errorMessage, 'INVALID_QUANTITY');
+  }
+
+  return roundQuantity(parsedValue);
+}
+
+/**
+ * Parsea una cantidad estrictamente positiva.
+ *
+ * @param {unknown} value Valor de entrada.
+ * @param {string} errorMessage Mensaje si falla.
+ * @returns {number} Cantidad.
+ */
+function parsePositiveQuantity(value, errorMessage) {
+  const parsedValue = Number(value);
+
+  if (!Number.isFinite(parsedValue) || parsedValue <= 0) {
+    throw new DomainError(errorMessage, 'INVALID_QUANTITY');
+  }
+
+  return roundQuantity(parsedValue);
+}
+
+/**
+ * Valida tipos de comida de una receta.
+ *
+ * @param {unknown[]} mealTypes Tipos seleccionados.
+ * @returns {import('../domain/types.js').MealType[]} Tipos validos.
+ */
+function normalizeMealTypes(mealTypes) {
+  const selectedMealTypes = [...new Set(mealTypes)].filter((mealType) => MEAL_TYPES.includes(mealType));
+
+  if (selectedMealTypes.length === 0) {
+    throw new DomainError('Selecciona al menos un momento del dia para la receta.', 'MEAL_TYPE_REQUIRED');
+  }
+
+  return selectedMealTypes;
+}
+
+/**
+ * Valida ingredientes y garantiza que todos existan en la despensa.
+ *
+ * @param {import('../domain/types.js').RecipeIngredient[]} ingredients Ingredientes de entrada.
+ * @param {import('../domain/types.js').PantryItem[]} pantryItems Alimentos disponibles.
+ * @returns {import('../domain/types.js').RecipeIngredient[]} Ingredientes normalizados.
+ */
+function normalizeIngredients(ingredients, pantryItems) {
+  if (!Array.isArray(ingredients) || ingredients.length === 0) {
+    throw new DomainError('La receta necesita al menos un ingrediente.', 'INGREDIENT_REQUIRED');
+  }
+
+  const pantryById = new Map(pantryItems.map((item) => [item.id, item]));
+  const usedItemIds = new Set();
+
+  return ingredients.map((ingredient) => {
+    const pantryItemId = cleanText(ingredient.pantryItemId);
+
+    if (!pantryById.has(pantryItemId)) {
+      throw new DomainError('Todos los ingredientes deben existir en la despensa.', 'INGREDIENT_NOT_FOUND');
+    }
+
+    if (usedItemIds.has(pantryItemId)) {
+      throw new DomainError('No repitas alimentos dentro de la misma receta.', 'INGREDIENT_DUPLICATED');
+    }
+
+    usedItemIds.add(pantryItemId);
+
+    return {
+      pantryItemId,
+      quantity: parsePositiveQuantity(ingredient.quantity, 'La cantidad del ingrediente no es valida.'),
+    };
+  });
+}

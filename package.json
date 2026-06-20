@@ -1,0 +1,19 @@
+{
+  "name": "js-despensapp",
+  "version": "1.0.0",
+  "description": "MVP mobile first para gestionar despensa, recetas y comidas planificadas en local.",
+  "type": "module",
+  "scripts": {
+    "dev": "vite --host 0.0.0.0",
+    "build": "vite build",
+    "preview": "vite preview --host 0.0.0.0",
+    "test": "node --test tests/*.test.js"
+  },
+  "private": true,
+  "devDependencies": {
+    "vite": "^7.0.0"
+  },
+  "overrides": {
+    "esbuild": "^0.28.1"
+  }
+}
