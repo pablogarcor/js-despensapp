@@ -15,6 +15,29 @@ test('impide borrar alimentos usados por recetas', async () => {
   );
 });
 
+test('permite vaciar la despensa si ningun alimento se usa en recetas', async () => {
+  const database = new MemoryDatabase();
+  const service = new PantryService(database, { now: () => fixedDate });
+
+  await service.createPantryItem({ name: 'Arroz', quantity: 500, unit: 'g' });
+  await service.createPantryItem({ name: 'Tomate', quantity: 4, unit: 'ud' });
+
+  const deletedCount = await service.clearPantryItems();
+  const dashboard = await service.getDashboard();
+
+  assert.equal(deletedCount, 2);
+  assert.equal(dashboard.pantryItems.length, 0);
+});
+
+test('impide vaciar la despensa si hay recetas que usan alimentos', async () => {
+  const { service } = await createServiceWithRecipe();
+
+  await assert.rejects(
+    () => service.clearPantryItems(),
+    /usa alimentos guardados/,
+  );
+});
+
 test('permite editar nombre y cantidad de un alimento existente', async () => {
   const { service, rice } = await createServiceWithRecipe();
 
@@ -191,6 +214,27 @@ test('impide borrar recetas planificadas', async () => {
   await assert.rejects(
     () => service.deleteRecipe(recipe.id),
     /esta planificada/,
+  );
+});
+
+test('permite vaciar recetas si no estan planificadas', async () => {
+  const { service } = await createServiceWithRecipe();
+
+  const deletedCount = await service.clearRecipes();
+  const dashboard = await service.getDashboard();
+
+  assert.equal(deletedCount, 1);
+  assert.equal(dashboard.recipes.length, 0);
+  assert.equal(dashboard.pantryItems.length, 1);
+});
+
+test('impide vaciar recetas si hay recetas planificadas', async () => {
+  const { service } = await createServiceWithRecipe();
+  await service.planNextWeek({ servings: 1 });
+
+  await assert.rejects(
+    () => service.clearRecipes(),
+    /recetas planificadas/,
   );
 });
 

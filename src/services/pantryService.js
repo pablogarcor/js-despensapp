@@ -311,6 +311,31 @@ export class PantryService {
   }
 
   /**
+   * Elimina todos los alimentos si ninguna receta depende de ellos.
+   *
+   * @returns {Promise<number>} Numero de alimentos eliminados.
+   */
+  async clearPantryItems() {
+    const [pantryItems, recipes] = await Promise.all([
+      this.database.getAll('pantryItems'),
+      this.database.getAll('recipes'),
+    ]);
+    const pantryItemIds = new Set(pantryItems.map((item) => item.id));
+    const blockingRecipe = recipes.find((recipe) =>
+      recipe.ingredients.some((ingredient) => pantryItemIds.has(ingredient.pantryItemId)),
+    );
+
+    if (blockingRecipe) {
+      throw new DomainError(
+        `No puedes vaciar la despensa porque "${blockingRecipe.name}" usa alimentos guardados.`,
+        'PANTRY_IN_USE',
+      );
+    }
+
+    return this.database.deleteWhere('pantryItems', () => true);
+  }
+
+  /**
    * Crea una receta con ingredientes existentes en la despensa.
    *
    * @param {Object} params Datos de entrada.
@@ -439,6 +464,29 @@ export class PantryService {
     }
 
     await this.database.delete('recipes', recipeId);
+  }
+
+  /**
+   * Elimina todas las recetas si ninguna esta planificada.
+   *
+   * @returns {Promise<number>} Numero de recetas eliminadas.
+   */
+  async clearRecipes() {
+    const [recipes, plannedMeals] = await Promise.all([
+      this.database.getAll('recipes'),
+      this.database.getAll('plannedMeals'),
+    ]);
+    const recipeIds = new Set(recipes.map((recipe) => recipe.id));
+    const blockingMeal = plannedMeals.find((meal) => recipeIds.has(meal.recipeId));
+
+    if (blockingMeal) {
+      throw new DomainError(
+        'No puedes vaciar recetas porque hay recetas planificadas.',
+        'RECIPE_IN_USE',
+      );
+    }
+
+    return this.database.deleteWhere('recipes', () => true);
   }
 
   /**

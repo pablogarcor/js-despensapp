@@ -52,11 +52,13 @@ La planificacion automatica genera 7 dias desde manana, con desayuno, comida y c
 Las reglas viven en `src/services/pantryService.js`:
 
 - No se puede borrar un alimento si alguna receta lo usa.
+- No se puede vaciar la despensa si alguna receta usa alimentos guardados.
 - Se puede sumar o restar cantidad a un alimento existente manteniendo su unidad.
 - Al restar stock manualmente, la cantidad nunca baja de cero.
 - Se puede editar nombre, cantidad y unidad de un alimento existente conservando su identificador.
 - Si cambias la unidad de un alimento usado en recetas, debes revisar y guardar la cantidad por racion de cada receta afectada.
 - No se puede borrar una receta si esta planificada.
+- No se pueden vaciar recetas si alguna esta planificada.
 - Se puede editar una receta existente para cambiar nombre, momentos del dia, ingredientes y cantidades.
 - Una receta planificada no puede perder una franja si ya hay comidas planificadas de esa receta en esa franja.
 - No puede haber dos comidas planificadas en la misma fecha y momento del dia.
@@ -180,18 +182,20 @@ Si el deploy falla con `HttpError: Not Found` y el mensaje `Ensure GitHub Pages 
 2. Si compras mas de un alimento existente, usa **Sumar** en su tarjeta para incrementar el stock sin duplicarlo.
 3. Si un alimento se gasta fuera del plan o se pone malo, usa **Restar** para descontarlo manualmente.
 4. Usa **Editar** en un alimento para corregir nombre, cantidad total o unidad. Si aparece en recetas, veras esas recetas en el mismo formulario para ajustar sus cantidades.
-5. En **Recetas**, crea recetas usando solo alimentos existentes. Cada ingrediente representa cantidad por racion.
-6. Usa **Editar** en una receta para modificar ingredientes, cantidades, nombre o momentos del dia.
-7. En **Plan**, la app muestra por defecto los huecos de los proximos 7 dias para poder anadir comidas manualmente.
-8. Si prefieres automatizar, indica raciones y pulsa **Planificar semana** para rellenar todos los huecos.
-9. Si eliminas una comida del plan, el hueco vuelve a aparecer dentro de su dia con un selector de recetas compatibles.
-10. Pulsa **Completar huecos** para rellenar automaticamente los huecos restantes sin borrar las comidas ya planificadas.
-11. Usa **Editar** en una comida planificada para cambiar receta o raciones.
-12. Si falta comida, la **lista de la compra** aparece cerrada por defecto pero indica claramente si falta compra o si el plan esta cubierto.
-13. Las comidas del plan que no se podrian cocinar quedan marcadas en su tarjeta para verlo de un vistazo.
-14. Al desplegar la lista de compra, muestra alimentos agregados por unidad y las **comidas afectadas**, con receta, fecha, franja y faltas concretas.
-15. Cuando una comida ya paso, la app la muestra como pendiente: si marcas **Hecha**, descuenta ingredientes; si marcas **No hecha**, solo elimina la planificacion.
-16. En **Configuracion**, usa **Exportar copia** para descargar un backup JSON o **Importar y reemplazar** para restaurarlo.
+5. Usa **Vaciar despensa** para eliminar todos los alimentos si no estan usados en recetas.
+6. En **Recetas**, crea recetas usando solo alimentos existentes. Cada ingrediente representa cantidad por racion.
+7. Usa **Editar** en una receta para modificar ingredientes, cantidades, nombre o momentos del dia.
+8. Usa **Vaciar recetas** para eliminar todas las recetas si no estan planificadas.
+9. En **Plan**, la app muestra por defecto los huecos de los proximos 7 dias para poder anadir comidas manualmente.
+10. Si prefieres automatizar, indica raciones y pulsa **Planificar semana** para rellenar todos los huecos.
+11. Si eliminas una comida del plan, el hueco vuelve a aparecer dentro de su dia con un selector de recetas compatibles.
+12. Pulsa **Completar huecos** para rellenar automaticamente los huecos restantes sin borrar las comidas ya planificadas.
+13. Usa **Editar** en una comida planificada para cambiar receta o raciones.
+14. Si falta comida, la **lista de la compra** aparece cerrada por defecto pero indica claramente si falta compra o si el plan esta cubierto.
+15. Las comidas del plan que no se podrian cocinar quedan marcadas en su tarjeta para verlo de un vistazo.
+16. Al desplegar la lista de compra, muestra alimentos agregados por unidad y las **comidas afectadas**, con receta, fecha, franja y faltas concretas.
+17. Cuando una comida ya paso, la app la muestra como pendiente: si marcas **Hecha**, descuenta ingredientes; si marcas **No hecha**, solo elimina la planificacion.
+18. En **Configuracion**, usa **Exportar copia** para descargar un backup JSON o **Importar y reemplazar** para restaurarlo.
 
 ## Importar y exportar
 

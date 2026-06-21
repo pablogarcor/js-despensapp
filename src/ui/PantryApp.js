@@ -69,7 +69,6 @@ export class PantryApp {
       <div class="app-shell">
         <header class="app-header">
           <div>
-            <p class="eyebrow">MVP local</p>
             <div class="brand-row">
               <h1>Despensapp</h1>
               <button
@@ -142,6 +141,12 @@ export class PantryApp {
         this.showToast('Alimento eliminado.');
       }
 
+      if (action === 'clear-pantry') {
+        const deletedCount = await this.service.clearPantryItems();
+        this.state.editingPantryItemId = null;
+        this.showToast(`${deletedCount} alimentos eliminados de la despensa.`);
+      }
+
       if (action === 'edit-pantry-item') {
         this.state.editingPantryItemId = id;
         shouldRefresh = false;
@@ -155,6 +160,14 @@ export class PantryApp {
       if (action === 'delete-recipe') {
         await this.service.deleteRecipe(id);
         this.showToast('Receta eliminada.');
+      }
+
+      if (action === 'clear-recipes') {
+        const deletedCount = await this.service.clearRecipes();
+        this.state.editingRecipeId = null;
+        this.state.editRecipeDraft = null;
+        this.state.editIngredientRows = [];
+        this.showToast(`${deletedCount} recetas eliminadas.`);
       }
 
       if (action === 'edit-recipe') {
@@ -681,6 +694,12 @@ export class PantryApp {
           </div>
           <button class="button full" type="submit">Anadir alimento</button>
         </form>
+
+        <div class="bulk-actions">
+          <button class="button ghost full" type="button" data-action="clear-pantry" ${dashboard.pantryItems.length === 0 ? 'disabled' : ''}>
+            Vaciar despensa
+          </button>
+        </div>
       </section>
 
       <section class="list-section" aria-label="Alimentos guardados">
@@ -863,6 +882,12 @@ export class PantryApp {
             Crear receta
           </button>
         </form>
+
+        <div class="bulk-actions">
+          <button class="button ghost full" type="button" data-action="clear-recipes" ${dashboard.recipes.length === 0 ? 'disabled' : ''}>
+            Vaciar recetas
+          </button>
+        </div>
       </section>
 
       <section class="list-section" aria-label="Recetas guardadas">
