@@ -18,6 +18,7 @@ export class PantryApp {
   constructor({ root, service }) {
     this.root = root;
     this.service = service;
+    this.toastTimeoutId = null;
     this.state = {
       activeView: 'pantry',
       dashboard: null,
@@ -128,6 +129,11 @@ export class PantryApp {
 
     await this.runSafely(async () => {
       let shouldRefresh = true;
+
+      if (action === 'dismiss-toast') {
+        this.dismissToast();
+        shouldRefresh = false;
+      }
 
       if (action === 'export-backup') {
         const backup = await this.service.exportBackup();
@@ -542,13 +548,42 @@ export class PantryApp {
   }
 
   /**
-   * Guarda un mensaje temporal para el siguiente render.
+   * Guarda un mensaje temporal y programa su cierre automatico.
    *
    * @param {string} message Mensaje.
    * @param {'success' | 'error'} [type='success'] Tipo visual.
    */
   showToast(message, type = 'success') {
-    this.state.toast = { message, type };
+    this.clearToastTimeout();
+    this.state.toast = {
+      id: createUiId('toast'),
+      message,
+      type,
+    };
+    this.toastTimeoutId = window.setTimeout(() => {
+      this.dismissToast();
+    }, 4500);
+  }
+
+  /**
+   * Cierra el aviso visible, si existe.
+   */
+  dismissToast() {
+    this.clearToastTimeout();
+    this.state.toast = null;
+    this.render();
+  }
+
+  /**
+   * Cancela el temporizador actual del aviso.
+   */
+  clearToastTimeout() {
+    if (!this.toastTimeoutId) {
+      return;
+    }
+
+    window.clearTimeout(this.toastTimeoutId);
+    this.toastTimeoutId = null;
   }
 
   /**
@@ -669,9 +704,14 @@ export class PantryApp {
     }
 
     const toast = this.state.toast;
-    this.state.toast = null;
+    const role = toast.type === 'error' ? 'alert' : 'status';
 
-    return `<p class="toast ${toast.type === 'error' ? 'is-error' : ''}" role="status">${escapeHtml(toast.message)}</p>`;
+    return `
+      <div class="toast ${toast.type === 'error' ? 'is-error' : ''}" role="${role}" aria-live="${toast.type === 'error' ? 'assertive' : 'polite'}">
+        <span>${escapeHtml(toast.message)}</span>
+        <button class="toast-close" type="button" data-action="dismiss-toast" aria-label="Cerrar aviso">x</button>
+      </div>
+    `;
   }
 
   /**
@@ -1413,10 +1453,20 @@ export class PantryApp {
  */
 function createIngredientRow(initialValues = {}) {
   return {
-    id: globalThis.crypto?.randomUUID?.() ?? String(Date.now() + Math.random()),
+    id: createUiId('ingredient'),
     pantryItemId: initialValues.pantryItemId ?? '',
     quantity: initialValues.quantity ?? '',
   };
+}
+
+/**
+ * Crea un identificador efimero para estado local de interfaz.
+ *
+ * @param {string} prefix Prefijo legible.
+ * @returns {string} Identificador de UI.
+ */
+function createUiId(prefix) {
+  return `${prefix}_${globalThis.crypto?.randomUUID?.() ?? String(Date.now() + Math.random())}`;
 }
 
 /**

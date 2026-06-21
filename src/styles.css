@@ -733,7 +733,6 @@ button:focus-visible {
   gap: 8px;
 }
 
-.toast,
 .empty-state {
   margin: 0 0 14px;
   border: 1px solid #91c4a8;
@@ -744,10 +743,46 @@ button:focus-visible {
   font-weight: 700;
 }
 
+.toast {
+  position: fixed;
+  z-index: 50;
+  top: calc(12px + env(safe-area-inset-top));
+  left: max(12px, env(safe-area-inset-left));
+  right: max(12px, env(safe-area-inset-right));
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  width: min(calc(100% - 24px), 560px);
+  margin: 0 auto;
+  border: 1px solid #91c4a8;
+  border-radius: 8px;
+  background: #edf8f2;
+  color: #225f3d;
+  box-shadow: 0 14px 36px rgba(24, 35, 30, 0.16);
+  padding: 12px 12px 12px 14px;
+  font-weight: 700;
+}
+
 .toast.is-error {
   border-color: #d89a87;
   background: #fff0eb;
   color: #7a3425;
+}
+
+.toast-close {
+  display: inline-grid;
+  place-items: center;
+  flex: 0 0 auto;
+  width: 34px;
+  height: 34px;
+  border: 1px solid currentColor;
+  border-radius: 8px;
+  background: transparent;
+  color: inherit;
+  font-size: 1rem;
+  font-weight: 900;
+  line-height: 1;
 }
 
 .empty-state {
