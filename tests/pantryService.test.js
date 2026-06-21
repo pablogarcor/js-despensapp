@@ -336,6 +336,50 @@ test('impide anadir una receta incompatible con la franja', async () => {
   );
 });
 
+test('permite editar receta y raciones de una comida planificada', async () => {
+  const { service, recipe } = await createServiceWithRecipe();
+  const meal = await service.createPlannedMeal({
+    date: '2026-06-21',
+    mealType: 'breakfast',
+    recipeId: recipe.id,
+    servings: 1,
+  });
+
+  const updatedMeal = await service.updatePlannedMeal(meal.id, {
+    recipeId: recipe.id,
+    servings: 2.5,
+  });
+
+  assert.equal(updatedMeal.id, meal.id);
+  assert.equal(updatedMeal.date, '2026-06-21');
+  assert.equal(updatedMeal.mealType, 'breakfast');
+  assert.equal(updatedMeal.servings, 2.5);
+});
+
+test('impide editar una comida con receta incompatible', async () => {
+  const { service, rice, recipe } = await createServiceWithRecipe(['breakfast']);
+  const meal = await service.createPlannedMeal({
+    date: '2026-06-21',
+    mealType: 'breakfast',
+    recipeId: recipe.id,
+    servings: 1,
+  });
+  const lunchRecipe = await service.createRecipe({
+    name: 'Arroz comida',
+    mealTypes: ['lunch'],
+    ingredients: [{ pantryItemId: rice.id, quantity: 100 }],
+  });
+
+  await assert.rejects(
+    () =>
+      service.updatePlannedMeal(meal.id, {
+        recipeId: lunchRecipe.id,
+        servings: 1,
+      }),
+    /no esta indicada/,
+  );
+});
+
 test('completa solo los huecos libres del plan actual', async () => {
   const { service } = await createServiceWithRecipe();
   await service.planNextWeek({ servings: 1 });

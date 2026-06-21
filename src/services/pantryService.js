@@ -576,6 +576,46 @@ export class PantryService {
   }
 
   /**
+   * Actualiza una comida planificada existente.
+   *
+   * @param {string} plannedMealId Identificador de la comida.
+   * @param {Object} params Datos de entrada.
+   * @param {string} params.recipeId Receta seleccionada.
+   * @param {number} params.servings Raciones.
+   * @returns {Promise<import('../domain/types.js').PlannedMeal>} Comida actualizada.
+   */
+  async updatePlannedMeal(plannedMealId, { recipeId, servings }) {
+    const cleanRecipeId = cleanText(recipeId);
+    const parsedServings = parsePositiveQuantity(servings, 'Las raciones deben ser mayores que cero.');
+
+    const [plannedMeal, recipe] = await Promise.all([
+      this.database.get('plannedMeals', plannedMealId),
+      this.database.get('recipes', cleanRecipeId),
+    ]);
+
+    if (!plannedMeal) {
+      throw new DomainError('La comida planificada no existe.', 'PLANNED_MEAL_NOT_FOUND');
+    }
+
+    if (!recipe) {
+      throw new DomainError('La receta no existe.', 'RECIPE_NOT_FOUND');
+    }
+
+    if (!recipe.mealTypes.includes(plannedMeal.mealType)) {
+      throw new DomainError('La receta no esta indicada para esa franja.', 'RECIPE_NOT_COMPATIBLE');
+    }
+
+    const updatedMeal = {
+      ...plannedMeal,
+      recipeId: cleanRecipeId,
+      servings: parsedServings,
+      updatedAt: this.now().toISOString(),
+    };
+
+    return this.database.put('plannedMeals', updatedMeal);
+  }
+
+  /**
    * Elimina una comida planificada.
    *
    * @param {string} plannedMealId Identificador de la comida.

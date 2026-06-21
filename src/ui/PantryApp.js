@@ -26,6 +26,7 @@ export class PantryApp {
       editingRecipeId: null,
       editRecipeDraft: null,
       editIngredientRows: [],
+      editingPlannedMealId: null,
       toast: null,
       isBusy: false,
     };
@@ -187,6 +188,16 @@ export class PantryApp {
         this.showToast('Comida eliminada del plan.');
       }
 
+      if (action === 'edit-planned-meal') {
+        this.state.editingPlannedMealId = id;
+        shouldRefresh = false;
+      }
+
+      if (action === 'cancel-edit-planned-meal') {
+        this.state.editingPlannedMealId = null;
+        shouldRefresh = false;
+      }
+
       if (action === 'clear-plan') {
         const deletedCount = await this.service.clearCurrentAndFutureMeals();
         this.showToast(`${deletedCount} comidas eliminadas del plan.`);
@@ -337,6 +348,16 @@ export class PantryApp {
           servings: data.get('servings'),
         });
         this.showToast('Comida anadida al plan.');
+      }
+
+      if (form.matches('[data-form="planned-meal-edit"]')) {
+        const data = new FormData(form);
+        await this.service.updatePlannedMeal(data.get('plannedMealId'), {
+          recipeId: data.get('recipeId'),
+          servings: data.get('servings'),
+        });
+        this.state.editingPlannedMealId = null;
+        this.showToast('Comida actualizada.');
       }
 
       if (form.matches('[data-form="import-backup"]')) {
@@ -1210,6 +1231,10 @@ export class PantryApp {
    * @returns {string} HTML.
    */
   renderPlannedMeal(meal, recipes, unavailableMeals) {
+    if (this.state.editingPlannedMealId === meal.id) {
+      return this.renderPlannedMealEditForm(meal, recipes);
+    }
+
     const recipe = recipes.find((candidate) => candidate.id === meal.recipeId);
     const unavailableMeal = unavailableMeals.find((candidate) => candidate.plannedMealId === meal.id);
     const missingIngredientNames = unavailableMeal?.missingIngredients
@@ -1229,10 +1254,51 @@ export class PantryApp {
           }
         </div>
         ${unavailableMeal ? '<span class="meal-status-badge">Faltan alimentos</span>' : ''}
-        <button class="icon-button" type="button" aria-label="Eliminar comida" data-action="delete-planned-meal" data-id="${meal.id}">
-          x
-        </button>
+        <div class="inline-actions">
+          <button class="button ghost small" type="button" data-action="edit-planned-meal" data-id="${meal.id}">
+            Editar
+          </button>
+          <button class="icon-button" type="button" aria-label="Eliminar comida" data-action="delete-planned-meal" data-id="${meal.id}">
+            x
+          </button>
+        </div>
       </article>
+    `;
+  }
+
+  /**
+   * Renderiza el formulario inline para editar una comida planificada.
+   *
+   * @param {import('../domain/types.js').PlannedMeal} meal Comida.
+   * @param {import('../domain/types.js').Recipe[]} recipes Recetas disponibles.
+   * @returns {string} HTML.
+   */
+  renderPlannedMealEditForm(meal, recipes) {
+    const compatibleRecipes = recipes.filter((recipe) => recipe.mealTypes.includes(meal.mealType));
+
+    return `
+      <form class="meal-card meal-edit-card" data-form="planned-meal-edit">
+        <input type="hidden" name="plannedMealId" value="${escapeAttribute(meal.id)}" />
+        <p class="meal-edit-date">${formatDate(meal.date)} · ${MEAL_TYPE_LABELS[meal.mealType]}</p>
+        <label>
+          Receta
+          <select name="recipeId" required>
+            ${compatibleRecipes.map((recipe) => `
+              <option value="${escapeAttribute(recipe.id)}" ${meal.recipeId === recipe.id ? 'selected' : ''}>
+                ${escapeHtml(recipe.name)}
+              </option>
+            `).join('')}
+          </select>
+        </label>
+        <label>
+          Raciones
+          <input name="servings" type="number" inputmode="decimal" min="0.5" step="0.5" value="${meal.servings}" required />
+        </label>
+        <div class="form-actions">
+          <button class="button small" type="submit">Guardar</button>
+          <button class="button ghost small" type="button" data-action="cancel-edit-planned-meal">Cancelar</button>
+        </div>
+      </form>
     `;
   }
 

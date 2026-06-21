@@ -59,6 +59,8 @@ Las reglas viven en `src/services/pantryService.js`:
 - Una receta planificada no puede perder una franja si ya hay comidas planificadas de esa receta en esa franja.
 - No puede haber dos comidas planificadas en la misma fecha y momento del dia.
 - Una comida manual solo puede usar recetas compatibles con su momento del dia.
+- Una comida editada conserva su fecha y momento del dia; solo puede cambiar receta y raciones.
+- Una comida editada solo puede usar una receta compatible con su momento del dia.
 - Una receta no puede repetir el mismo alimento.
 - Una comida hecha descuenta `cantidad por racion * raciones`.
 - La despensa no baja de cero si se confirma una comida aunque falten alimentos.
@@ -120,11 +122,12 @@ npm test         # tests de negocio con node:test
 8. La app rellena los proximos 7 dias y calcula si falta algo.
 9. Si eliminas una comida del plan, el hueco aparece dentro de su dia con un selector de recetas compatibles para anadirla manualmente.
 10. Pulsa **Completar huecos** para rellenar automaticamente los huecos restantes sin borrar las comidas ya planificadas.
-11. Si falta comida, la **lista de la compra** aparece cerrada por defecto pero indica claramente si falta compra o si el plan esta cubierto.
-12. Las comidas del plan que no se podrian cocinar quedan marcadas en su tarjeta para verlo de un vistazo.
-13. Al desplegar la lista de compra, muestra alimentos agregados por unidad y las **comidas afectadas**, con receta, fecha, franja y faltas concretas.
-14. Cuando una comida ya paso, la app la muestra como pendiente: si marcas **Hecha**, descuenta ingredientes; si marcas **No hecha**, solo elimina la planificacion.
-15. En **Configuracion**, usa **Exportar copia** para descargar un backup JSON o **Importar y reemplazar** para restaurarlo.
+11. Usa **Editar** en una comida planificada para cambiar receta o raciones.
+12. Si falta comida, la **lista de la compra** aparece cerrada por defecto pero indica claramente si falta compra o si el plan esta cubierto.
+13. Las comidas del plan que no se podrian cocinar quedan marcadas en su tarjeta para verlo de un vistazo.
+14. Al desplegar la lista de compra, muestra alimentos agregados por unidad y las **comidas afectadas**, con receta, fecha, franja y faltas concretas.
+15. Cuando una comida ya paso, la app la muestra como pendiente: si marcas **Hecha**, descuenta ingredientes; si marcas **No hecha**, solo elimina la planificacion.
+16. En **Configuracion**, usa **Exportar copia** para descargar un backup JSON o **Importar y reemplazar** para restaurarlo.
 
 ## Importar y exportar
 
@@ -144,11 +147,9 @@ La importacion valida estructura, ids duplicados y relaciones entre alimentos, r
 - No hay conversion automatica entre unidades. Una receta usa la misma unidad definida por cada alimento.
 - No hay sincronizacion entre dispositivos ni usuarios.
 - Los datos demo se insertan solo la primera vez para facilitar pruebas.
-- No hay edicion de comidas planificadas todavia; el MVP permite crear, borrar y ajustar stock.
 
 ## Siguientes pasos recomendados
 
-- Edicion de comidas planificadas.
 - Conversor de unidades controlado.
 - Historial de comidas hechas.
 - PWA instalable y cache offline.

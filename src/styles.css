@@ -664,6 +664,20 @@ button:focus-visible {
   white-space: nowrap;
 }
 
+.meal-edit-card {
+  display: grid;
+  grid-template-columns: 1fr;
+  align-items: end;
+  border-color: #91c4a8;
+  background: #f8fbf9;
+}
+
+.meal-edit-date {
+  margin: 0;
+  color: #243b30;
+  font-weight: 850;
+}
+
 .missing-meal-card {
   align-items: end;
   flex-wrap: wrap;
@@ -732,5 +746,13 @@ button:focus-visible {
   .plan-actions {
     grid-template-columns: 1fr auto auto auto;
     align-items: end;
+  }
+
+  .meal-edit-card {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .meal-edit-card .form-actions {
+    grid-column: 1 / -1;
   }
 }
