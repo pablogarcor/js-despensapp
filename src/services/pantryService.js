@@ -3,6 +3,7 @@ import {
   buildRandomMealsForSlots,
   buildRandomWeekPlan,
   calculateShoppingList,
+  calculateUnavailablePlannedMeals,
   createId,
   findMissingMealSlots,
   getNextSevenDates,
@@ -59,6 +60,7 @@ export class PantryService {
       pendingMeals,
       missingPlanSlots,
       shoppingList: calculateShoppingList({ pantryItems, recipes, plannedMeals }),
+      unavailableMeals: calculateUnavailablePlannedMeals({ pantryItems, recipes, plannedMeals }),
     };
   }
 

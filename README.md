@@ -57,6 +57,7 @@ Las reglas viven en `src/services/pantryService.js`:
 - Una comida hecha descuenta `cantidad por racion * raciones`.
 - La despensa no baja de cero si se confirma una comida aunque falten alimentos.
 - La lista de la compra se calcula agregando todo lo que requiere el plan futuro y comparandolo con la despensa.
+- La lista de la compra tambien senala que comidas del plan no se podrian preparar, indicando receta, fecha, franja y alimentos que faltan.
 
 ## Estructura
 
@@ -109,7 +110,8 @@ npm test         # tests de negocio con node:test
 5. Si eliminas una comida del plan, el hueco aparece dentro de su dia con un selector de recetas compatibles para anadirla manualmente.
 6. Pulsa **Completar huecos** para rellenar automaticamente los huecos restantes sin borrar las comidas ya planificadas.
 7. Si falta comida, aparece una **lista de la compra** agregada por alimento y unidad.
-8. Cuando una comida ya paso, la app la muestra como pendiente: si marcas **Hecha**, descuenta ingredientes; si marcas **No hecha**, solo elimina la planificacion.
+8. Debajo de la lista se muestran las **comidas afectadas**, con receta, fecha, franja y faltas concretas para saber cuando no se podria cocinar.
+9. Cuando una comida ya paso, la app la muestra como pendiente: si marcas **Hecha**, descuenta ingredientes; si marcas **No hecha**, solo elimina la planificacion.
 
 ## Limitaciones conscientes del MVP
 

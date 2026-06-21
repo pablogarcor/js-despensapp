@@ -55,6 +55,25 @@
  */
 
 /**
+ * @typedef {Object} MealIngredientShortage
+ * @property {string} pantryItemId Identificador del alimento que falta.
+ * @property {string} name Nombre visible del alimento.
+ * @property {number} missingQuantity Cantidad que falta para esa comida.
+ * @property {string} unit Unidad del alimento.
+ */
+
+/**
+ * @typedef {Object} UnavailablePlannedMeal
+ * @property {string} plannedMealId Identificador de la comida planificada.
+ * @property {string} date Fecha en formato YYYY-MM-DD.
+ * @property {MealType} mealType Momento del dia.
+ * @property {string} recipeId Identificador de la receta.
+ * @property {string} recipeName Nombre visible de la receta.
+ * @property {number} servings Numero de raciones planificadas.
+ * @property {MealIngredientShortage[]} missingIngredients Alimentos que faltan para esa comida.
+ */
+
+/**
  * @typedef {Object} DashboardSnapshot
  * @property {PantryItem[]} pantryItems Alimentos ordenados por nombre.
  * @property {Recipe[]} recipes Recetas ordenadas por nombre.
@@ -62,6 +81,7 @@
  * @property {PlannedMeal[]} pendingMeals Comidas pasadas pendientes de confirmar.
  * @property {MealSlot[]} missingPlanSlots Huecos de los proximos siete dias sin comida.
  * @property {ShoppingListItem[]} shoppingList Compra necesaria para el plan activo.
+ * @property {UnavailablePlannedMeal[]} unavailableMeals Comidas del plan que no se podrian hacer sin comprar.
  */
 
 export const MEAL_TYPES = Object.freeze(['breakfast', 'lunch', 'dinner']);

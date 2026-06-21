@@ -375,6 +375,44 @@ button:focus-visible {
   padding-top: 8px;
 }
 
+.unavailable-meals {
+  display: grid;
+  gap: 8px;
+  margin-top: 14px;
+  border-top: 1px solid rgba(24, 35, 30, 0.12);
+  padding-top: 12px;
+}
+
+.unavailable-meals h4 {
+  margin: 0;
+  color: #8c3a2a;
+  font-size: 0.9rem;
+}
+
+.unavailable-meal {
+  display: grid;
+  gap: 8px;
+  border: 1px solid #edc3b6;
+  border-radius: 8px;
+  background: #fffaf8;
+  padding: 10px;
+}
+
+.unavailable-meal span {
+  display: block;
+  color: #60736a;
+  font-size: 0.82rem;
+}
+
+.unavailable-meal ul {
+  display: grid;
+  gap: 4px;
+  margin: 0;
+  padding-left: 18px;
+  color: #7a3425;
+  font-size: 0.88rem;
+}
+
 .day-group {
   display: grid;
   gap: 8px;

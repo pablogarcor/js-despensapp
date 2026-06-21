@@ -49,6 +49,23 @@ test('calcula lista de compra cuando el plan supera la despensa', async () => {
   assert.ok(riceShortage.missingQuantity > 0);
 });
 
+test('indica que recetas y fechas no se podrian cocinar con la despensa actual', async () => {
+  const { service } = await createServiceWithRecipe();
+
+  await service.planNextWeek({ servings: 2 });
+  const dashboard = await service.getDashboard();
+  const firstUnavailableMeal = dashboard.unavailableMeals[0];
+
+  assert.ok(firstUnavailableMeal);
+  assert.equal(firstUnavailableMeal.date, '2026-06-21');
+  assert.equal(firstUnavailableMeal.mealType, 'dinner');
+  assert.equal(firstUnavailableMeal.recipeName, 'Arroz basico');
+  assert.equal(firstUnavailableMeal.missingIngredients.length, 1);
+  assert.equal(firstUnavailableMeal.missingIngredients[0].name, 'Arroz');
+  assert.equal(firstUnavailableMeal.missingIngredients[0].missingQuantity, 100);
+  assert.equal(firstUnavailableMeal.missingIngredients[0].unit, 'g');
+});
+
 test('resolver comida hecha descuenta ingredientes y borra la planificacion', async () => {
   const { service, rice } = await createServiceWithRecipe();
   await service.planNextWeek({ servings: 1 });

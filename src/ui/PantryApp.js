@@ -656,7 +656,39 @@ export class PantryApp {
             </li>
           `).join('')}
         </ul>
+        ${this.renderUnavailableMeals(dashboard)}
       </section>
+    `;
+  }
+
+  /**
+   * Renderiza las comidas que no se podrian preparar sin comprar antes.
+   *
+   * @param {import('../domain/types.js').DashboardSnapshot} dashboard Snapshot.
+   * @returns {string} HTML.
+   */
+  renderUnavailableMeals(dashboard) {
+    if (dashboard.unavailableMeals.length === 0) {
+      return '';
+    }
+
+    return `
+      <div class="unavailable-meals" aria-label="Comidas afectadas por falta de alimentos">
+        <h4>Comidas afectadas</h4>
+        ${dashboard.unavailableMeals.map((meal) => `
+          <article class="unavailable-meal">
+            <div>
+              <strong>${escapeHtml(meal.recipeName)}</strong>
+              <span>${formatDate(meal.date)} · ${MEAL_TYPE_LABELS[meal.mealType]} · ${formatQuantity(meal.servings)} raciones</span>
+            </div>
+            <ul>
+              ${meal.missingIngredients.map((ingredient) => `
+                <li>${escapeHtml(ingredient.name)}: faltan ${formatQuantity(ingredient.missingQuantity)} ${escapeHtml(ingredient.unit)}</li>
+              `).join('')}
+            </ul>
+          </article>
+        `).join('')}
+      </div>
     `;
   }
 

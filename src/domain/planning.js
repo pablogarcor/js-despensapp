@@ -131,6 +131,79 @@ export function calculateShoppingList({ pantryItems, recipes, plannedMeals }) {
 }
 
 /**
+ * Detecta que comidas planificadas no se podrian cocinar con la despensa actual.
+ *
+ * El calculo recorre el plan en orden cronologico y va descontando stock virtual.
+ * Asi identifica la primera fecha real en la que se queda corto cada alimento,
+ * manteniendo coherencia con la lista de la compra agregada.
+ *
+ * @param {Object} params Parametros de calculo.
+ * @param {import('./types.js').PantryItem[]} params.pantryItems Alimentos actuales.
+ * @param {import('./types.js').Recipe[]} params.recipes Recetas disponibles.
+ * @param {import('./types.js').PlannedMeal[]} params.plannedMeals Comidas a evaluar.
+ * @returns {import('./types.js').UnavailablePlannedMeal[]} Comidas afectadas por faltas.
+ */
+export function calculateUnavailablePlannedMeals({ pantryItems, recipes, plannedMeals }) {
+  const pantryById = new Map(pantryItems.map((item) => [item.id, item]));
+  const recipesById = new Map(recipes.map((recipe) => [recipe.id, recipe]));
+  const remainingQuantities = new Map(
+    pantryItems.map((item) => [item.id, roundQuantity(item.quantity)]),
+  );
+  const unavailableMeals = [];
+
+  for (const meal of sortPlannedMeals(plannedMeals)) {
+    const recipe = recipesById.get(meal.recipeId);
+
+    if (!recipe) {
+      continue;
+    }
+
+    const missingIngredients = recipe.ingredients
+      .map((ingredient) => {
+        const pantryItem = pantryById.get(ingredient.pantryItemId);
+        const requiredQuantity = roundQuantity(ingredient.quantity * meal.servings);
+        const availableQuantity = remainingQuantities.get(ingredient.pantryItemId) ?? 0;
+        const missingQuantity = roundQuantity(requiredQuantity - availableQuantity);
+
+        if (!pantryItem || missingQuantity <= 0) {
+          return null;
+        }
+
+        return {
+          pantryItemId: ingredient.pantryItemId,
+          name: pantryItem.name,
+          missingQuantity,
+          unit: pantryItem.unit,
+        };
+      })
+      .filter(Boolean);
+
+    if (missingIngredients.length > 0) {
+      unavailableMeals.push({
+        plannedMealId: meal.id,
+        date: meal.date,
+        mealType: meal.mealType,
+        recipeId: recipe.id,
+        recipeName: recipe.name,
+        servings: meal.servings,
+        missingIngredients,
+      });
+    }
+
+    for (const ingredient of recipe.ingredients) {
+      const requiredQuantity = roundQuantity(ingredient.quantity * meal.servings);
+      const availableQuantity = remainingQuantities.get(ingredient.pantryItemId) ?? 0;
+      remainingQuantities.set(
+        ingredient.pantryItemId,
+        roundQuantity(Math.max(0, availableQuantity - requiredQuantity)),
+      );
+    }
+  }
+
+  return unavailableMeals;
+}
+
+/**
  * Construye una clave estable para una fecha y franja de comida.
  *
  * @param {string} date Fecha YYYY-MM-DD.
