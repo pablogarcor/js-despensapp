@@ -3,6 +3,7 @@ import { PantryService } from './services/pantryService.js';
 import { IndexedDbClient } from './storage/indexedDbClient.js';
 import { seedDemoData } from './storage/seedData.js';
 import { PantryApp } from './ui/PantryApp.js';
+import { registerServiceWorker } from './pwa/registerServiceWorker.js';
 
 const root = document.querySelector('#app');
 const database = new IndexedDbClient();
@@ -12,3 +13,4 @@ const app = new PantryApp({ root, service });
 await database.open();
 await seedDemoData(database);
 await app.start();
+registerServiceWorker();

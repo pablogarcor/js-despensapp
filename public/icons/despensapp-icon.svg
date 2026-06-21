@@ -1,0 +1,14 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" role="img" aria-labelledby="title desc">
+  <title id="title">Despensapp</title>
+  <desc id="desc">Icono de una despensa con alimentos.</desc>
+  <rect width="512" height="512" rx="112" fill="#183f31" />
+  <rect x="96" y="88" width="320" height="336" rx="54" fill="#f7fbf7" />
+  <rect x="128" y="190" width="256" height="20" rx="10" fill="#bdd6c8" />
+  <rect x="128" y="314" width="256" height="20" rx="10" fill="#bdd6c8" />
+  <circle cx="178" cy="154" r="34" fill="#d85b45" />
+  <path d="M168 120c12-18 31-22 51-14-10 20-28 31-51 28Z" fill="#257054" />
+  <rect x="247" y="116" width="72" height="72" rx="18" fill="#f0c968" />
+  <rect x="154" y="242" width="78" height="74" rx="18" fill="#8fb7a4" />
+  <rect x="280" y="238" width="80" height="80" rx="24" fill="#e9a35f" />
+  <path d="M178 370h156c18 0 31 18 24 35l-4 9H158l-4-9c-7-17 6-35 24-35Z" fill="#183f31" />
+</svg>

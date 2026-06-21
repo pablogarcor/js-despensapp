@@ -16,6 +16,7 @@
 body {
   min-width: 320px;
   min-height: 100vh;
+  min-height: 100dvh;
   margin: 0;
   background:
     linear-gradient(180deg, rgba(255, 255, 255, 0.9), rgba(237, 244, 240, 0.96)),
@@ -40,8 +41,13 @@ button:disabled {
 .app-shell {
   width: min(100%, 760px);
   min-height: 100vh;
+  min-height: 100dvh;
   margin: 0 auto;
-  padding: 20px 16px 36px;
+  padding:
+    calc(20px + env(safe-area-inset-top))
+    max(16px, env(safe-area-inset-right))
+    calc(36px + env(safe-area-inset-bottom))
+    max(16px, env(safe-area-inset-left));
 }
 
 .app-header {

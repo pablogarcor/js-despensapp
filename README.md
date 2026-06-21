@@ -6,6 +6,8 @@ MVP mobile first para gestionar una despensa local, crear recetas con alimentos 
 
 - **Vite + JavaScript nativo**: Vite se usa solo como servidor de desarrollo y bundler. No hay framework de UI porque el MVP no necesita router, estado global ni componentes complejos.
 - **IndexedDB**: es persistente, funciona en navegadores moviles modernos y permite modelar tablas locales sin servidor.
+- **PWA nativa sin plugin**: se usa un `manifest.webmanifest`, un service worker propio e iconos locales. No se anade `vite-plugin-pwa` porque el caso actual se resuelve con pocas APIs estandar.
+- **`asset-manifest.json` de Vite**: el build emite un manifest de assets para que el service worker pueda precachear los archivos con hash sin hardcodearlos.
 - **JSDoc**: documenta tipos, servicios y funciones sin introducir TypeScript en esta fase.
 - **Node test runner**: los tests usan `node:test`, asi que no se anade Vitest/Jest para mantener pocas dependencias.
 - **`overrides.esbuild`**: fuerza una version no vulnerable de una dependencia transitiva de Vite. Se mantiene acotado para no introducir mas librerias.
@@ -72,6 +74,13 @@ Las reglas viven en `src/services/pantryService.js`:
 ```text
 .
 ├── index.html
+├── public
+│   ├── manifest.webmanifest # Metadatos de instalacion PWA
+│   ├── offline.html         # Fallback si no hay shell cacheado
+│   ├── sw.js                # Service worker de cache offline
+│   └── icons                # Iconos Android/iOS y maskable
+├── scripts
+│   └── generate-pwa-icons.js # Generador de iconos PNG sin dependencias
 ├── src
 │   ├── domain
 │   │   ├── backup.js          # Validacion y creacion de backups JSON
@@ -84,10 +93,13 @@ Las reglas viven en `src/services/pantryService.js`:
 │   │   ├── indexedDbClient.js # Adaptador IndexedDB
 │   │   ├── memoryDatabase.js  # Adaptador para tests
 │   │   └── seedData.js        # Datos demo iniciales
+│   ├── pwa
+│   │   └── registerServiceWorker.js # Registro seguro del service worker
 │   ├── ui
 │   │   └── PantryApp.js       # Controlador y render de la SPA
 │   ├── main.js                # Bootstrap de la app
 │   └── styles.css             # UI mobile first
+├── vite.config.js             # Build manifest para precache PWA
 └── tests
     └── pantryService.test.js  # Tests de reglas criticas
 ```
@@ -101,14 +113,36 @@ npm run dev
 
 Vite mostrara una URL local. En movil, usa la URL de red que imprime Vite si el telefono esta en la misma red que el ordenador.
 
+Para probar instalacion PWA real en movil hace falta servir la app por HTTPS. Los navegadores permiten service workers en `localhost`, pero no suelen permitirlos en una IP local con HTTP. Para iOS y Android, despliega el build en una web HTTPS y despues:
+
+- Android Chrome: menu del navegador -> **Instalar app** o **Anadir a pantalla de inicio**.
+- iOS Safari: compartir -> **Anadir a pantalla de inicio**.
+
 ## Scripts
 
 ```bash
 npm run dev      # servidor de desarrollo
 npm run build    # build de produccion
 npm run preview  # previsualizacion del build
+npm run pwa:icons # regenera los iconos PNG de la PWA
 npm test         # tests de negocio con node:test
 ```
+
+## PWA y uso offline
+
+La PWA se compone de:
+
+- `public/manifest.webmanifest`: nombre, colores, `start_url`, `scope`, modo `standalone` e iconos.
+- `public/sw.js`: service worker con cache offline.
+- `src/pwa/registerServiceWorker.js`: registro solo en build de produccion y en origen seguro.
+- `public/icons/*`: iconos PNG para Android/iOS, icono maskable y SVG base.
+
+El service worker usa dos estrategias:
+
+- **Network-first para navegaciones**: si hay conexion, descarga la version actual de la app; si no hay conexion, abre el shell cacheado.
+- **Cache-first para assets**: CSS, JS, iconos y manifest se sirven desde cache cuando ya existen.
+
+Los datos siguen viviendo en IndexedDB. La PWA permite abrir la app offline tras una primera carga con conexion, pero no sincroniza datos entre dispositivos.
 
 ## Flujo de uso
 
@@ -146,10 +180,11 @@ La importacion valida estructura, ids duplicados y relaciones entre alimentos, r
 
 - No hay conversion automatica entre unidades. Una receta usa la misma unidad definida por cada alimento.
 - No hay sincronizacion entre dispositivos ni usuarios.
+- No hay sincronizacion en segundo plano, notificaciones push ni actualizaciones silenciosas de datos.
 - Los datos demo se insertan solo la primera vez para facilitar pruebas.
 
 ## Siguientes pasos recomendados
 
 - Conversor de unidades controlado.
 - Historial de comidas hechas.
-- PWA instalable y cache offline.
+- Sincronizacion opcional entre dispositivos.
