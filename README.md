@@ -172,6 +172,8 @@ Configuracion necesaria en GitHub:
 
 `npm run build:github-pages` usa `--base=/js-despensapp/`, necesario porque GitHub Pages sirve este repositorio bajo un subdirectorio. La PWA usa rutas relativas al scope, asi que manifest, iconos y service worker funcionan tanto en local como en GitHub Pages.
 
+Si el deploy falla con `HttpError: Not Found` y el mensaje `Ensure GitHub Pages has been enabled`, el build ya se ha generado pero GitHub Pages no esta activado para el repositorio. Revisa de nuevo **Settings > Pages > Source: GitHub Actions** y vuelve a ejecutar el workflow. Los avisos de runtime de Node en las actions no son ese fallo; el workflow usa las majors actuales de las actions oficiales para evitar depender de Node 20.
+
 ## Flujo de uso
 
 1. En **Despensa**, anade alimentos con cantidad y unidad.
