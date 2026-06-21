@@ -708,7 +708,7 @@ export class PantryApp {
               </select>
             </label>
           </div>
-          <button class="button full" type="submit">Anadir alimento</button>
+          <button class="button full" type="submit">añadir alimento</button>
         </form>
 
         <div class="bulk-actions">
@@ -1353,7 +1353,7 @@ export class PantryApp {
   }
 
   /**
-   * Renderiza un hueco libre para anadir una comida compatible.
+   * Renderiza un hueco libre para añadir una comida compatible.
    *
    * @param {import('../domain/types.js').MealSlot} slot Hueco sin comida.
    * @param {import('../domain/types.js').Recipe[]} recipes Recetas disponibles.
@@ -1389,7 +1389,7 @@ export class PantryApp {
           Raciones
           <input name="servings" type="number" inputmode="decimal" min="0.5" step="0.5" value="1" required />
         </label>
-        <button class="button small" type="submit">Anadir</button>
+        <button class="button small" type="submit">añadir</button>
       </form>
     `;
   }

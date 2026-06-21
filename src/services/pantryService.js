@@ -258,7 +258,7 @@ export class PantryService {
    * Suma cantidad a un alimento existente manteniendo su unidad.
    *
    * @param {string} pantryItemId Identificador del alimento.
-   * @param {number} quantityToAdd Cantidad positiva que se anadira al stock.
+   * @param {number} quantityToAdd Cantidad positiva que se añadira al stock.
    * @returns {Promise<import('../domain/types.js').PantryItem>} Alimento actualizado.
    */
   async addPantryItemQuantity(pantryItemId, quantityToAdd) {
@@ -270,7 +270,7 @@ export class PantryService {
 
     const parsedQuantity = parsePositiveQuantity(
       quantityToAdd,
-      'La cantidad a anadir debe ser mayor que cero.',
+      'La cantidad a añadir debe ser mayor que cero.',
     );
     const updatedItem = {
       ...pantryItem,
@@ -609,7 +609,7 @@ export class PantryService {
     const allowedDates = getNextSevenDates(this.now());
 
     if (!allowedDates.includes(cleanDate)) {
-      throw new DomainError('Solo puedes anadir comidas dentro de los proximos siete dias.', 'DATE_OUT_OF_PLAN');
+      throw new DomainError('Solo puedes añadir comidas dentro de los proximos siete dias.', 'DATE_OUT_OF_PLAN');
     }
 
     if (!MEAL_TYPES.includes(cleanMealType)) {

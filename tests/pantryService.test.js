@@ -345,7 +345,7 @@ test('resolver comida hecha descuenta ingredientes y borra la planificacion', as
   assert.equal(updatedRice.quantity, 400);
 });
 
-test('permite anadir una comida manual en un hueco libre', async () => {
+test('permite añadir una comida manual en un hueco libre', async () => {
   const { service, recipe } = await createServiceWithRecipe();
 
   const meal = await service.createPlannedMeal({
@@ -376,7 +376,7 @@ test('muestra huecos de la siguiente semana aunque el plan este vacio', async ()
   );
 });
 
-test('impide anadir dos comidas en el mismo dia y franja', async () => {
+test('impide añadir dos comidas en el mismo dia y franja', async () => {
   const { service, recipe } = await createServiceWithRecipe();
   const plannedMeal = {
     date: '2026-06-21',
@@ -393,7 +393,7 @@ test('impide anadir dos comidas en el mismo dia y franja', async () => {
   );
 });
 
-test('impide anadir una receta incompatible con la franja', async () => {
+test('impide añadir una receta incompatible con la franja', async () => {
   const { service, recipe } = await createServiceWithRecipe(['breakfast']);
 
   await assert.rejects(

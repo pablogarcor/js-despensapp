@@ -121,8 +121,8 @@ Vite mostrara una URL local. En movil, usa la URL de red que imprime Vite si el 
 
 Para probar instalacion PWA real en movil hace falta servir la app por HTTPS. Los navegadores permiten service workers en `localhost`, pero no suelen permitirlos en una IP local con HTTP. Para iOS y Android, despliega el build en una web HTTPS y despues:
 
-- Android Chrome: menu del navegador -> **Instalar app** o **Anadir a pantalla de inicio**.
-- iOS Safari: compartir -> **Anadir a pantalla de inicio**.
+- Android Chrome: menu del navegador -> **Instalar app** o **añadir a pantalla de inicio**.
+- iOS Safari: compartir -> **añadir a pantalla de inicio**.
 
 ## Scripts
 
@@ -187,7 +187,7 @@ Si el deploy falla con `HttpError: Not Found` y el mensaje `Ensure GitHub Pages 
 6. En **Recetas**, crea recetas usando solo alimentos existentes. Cada ingrediente representa cantidad por racion.
 7. Usa **Editar** en una receta para modificar ingredientes, cantidades, nombre o momentos del dia.
 8. Usa **Vaciar recetas** para eliminar todas las recetas si no estan planificadas.
-9. En **Plan**, la app muestra por defecto los huecos de los proximos 7 dias para poder anadir comidas manualmente.
+9. En **Plan**, la app muestra por defecto los huecos de los proximos 7 dias para poder añadir comidas manualmente.
 10. Si prefieres automatizar, indica raciones y pulsa **Planificar semana** para rellenar todos los huecos.
 11. Si eliminas una comida del plan, el hueco vuelve a aparecer dentro de su dia con un selector de recetas compatibles.
 12. Pulsa **Completar huecos** para rellenar automaticamente los huecos restantes sin borrar las comidas ya planificadas.
