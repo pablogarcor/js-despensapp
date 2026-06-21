@@ -22,6 +22,9 @@ export class PantryApp {
       activeView: 'pantry',
       dashboard: null,
       ingredientRows: [createIngredientRow()],
+      editingRecipeId: null,
+      editRecipeDraft: null,
+      editIngredientRows: [],
       toast: null,
       isBusy: false,
     };
@@ -112,6 +115,8 @@ export class PantryApp {
     const { action, id } = actionElement.dataset;
 
     await this.runSafely(async () => {
+      let shouldRefresh = true;
+
       if (action === 'delete-pantry-item') {
         await this.service.deletePantryItem(id);
         this.showToast('Alimento eliminado.');
@@ -120,6 +125,32 @@ export class PantryApp {
       if (action === 'delete-recipe') {
         await this.service.deleteRecipe(id);
         this.showToast('Receta eliminada.');
+      }
+
+      if (action === 'edit-recipe') {
+        const recipe = this.state.dashboard.recipes.find((candidate) => candidate.id === id);
+
+        if (recipe) {
+          this.state.editingRecipeId = recipe.id;
+          this.state.editRecipeDraft = {
+            name: recipe.name,
+            mealTypes: [...recipe.mealTypes],
+          };
+          this.state.editIngredientRows = recipe.ingredients.map((ingredient) =>
+            createIngredientRow({
+              pantryItemId: ingredient.pantryItemId,
+              quantity: String(ingredient.quantity),
+            }),
+          );
+        }
+        shouldRefresh = false;
+      }
+
+      if (action === 'cancel-edit-recipe') {
+        this.state.editingRecipeId = null;
+        this.state.editRecipeDraft = null;
+        this.state.editIngredientRows = [];
+        shouldRefresh = false;
       }
 
       if (action === 'delete-planned-meal') {
@@ -139,6 +170,7 @@ export class PantryApp {
 
       if (action === 'add-ingredient-row') {
         this.state.ingredientRows.push(createIngredientRow());
+        shouldRefresh = false;
       }
 
       if (action === 'remove-ingredient-row') {
@@ -147,9 +179,30 @@ export class PantryApp {
         if (this.state.ingredientRows.length === 0) {
           this.state.ingredientRows.push(createIngredientRow());
         }
+        shouldRefresh = false;
       }
 
-      await this.refresh();
+      if (action === 'add-edit-ingredient-row') {
+        this.syncEditIngredientRows(actionElement.closest('form'));
+        this.state.editIngredientRows.push(createIngredientRow());
+        shouldRefresh = false;
+      }
+
+      if (action === 'remove-edit-ingredient-row') {
+        this.syncEditIngredientRows(actionElement.closest('form'));
+        this.state.editIngredientRows = this.state.editIngredientRows.filter((row) => row.id !== id);
+
+        if (this.state.editIngredientRows.length === 0) {
+          this.state.editIngredientRows.push(createIngredientRow());
+        }
+        shouldRefresh = false;
+      }
+
+      if (shouldRefresh) {
+        await this.refresh();
+      } else {
+        this.render();
+      }
     });
   }
 
@@ -205,6 +258,19 @@ export class PantryApp {
         this.showToast('Receta creada.');
       }
 
+      if (form.matches('[data-form="recipe-edit"]')) {
+        const data = new FormData(form);
+        await this.service.updateRecipe(data.get('recipeId'), {
+          name: data.get('name'),
+          mealTypes: data.getAll('mealTypes'),
+          ingredients: this.readIngredientsFromForm(data),
+        });
+        this.state.editingRecipeId = null;
+        this.state.editRecipeDraft = null;
+        this.state.editIngredientRows = [];
+        this.showToast('Receta actualizada.');
+      }
+
       if (form.matches('[data-form="plan-week"]')) {
         const data = new FormData(form);
         const mode = event.submitter?.dataset.planMode ?? 'reset';
@@ -244,22 +310,44 @@ export class PantryApp {
   handleChange(event) {
     const rowElement = event.target.closest('[data-ingredient-row]');
 
-    if (!rowElement) {
+    if (rowElement) {
+      const row = this.state.ingredientRows.find((ingredientRow) => ingredientRow.id === rowElement.dataset.ingredientRow);
+
+      if (!row) {
+        return;
+      }
+
+      if (event.target.matches('[name="ingredientItem"]')) {
+        row.pantryItemId = event.target.value;
+      }
+
+      if (event.target.matches('[name="ingredientQuantity"]')) {
+        row.quantity = event.target.value;
+      }
+
       return;
     }
 
-    const row = this.state.ingredientRows.find((ingredientRow) => ingredientRow.id === rowElement.dataset.ingredientRow);
+    const editRowElement = event.target.closest('[data-edit-ingredient-row]');
 
-    if (!row) {
+    if (!editRowElement) {
+      return;
+    }
+
+    const editRow = this.state.editIngredientRows.find(
+      (ingredientRow) => ingredientRow.id === editRowElement.dataset.editIngredientRow,
+    );
+
+    if (!editRow) {
       return;
     }
 
     if (event.target.matches('[name="ingredientItem"]')) {
-      row.pantryItemId = event.target.value;
+      editRow.pantryItemId = event.target.value;
     }
 
     if (event.target.matches('[name="ingredientQuantity"]')) {
-      row.quantity = event.target.value;
+      editRow.quantity = event.target.value;
     }
   }
 
@@ -302,6 +390,28 @@ export class PantryApp {
     return itemIds.map((pantryItemId, index) => ({
       pantryItemId,
       quantity: quantities[index],
+    }));
+  }
+
+  /**
+   * Sincroniza filas de ingredientes de edicion desde el formulario visible.
+   *
+   * @param {HTMLFormElement | null} form Formulario de edicion.
+   */
+  syncEditIngredientRows(form) {
+    if (!form) {
+      return;
+    }
+
+    const formData = new FormData(form);
+    this.state.editRecipeDraft = {
+      name: formData.get('name'),
+      mealTypes: formData.getAll('mealTypes'),
+    };
+    this.state.editIngredientRows = [...form.querySelectorAll('[data-edit-ingredient-row]')].map((rowElement) => ({
+      id: rowElement.dataset.editIngredientRow,
+      pantryItemId: rowElement.querySelector('[name="ingredientItem"]').value,
+      quantity: rowElement.querySelector('[name="ingredientQuantity"]').value,
     }));
   }
 
@@ -554,11 +664,15 @@ export class PantryApp {
    *
    * @param {{id: string, pantryItemId: string, quantity: string}} row Estado de fila.
    * @param {import('../domain/types.js').PantryItem[]} pantryItems Alimentos.
+   * @param {{rowAttribute?: string, removeAction?: string}} [options] Atributos y acciones para reutilizar en edicion.
    * @returns {string} HTML.
    */
-  renderIngredientRow(row, pantryItems) {
+  renderIngredientRow(row, pantryItems, options = {}) {
+    const rowAttribute = options.rowAttribute ?? 'data-ingredient-row';
+    const removeAction = options.removeAction ?? 'remove-ingredient-row';
+
     return `
-      <div class="ingredient-row" data-ingredient-row="${row.id}">
+      <div class="ingredient-row" ${rowAttribute}="${row.id}">
         <label>
           Alimento
           <select name="ingredientItem" required>
@@ -574,7 +688,7 @@ export class PantryApp {
           Cantidad
           <input name="ingredientQuantity" type="number" inputmode="decimal" step="0.01" min="0.01" value="${row.quantity}" required />
         </label>
-        <button class="icon-button ingredient-remove" type="button" aria-label="Quitar ingrediente" data-action="remove-ingredient-row" data-id="${row.id}">
+        <button class="icon-button ingredient-remove" type="button" aria-label="Quitar ingrediente" data-action="${removeAction}" data-id="${row.id}">
           x
         </button>
       </div>
@@ -589,6 +703,10 @@ export class PantryApp {
    * @returns {string} HTML.
    */
   renderRecipe(recipe, pantryItems) {
+    if (this.state.editingRecipeId === recipe.id) {
+      return this.renderRecipeEditForm(recipe, pantryItems);
+    }
+
     const pantryById = new Map(pantryItems.map((item) => [item.id, item]));
     const ingredients = recipe.ingredients
       .map((ingredient) => {
@@ -604,11 +722,78 @@ export class PantryApp {
             <h3>${escapeHtml(recipe.name)}</h3>
             <p>${recipe.mealTypes.map((mealType) => MEAL_TYPE_LABELS[mealType]).join(' · ')}</p>
           </div>
-          <button class="icon-button" type="button" aria-label="Eliminar ${escapeAttribute(recipe.name)}" data-action="delete-recipe" data-id="${recipe.id}">
-            x
-          </button>
+          <div class="inline-actions">
+            <button class="button ghost small" type="button" data-action="edit-recipe" data-id="${recipe.id}">
+              Editar
+            </button>
+            <button class="icon-button" type="button" aria-label="Eliminar ${escapeAttribute(recipe.name)}" data-action="delete-recipe" data-id="${recipe.id}">
+              x
+            </button>
+          </div>
         </div>
         <p class="muted">${ingredients}</p>
+      </article>
+    `;
+  }
+
+  /**
+   * Renderiza el formulario inline para editar una receta existente.
+   *
+   * @param {import('../domain/types.js').Recipe} recipe Receta.
+   * @param {import('../domain/types.js').PantryItem[]} pantryItems Alimentos.
+   * @returns {string} HTML.
+   */
+  renderRecipeEditForm(recipe, pantryItems) {
+    const draft = this.state.editRecipeDraft ?? {
+      name: recipe.name,
+      mealTypes: recipe.mealTypes,
+    };
+    const rows = this.state.editIngredientRows.length > 0
+      ? this.state.editIngredientRows
+      : recipe.ingredients.map((ingredient) =>
+          createIngredientRow({
+            pantryItemId: ingredient.pantryItemId,
+            quantity: String(ingredient.quantity),
+          }),
+        );
+
+    return `
+      <article class="list-card vertical recipe-edit-card">
+        <form class="stacked-form" data-form="recipe-edit">
+          <input type="hidden" name="recipeId" value="${escapeAttribute(recipe.id)}" />
+          <label>
+            Nombre
+            <input name="name" type="text" autocomplete="off" value="${escapeAttribute(draft.name)}" required />
+          </label>
+
+          <fieldset class="choice-group">
+            <legend>Momentos del dia</legend>
+            ${MEAL_TYPES.map((mealType) => `
+              <label class="checkbox-card">
+                <input type="checkbox" name="mealTypes" value="${mealType}" ${draft.mealTypes.includes(mealType) ? 'checked' : ''} />
+                <span>${MEAL_TYPE_LABELS[mealType]}</span>
+              </label>
+            `).join('')}
+          </fieldset>
+
+          <div class="ingredient-builder">
+            <div class="section-heading compact">
+              <h3>Ingredientes por racion</h3>
+              <button class="button ghost small" type="button" data-action="add-edit-ingredient-row">+</button>
+            </div>
+            ${rows.map((row) =>
+              this.renderIngredientRow(row, pantryItems, {
+                rowAttribute: 'data-edit-ingredient-row',
+                removeAction: 'remove-edit-ingredient-row',
+              }),
+            ).join('')}
+          </div>
+
+          <div class="form-actions">
+            <button class="button" type="submit">Guardar</button>
+            <button class="button ghost" type="button" data-action="cancel-edit-recipe">Cancelar</button>
+          </div>
+        </form>
       </article>
     `;
   }
@@ -872,13 +1057,14 @@ export class PantryApp {
 /**
  * Crea una fila de ingrediente para el formulario.
  *
+ * @param {{pantryItemId?: string, quantity?: string}} [initialValues] Valores iniciales.
  * @returns {{id: string, pantryItemId: string, quantity: string}} Estado inicial.
  */
-function createIngredientRow() {
+function createIngredientRow(initialValues = {}) {
   return {
     id: globalThis.crypto?.randomUUID?.() ?? String(Date.now() + Math.random()),
-    pantryItemId: '',
-    quantity: '',
+    pantryItemId: initialValues.pantryItemId ?? '',
+    quantity: initialValues.quantity ?? '',
   };
 }
 

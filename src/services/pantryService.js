@@ -229,6 +229,69 @@ export class PantryService {
   }
 
   /**
+   * Actualiza una receta existente conservando su identificador.
+   *
+   * Si la receta esta planificada, sus nuevas franjas compatibles deben seguir
+   * cubriendo todas las comidas planificadas que ya la usan.
+   *
+   * @param {string} recipeId Identificador de la receta.
+   * @param {Object} params Datos de entrada.
+   * @param {string} params.name Nombre.
+   * @param {import('../domain/types.js').MealType[]} params.mealTypes Tipos de comida.
+   * @param {import('../domain/types.js').RecipeIngredient[]} params.ingredients Ingredientes por racion.
+   * @returns {Promise<import('../domain/types.js').Recipe>} Receta actualizada.
+   */
+  async updateRecipe(recipeId, { name, mealTypes, ingredients }) {
+    const [pantryItems, recipes, plannedMeals] = await Promise.all([
+      this.database.getAll('pantryItems'),
+      this.database.getAll('recipes'),
+      this.database.getAll('plannedMeals'),
+    ]);
+    const recipe = recipes.find((candidate) => candidate.id === recipeId);
+    const cleanName = cleanText(name);
+
+    if (!recipe) {
+      throw new DomainError('La receta no existe.', 'RECIPE_NOT_FOUND');
+    }
+
+    if (!cleanName) {
+      throw new DomainError('La receta necesita un nombre.', 'RECIPE_NAME_REQUIRED');
+    }
+
+    const duplicatedRecipe = recipes.find(
+      (candidate) =>
+        candidate.id !== recipeId && normalizeName(candidate.name) === normalizeName(cleanName),
+    );
+
+    if (duplicatedRecipe) {
+      throw new DomainError('Ya existe una receta con ese nombre.', 'RECIPE_DUPLICATED');
+    }
+
+    const normalizedMealTypes = normalizeMealTypes(mealTypes);
+    const incompatiblePlannedMeal = plannedMeals.find(
+      (meal) => meal.recipeId === recipeId && !normalizedMealTypes.includes(meal.mealType),
+    );
+
+    if (incompatiblePlannedMeal) {
+      throw new DomainError(
+        'No puedes quitar una franja que ya esta planificada con esta receta.',
+        'RECIPE_PLANNED_MEAL_TYPE_REQUIRED',
+      );
+    }
+
+    const normalizedIngredients = normalizeIngredients(ingredients, pantryItems);
+    const updatedRecipe = {
+      ...recipe,
+      name: cleanName,
+      mealTypes: normalizedMealTypes,
+      ingredients: normalizedIngredients,
+      updatedAt: this.now().toISOString(),
+    };
+
+    return this.database.put('recipes', updatedRecipe);
+  }
+
+  /**
    * Elimina una receta solo si no esta planificada.
    *
    * @param {string} recipeId Identificador de la receta.
