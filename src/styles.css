@@ -231,6 +231,11 @@ button:disabled {
   margin-top: 12px;
 }
 
+.settings-actions {
+  display: grid;
+  gap: 12px;
+}
+
 .form-grid {
   display: grid;
   grid-template-columns: minmax(0, 1fr) minmax(112px, 0.55fr);

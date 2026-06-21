@@ -1117,10 +1117,12 @@ export class PantryApp {
           <span><strong>${totalStoredMeals}</strong> comidas</span>
         </div>
 
-        <button class="button full" type="button" data-action="export-backup">Exportar copia</button>
-        <button class="button ghost full danger-action" type="button" data-action="clear-all-data" ${totalStoredMeals + dashboard.recipes.length + dashboard.pantryItems.length === 0 ? 'disabled' : ''}>
-          Borrar todo
-        </button>
+        <div class="settings-actions">
+          <button class="button full" type="button" data-action="export-backup">Exportar copia</button>
+          <button class="button ghost full danger-action" type="button" data-action="clear-all-data" ${totalStoredMeals + dashboard.recipes.length + dashboard.pantryItems.length === 0 ? 'disabled' : ''}>
+            Borrar todo
+          </button>
+        </div>
       </section>
 
       <section class="panel">
