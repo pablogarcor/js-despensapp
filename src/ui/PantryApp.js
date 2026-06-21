@@ -634,30 +634,50 @@ export class PantryApp {
       return '';
     }
 
-    if (dashboard.shoppingList.length === 0) {
-      return `
-        <section class="status-panel ok">
-          <strong>Tienes alimentos suficientes para el plan actual.</strong>
-        </section>
-      `;
-    }
+    const hasMissingFood = dashboard.shoppingList.length > 0;
+    const statusText = hasMissingFood
+      ? `${dashboard.shoppingList.length} alimentos pendientes`
+      : 'Plan cubierto';
+    const affectedText =
+      dashboard.unavailableMeals.length > 0
+        ? `${dashboard.unavailableMeals.length} comidas afectadas`
+        : 'Sin comidas afectadas';
 
     return `
-      <section class="status-panel">
-        <div class="section-heading compact">
-          <h3>Lista de la compra</h3>
-          <span class="counter">${dashboard.shoppingList.length}</span>
+      <details class="status-panel shopping-dropdown ${hasMissingFood ? '' : 'ok'}">
+        <summary class="shopping-summary">
+          <span>
+            <strong>Lista de la compra</strong>
+            <small>${statusText} · ${affectedText}</small>
+          </span>
+          <span class="shopping-badge ${hasMissingFood ? 'is-warning' : 'is-ok'}">
+            ${hasMissingFood ? 'Falta compra' : 'Suficiente'}
+          </span>
+        </summary>
+        <div class="shopping-dropdown-content">
+          ${hasMissingFood ? this.renderShoppingItems(dashboard) : '<p class="shopping-ok-text">Tienes alimentos suficientes para el plan actual.</p>'}
+          ${this.renderUnavailableMeals(dashboard)}
         </div>
-        <ul class="shopping-list">
-          ${dashboard.shoppingList.map((item) => `
-            <li>
-              <span>${escapeHtml(item.name)}</span>
-              <strong>${formatQuantity(item.missingQuantity)} ${escapeHtml(item.unit)}</strong>
-            </li>
-          `).join('')}
-        </ul>
-        ${this.renderUnavailableMeals(dashboard)}
-      </section>
+      </details>
+    `;
+  }
+
+  /**
+   * Renderiza los alimentos agregados que faltan en el plan.
+   *
+   * @param {import('../domain/types.js').DashboardSnapshot} dashboard Snapshot.
+   * @returns {string} HTML.
+   */
+  renderShoppingItems(dashboard) {
+    return `
+      <ul class="shopping-list">
+        ${dashboard.shoppingList.map((item) => `
+          <li>
+            <span>${escapeHtml(item.name)}</span>
+            <strong>${formatQuantity(item.missingQuantity)} ${escapeHtml(item.unit)}</strong>
+          </li>
+        `).join('')}
+      </ul>
     `;
   }
 

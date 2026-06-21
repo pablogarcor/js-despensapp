@@ -109,8 +109,8 @@ npm test         # tests de negocio con node:test
 4. La app rellena los proximos 7 dias y calcula si falta algo.
 5. Si eliminas una comida del plan, el hueco aparece dentro de su dia con un selector de recetas compatibles para anadirla manualmente.
 6. Pulsa **Completar huecos** para rellenar automaticamente los huecos restantes sin borrar las comidas ya planificadas.
-7. Si falta comida, aparece una **lista de la compra** agregada por alimento y unidad.
-8. Debajo de la lista se muestran las **comidas afectadas**, con receta, fecha, franja y faltas concretas para saber cuando no se podria cocinar.
+7. Si falta comida, la **lista de la compra** aparece cerrada por defecto pero indica claramente si falta compra o si el plan esta cubierto.
+8. Al desplegarla, muestra alimentos agregados por unidad y las **comidas afectadas**, con receta, fecha, franja y faltas concretas.
 9. Cuando una comida ya paso, la app la muestra como pendiente: si marcas **Hecha**, descuenta ingredientes; si marcas **No hecha**, solo elimina la planificacion.
 
 ## Limitaciones conscientes del MVP
