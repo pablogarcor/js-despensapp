@@ -68,7 +68,18 @@ export class PantryApp {
         <header class="app-header">
           <div>
             <p class="eyebrow">MVP local</p>
-            <h1>Despensapp</h1>
+            <div class="brand-row">
+              <h1>Despensapp</h1>
+              <button
+                class="settings-button ${this.state.activeView === 'settings' ? 'is-active' : ''}"
+                type="button"
+                data-view="settings"
+                aria-label="Abrir configuracion"
+                aria-pressed="${this.state.activeView === 'settings'}"
+              >
+                &#9881;
+              </button>
+            </div>
           </div>
           <div class="header-stat" aria-label="Resumen de despensa">
             <strong>${dashboard.pantryItems.length}</strong>
@@ -83,7 +94,6 @@ export class PantryApp {
           ${this.renderTab('pantry', 'Despensa')}
           ${this.renderTab('recipes', 'Recetas')}
           ${this.renderTab('plan', 'Plan')}
-          ${this.renderTab('data', 'Datos')}
         </nav>
 
         <main>
@@ -319,7 +329,7 @@ export class PantryApp {
 
         const summary = await this.service.importBackup(await file.text());
         form.reset();
-        this.state.activeView = 'data';
+        this.state.activeView = 'settings';
         this.showToast(
           `Importados ${summary.pantryItems} alimentos, ${summary.recipes} recetas y ${summary.plannedMeals} comidas.`,
         );
@@ -467,8 +477,8 @@ export class PantryApp {
       return this.renderPlanView(dashboard);
     }
 
-    if (this.state.activeView === 'data') {
-      return this.renderDataView(dashboard);
+    if (this.state.activeView === 'settings') {
+      return this.renderSettingsView(dashboard);
     }
 
     return this.renderPantryView(dashboard);
@@ -889,7 +899,7 @@ export class PantryApp {
    * @param {import('../domain/types.js').DashboardSnapshot} dashboard Snapshot.
    * @returns {string} HTML.
    */
-  renderDataView(dashboard) {
+  renderSettingsView(dashboard) {
     const totalStoredMeals = dashboard.plannedMeals.length + dashboard.pendingMeals.length;
 
     return `
