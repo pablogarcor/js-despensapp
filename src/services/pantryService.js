@@ -1,4 +1,5 @@
 import { DomainError } from '../domain/errors.js';
+import { createBackup, validateBackup } from '../domain/backup.js';
 import {
   buildRandomMealsForSlots,
   buildRandomWeekPlan,
@@ -61,6 +62,56 @@ export class PantryService {
       missingPlanSlots,
       shoppingList: calculateShoppingList({ pantryItems, recipes, plannedMeals }),
       unavailableMeals: calculateUnavailablePlannedMeals({ pantryItems, recipes, plannedMeals }),
+    };
+  }
+
+  /**
+   * Exporta todos los datos locales de usuario a un backup versionado.
+   *
+   * @returns {Promise<import('../domain/types.js').PantryBackup>} Backup serializable.
+   */
+  async exportBackup() {
+    const [pantryItems, recipes, plannedMeals] = await Promise.all([
+      this.database.getAll('pantryItems'),
+      this.database.getAll('recipes'),
+      this.database.getAll('plannedMeals'),
+    ]);
+
+    return createBackup({
+      pantryItems: sortByName(pantryItems),
+      recipes: sortByName(recipes),
+      plannedMeals: sortPlannedMeals(plannedMeals),
+      exportedAt: this.now().toISOString(),
+    });
+  }
+
+  /**
+   * Importa un backup JSON reemplazando datos de usuario actuales.
+   *
+   * @param {string} backupText Contenido JSON del archivo.
+   * @returns {Promise<import('../domain/types.js').ImportSummary>} Resumen de importacion.
+   */
+  async importBackup(backupText) {
+    let parsedBackup;
+
+    try {
+      parsedBackup = JSON.parse(backupText);
+    } catch {
+      throw new DomainError('El archivo no es un JSON valido.', 'BACKUP_JSON_INVALID');
+    }
+
+    const backupData = validateBackup(parsedBackup);
+
+    await this.database.replaceStores({
+      pantryItems: backupData.pantryItems,
+      recipes: backupData.recipes,
+      plannedMeals: backupData.plannedMeals,
+    });
+
+    return {
+      pantryItems: backupData.pantryItems.length,
+      recipes: backupData.recipes.length,
+      plannedMeals: backupData.plannedMeals.length,
     };
   }
 

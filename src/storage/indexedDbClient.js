@@ -147,6 +147,29 @@ export class IndexedDbClient {
   }
 
   /**
+   * Reemplaza por completo varias tablas en una unica transaccion.
+   *
+   * @param {Record<string, Array<unknown>>} recordsByStore Registros por tabla.
+   * @returns {Promise<void>}
+   */
+  async replaceStores(recordsByStore) {
+    const database = this.requireDatabase();
+    const storeNames = Object.keys(recordsByStore);
+    const transaction = database.transaction(storeNames, 'readwrite');
+
+    for (const storeName of storeNames) {
+      const store = transaction.objectStore(storeName);
+      store.clear();
+
+      for (const record of recordsByStore[storeName]) {
+        store.put(record);
+      }
+    }
+
+    await this.transactionDone(transaction);
+  }
+
+  /**
    * Devuelve una object store validando que la base de datos este abierta.
    *
    * @param {string} storeName Nombre de la object store.

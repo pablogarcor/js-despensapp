@@ -104,7 +104,7 @@ button:disabled {
   top: 0;
   z-index: 10;
   display: grid;
-  grid-template-columns: repeat(3, 1fr);
+  grid-template-columns: repeat(4, 1fr);
   gap: 6px;
   margin: 0 -2px 16px;
   padding: 8px 0;
@@ -395,6 +395,29 @@ button:focus-visible {
 
 .plan-actions {
   grid-template-columns: 1fr;
+}
+
+.data-stats {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 8px;
+  margin-bottom: 14px;
+}
+
+.data-stats span {
+  display: grid;
+  place-items: center;
+  min-height: 58px;
+  border: 1px solid #d8e0da;
+  border-radius: 8px;
+  background: #f6faf8;
+  color: #60736a;
+  font-size: 0.82rem;
+}
+
+.data-stats strong {
+  color: #183f31;
+  font-size: 1.15rem;
 }
 
 .shopping-dropdown {

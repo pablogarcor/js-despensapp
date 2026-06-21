@@ -70,6 +70,7 @@ Las reglas viven en `src/services/pantryService.js`:
 ├── index.html
 ├── src
 │   ├── domain
+│   │   ├── backup.js          # Validacion y creacion de backups JSON
 │   │   ├── errors.js          # Error de negocio reusable
 │   │   ├── planning.js        # Fechas, calculos y generacion de plan
 │   │   └── types.js           # Tipos JSDoc y constantes
@@ -120,18 +121,31 @@ npm test         # tests de negocio con node:test
 11. Las comidas del plan que no se podrian cocinar quedan marcadas en su tarjeta para verlo de un vistazo.
 12. Al desplegar la lista de compra, muestra alimentos agregados por unidad y las **comidas afectadas**, con receta, fecha, franja y faltas concretas.
 13. Cuando una comida ya paso, la app la muestra como pendiente: si marcas **Hecha**, descuenta ingredientes; si marcas **No hecha**, solo elimina la planificacion.
+14. En **Datos**, usa **Exportar copia** para descargar un backup JSON o **Importar y reemplazar** para restaurarlo.
+
+## Importar y exportar
+
+La app exporta un JSON con:
+
+- `app: "despensapp"`.
+- `schemaVersion: 1`.
+- `exportedAt`.
+- `data.pantryItems`.
+- `data.recipes`.
+- `data.plannedMeals`.
+
+La importacion valida estructura, ids duplicados y relaciones entre alimentos, recetas y comidas antes de reemplazar los datos actuales. En este MVP la importacion siempre es de tipo **reemplazar**, no fusionar.
 
 ## Limitaciones conscientes del MVP
 
 - No hay conversion automatica entre unidades. Una receta usa la misma unidad definida por cada alimento.
 - No hay sincronizacion entre dispositivos ni usuarios.
 - Los datos demo se insertan solo la primera vez para facilitar pruebas.
-- No hay edicion de alimentos o recetas todavia; el MVP permite crear y borrar.
+- No hay edicion de alimentos ni comidas planificadas todavia; el MVP permite crear, borrar y ajustar stock.
 
 ## Siguientes pasos recomendados
 
 - Edicion de alimentos y comidas planificadas.
-- Exportar/importar datos locales.
 - Conversor de unidades controlado.
 - Historial de comidas hechas.
 - PWA instalable y cache offline.

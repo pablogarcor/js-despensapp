@@ -74,6 +74,28 @@
  */
 
 /**
+ * @typedef {Object} BackupData
+ * @property {PantryItem[]} pantryItems Alimentos exportados.
+ * @property {Recipe[]} recipes Recetas exportadas.
+ * @property {PlannedMeal[]} plannedMeals Comidas planificadas exportadas.
+ */
+
+/**
+ * @typedef {Object} PantryBackup
+ * @property {'despensapp'} app Identificador de la aplicacion.
+ * @property {1} schemaVersion Version del formato de backup.
+ * @property {string} exportedAt Fecha ISO de exportacion.
+ * @property {BackupData} data Datos exportados.
+ */
+
+/**
+ * @typedef {Object} ImportSummary
+ * @property {number} pantryItems Numero de alimentos importados.
+ * @property {number} recipes Numero de recetas importadas.
+ * @property {number} plannedMeals Numero de comidas planificadas importadas.
+ */
+
+/**
  * @typedef {Object} DashboardSnapshot
  * @property {PantryItem[]} pantryItems Alimentos ordenados por nombre.
  * @property {Recipe[]} recipes Recetas ordenadas por nombre.

@@ -59,6 +59,71 @@ test('impide restar una cantidad no positiva a un alimento', async () => {
   );
 });
 
+test('exporta un backup versionado con datos locales', async () => {
+  const { service } = await createServiceWithRecipe();
+  await service.planNextWeek({ servings: 1 });
+
+  const backup = await service.exportBackup();
+
+  assert.equal(backup.app, 'despensapp');
+  assert.equal(backup.schemaVersion, 1);
+  assert.equal(backup.data.pantryItems.length, 1);
+  assert.equal(backup.data.recipes.length, 1);
+  assert.equal(backup.data.plannedMeals.length, 21);
+});
+
+test('importa un backup reemplazando datos actuales', async () => {
+  const source = await createServiceWithRecipe();
+  const backup = await source.service.exportBackup();
+  const targetDatabase = new MemoryDatabase();
+  const targetService = new PantryService(targetDatabase, { now: () => fixedDate });
+  await targetService.createPantryItem({ name: 'Lentejas', quantity: 300, unit: 'g' });
+
+  const summary = await targetService.importBackup(JSON.stringify(backup));
+  const dashboard = await targetService.getDashboard();
+
+  assert.deepEqual(summary, {
+    pantryItems: 1,
+    recipes: 1,
+    plannedMeals: 0,
+  });
+  assert.equal(dashboard.pantryItems.length, 1);
+  assert.equal(dashboard.pantryItems[0].name, 'Arroz');
+  assert.equal(dashboard.recipes[0].name, 'Arroz basico');
+});
+
+test('rechaza backups con relaciones invalidas sin reemplazar los datos actuales', async () => {
+  const { service } = await createServiceWithRecipe();
+  const invalidBackup = {
+    app: 'despensapp',
+    schemaVersion: 1,
+    exportedAt: fixedDate.toISOString(),
+    data: {
+      pantryItems: [],
+      recipes: [
+        {
+          id: 'recipe_invalid',
+          name: 'Receta rota',
+          mealTypes: ['lunch'],
+          ingredients: [{ pantryItemId: 'item_missing', quantity: 1 }],
+          createdAt: fixedDate.toISOString(),
+          updatedAt: fixedDate.toISOString(),
+        },
+      ],
+      plannedMeals: [],
+    },
+  };
+
+  await assert.rejects(
+    () => service.importBackup(JSON.stringify(invalidBackup)),
+    /alimento inexistente/,
+  );
+
+  const dashboard = await service.getDashboard();
+  assert.equal(dashboard.pantryItems.length, 1);
+  assert.equal(dashboard.recipes.length, 1);
+});
+
 test('impide borrar recetas planificadas', async () => {
   const { service, recipe } = await createServiceWithRecipe();
   await service.planNextWeek({ servings: 1 });

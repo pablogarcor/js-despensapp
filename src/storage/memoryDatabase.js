@@ -105,6 +105,24 @@ export class MemoryDatabase {
   }
 
   /**
+   * Reemplaza por completo varias tablas.
+   *
+   * @param {Record<string, Array<unknown>>} recordsByStore Registros por tabla.
+   * @returns {Promise<void>}
+   */
+  async replaceStores(recordsByStore) {
+    for (const [storeName, records] of Object.entries(recordsByStore)) {
+      const store = this.requireStore(storeName);
+      store.clear();
+
+      for (const record of records) {
+        const key = record.id ?? record.key;
+        store.set(key, structuredClone(record));
+      }
+    }
+  }
+
+  /**
    * Obtiene una store o lanza error si no existe.
    *
    * @param {string} storeName Nombre de la tabla.

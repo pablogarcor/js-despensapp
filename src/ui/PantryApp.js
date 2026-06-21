@@ -83,6 +83,7 @@ export class PantryApp {
           ${this.renderTab('pantry', 'Despensa')}
           ${this.renderTab('recipes', 'Recetas')}
           ${this.renderTab('plan', 'Plan')}
+          ${this.renderTab('data', 'Datos')}
         </nav>
 
         <main>
@@ -116,6 +117,13 @@ export class PantryApp {
 
     await this.runSafely(async () => {
       let shouldRefresh = true;
+
+      if (action === 'export-backup') {
+        const backup = await this.service.exportBackup();
+        this.downloadBackup(backup);
+        this.showToast('Copia exportada.');
+        shouldRefresh = false;
+      }
 
       if (action === 'delete-pantry-item') {
         await this.service.deletePantryItem(id);
@@ -298,6 +306,25 @@ export class PantryApp {
         this.showToast('Comida anadida al plan.');
       }
 
+      if (form.matches('[data-form="import-backup"]')) {
+        const file = form.elements.backupFile.files[0];
+
+        if (!file) {
+          throw new DomainError('Selecciona un archivo JSON para importar.', 'BACKUP_FILE_REQUIRED');
+        }
+
+        if (!window.confirm('Importar esta copia reemplazara los datos actuales.')) {
+          return;
+        }
+
+        const summary = await this.service.importBackup(await file.text());
+        form.reset();
+        this.state.activeView = 'data';
+        this.showToast(
+          `Importados ${summary.pantryItems} alimentos, ${summary.recipes} recetas y ${summary.plannedMeals} comidas.`,
+        );
+      }
+
       await this.refresh();
     });
   }
@@ -440,7 +467,28 @@ export class PantryApp {
       return this.renderPlanView(dashboard);
     }
 
+    if (this.state.activeView === 'data') {
+      return this.renderDataView(dashboard);
+    }
+
     return this.renderPantryView(dashboard);
+  }
+
+  /**
+   * Descarga un backup como archivo JSON.
+   *
+   * @param {import('../domain/types.js').PantryBackup} backup Backup exportado.
+   */
+  downloadBackup(backup) {
+    const blob = new Blob([JSON.stringify(backup, null, 2)], { type: 'application/json' });
+    const link = document.createElement('a');
+    const url = URL.createObjectURL(blob);
+    const exportedDate = backup.exportedAt.slice(0, 10);
+
+    link.href = url;
+    link.download = `despensapp-backup-${exportedDate}.json`;
+    link.click();
+    URL.revokeObjectURL(url);
   }
 
   /**
@@ -831,6 +879,49 @@ export class PantryApp {
       <section class="list-section" aria-label="Comidas planificadas">
         ${dashboard.plannedMeals.length === 0 ? this.renderEmptyState('Aun no hay comidas planificadas.') : ''}
         ${this.renderPlanGroups(dashboard)}
+      </section>
+    `;
+  }
+
+  /**
+   * Renderiza herramientas de exportacion e importacion de datos locales.
+   *
+   * @param {import('../domain/types.js').DashboardSnapshot} dashboard Snapshot.
+   * @returns {string} HTML.
+   */
+  renderDataView(dashboard) {
+    const totalStoredMeals = dashboard.plannedMeals.length + dashboard.pendingMeals.length;
+
+    return `
+      <section class="panel">
+        <div class="section-heading">
+          <div>
+            <p class="eyebrow">Copia local</p>
+            <h2>Datos</h2>
+          </div>
+        </div>
+
+        <div class="data-stats" aria-label="Datos guardados">
+          <span><strong>${dashboard.pantryItems.length}</strong> alimentos</span>
+          <span><strong>${dashboard.recipes.length}</strong> recetas</span>
+          <span><strong>${totalStoredMeals}</strong> comidas</span>
+        </div>
+
+        <button class="button full" type="button" data-action="export-backup">Exportar copia</button>
+      </section>
+
+      <section class="panel">
+        <div class="section-heading compact">
+          <h2>Importar</h2>
+        </div>
+
+        <form class="stacked-form" data-form="import-backup">
+          <label>
+            Archivo JSON
+            <input name="backupFile" type="file" accept=".json,application/json" required />
+          </label>
+          <button class="button full" type="submit">Importar y reemplazar</button>
+        </form>
       </section>
     `;
   }
