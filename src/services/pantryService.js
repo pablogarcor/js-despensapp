@@ -156,6 +156,77 @@ export class PantryService {
   }
 
   /**
+   * Actualiza un alimento existente conservando su identificador.
+   *
+   * Cambiar la unidad exige actualizar las cantidades de receta que usan este
+   * alimento, porque esas cantidades se interpretan en la unidad del alimento.
+   *
+   * @param {string} pantryItemId Identificador del alimento.
+   * @param {Object} params Datos de entrada.
+   * @param {string} params.name Nombre.
+   * @param {number} params.quantity Cantidad disponible.
+   * @param {string} params.unit Unidad.
+   * @param {Array<{recipeId: string, quantity: number}>} [params.recipeIngredientUpdates]
+   * Cantidades por racion para recetas que usan este alimento.
+   * @returns {Promise<import('../domain/types.js').PantryItem>} Alimento actualizado.
+   */
+  async updatePantryItem(pantryItemId, { name, quantity, unit, recipeIngredientUpdates = [] }) {
+    const [pantryItems, recipes] = await Promise.all([
+      this.database.getAll('pantryItems'),
+      this.database.getAll('recipes'),
+    ]);
+    const pantryItem = pantryItems.find((item) => item.id === pantryItemId);
+    const cleanName = cleanText(name);
+    const cleanUnit = cleanText(unit);
+    const parsedQuantity = parseNonNegativeQuantity(quantity, 'La cantidad del alimento no es valida.');
+
+    if (!pantryItem) {
+      throw new DomainError('El alimento no existe.', 'PANTRY_NOT_FOUND');
+    }
+
+    if (!cleanName) {
+      throw new DomainError('El alimento necesita un nombre.', 'PANTRY_NAME_REQUIRED');
+    }
+
+    if (!cleanUnit) {
+      throw new DomainError('El alimento necesita una unidad.', 'PANTRY_UNIT_REQUIRED');
+    }
+
+    const duplicatedItem = pantryItems.find(
+      (item) => item.id !== pantryItemId && normalizeName(item.name) === normalizeName(cleanName),
+    );
+
+    if (duplicatedItem) {
+      throw new DomainError('Ya existe un alimento con ese nombre.', 'PANTRY_DUPLICATED');
+    }
+
+    const affectedRecipes = recipes.filter((recipe) =>
+      recipe.ingredients.some((ingredient) => ingredient.pantryItemId === pantryItemId),
+    );
+    const normalizedRecipeIngredientUpdates = normalizeRecipeIngredientUpdates({
+      recipeIngredientUpdates,
+      affectedRecipes,
+      mustUpdateAll: pantryItem.unit !== cleanUnit,
+    });
+    const updatedRecipes = applyRecipeIngredientUpdates({
+      affectedRecipes,
+      recipeIngredientUpdates: normalizedRecipeIngredientUpdates,
+      pantryItemId,
+      updatedAt: this.now().toISOString(),
+    });
+    const updatedItem = {
+      ...pantryItem,
+      name: cleanName,
+      quantity: parsedQuantity,
+      unit: cleanUnit,
+      updatedAt: this.now().toISOString(),
+    };
+
+    await this.database.bulkPut('recipes', updatedRecipes);
+    return this.database.put('pantryItems', updatedItem);
+  }
+
+  /**
    * Suma cantidad a un alimento existente manteniendo su unidad.
    *
    * @param {string} pantryItemId Identificador del alimento.
@@ -692,4 +763,89 @@ function normalizeIngredients(ingredients, pantryItems) {
       quantity: parsePositiveQuantity(ingredient.quantity, 'La cantidad del ingrediente no es valida.'),
     };
   });
+}
+
+/**
+ * Valida cantidades de recetas afectadas por un cambio de alimento.
+ *
+ * @param {Object} params Parametros.
+ * @param {Array<{recipeId: string, quantity: number}>} params.recipeIngredientUpdates Actualizaciones de entrada.
+ * @param {import('../domain/types.js').Recipe[]} params.affectedRecipes Recetas que usan el alimento.
+ * @param {boolean} params.mustUpdateAll Indica si todas las recetas afectadas son obligatorias.
+ * @returns {Map<string, number>} Cantidades por receta.
+ */
+function normalizeRecipeIngredientUpdates({
+  recipeIngredientUpdates,
+  affectedRecipes,
+  mustUpdateAll,
+}) {
+  const affectedRecipeIds = new Set(affectedRecipes.map((recipe) => recipe.id));
+  const updatesByRecipeId = new Map();
+
+  for (const update of recipeIngredientUpdates) {
+    const recipeId = cleanText(update.recipeId);
+
+    if (!affectedRecipeIds.has(recipeId)) {
+      throw new DomainError('Hay una receta no relacionada en la edicion del alimento.', 'PANTRY_RECIPE_UPDATE_INVALID');
+    }
+
+    if (updatesByRecipeId.has(recipeId)) {
+      throw new DomainError('Hay una receta repetida en la edicion del alimento.', 'PANTRY_RECIPE_UPDATE_DUPLICATED');
+    }
+
+    updatesByRecipeId.set(
+      recipeId,
+      parsePositiveQuantity(update.quantity, 'La cantidad de receta debe ser mayor que cero.'),
+    );
+  }
+
+  if (mustUpdateAll) {
+    const missingRecipe = affectedRecipes.find((recipe) => !updatesByRecipeId.has(recipe.id));
+
+    if (missingRecipe) {
+      throw new DomainError(
+        `Actualiza la cantidad de "${missingRecipe.name}" antes de cambiar la unidad.`,
+        'PANTRY_UNIT_RECIPE_UPDATE_REQUIRED',
+      );
+    }
+  }
+
+  if (affectedRecipes.length === 0 && updatesByRecipeId.size > 0) {
+    throw new DomainError('El alimento no se usa en recetas.', 'PANTRY_RECIPE_UPDATE_INVALID');
+  }
+
+  return updatesByRecipeId;
+}
+
+/**
+ * Aplica cambios de cantidad a los ingredientes que usan un alimento.
+ *
+ * @param {Object} params Parametros.
+ * @param {import('../domain/types.js').Recipe[]} params.affectedRecipes Recetas que usan el alimento.
+ * @param {Map<string, number>} params.recipeIngredientUpdates Cantidades por receta.
+ * @param {string} params.pantryItemId Alimento editado.
+ * @param {string} params.updatedAt Fecha ISO de actualizacion.
+ * @returns {import('../domain/types.js').Recipe[]} Recetas actualizadas.
+ */
+function applyRecipeIngredientUpdates({
+  affectedRecipes,
+  recipeIngredientUpdates,
+  pantryItemId,
+  updatedAt,
+}) {
+  if (recipeIngredientUpdates.size === 0) {
+    return [];
+  }
+
+  return affectedRecipes
+    .filter((recipe) => recipeIngredientUpdates.has(recipe.id))
+    .map((recipe) => ({
+      ...recipe,
+      ingredients: recipe.ingredients.map((ingredient) =>
+        ingredient.pantryItemId === pantryItemId
+          ? { ...ingredient, quantity: recipeIngredientUpdates.get(recipe.id) }
+          : ingredient,
+      ),
+      updatedAt,
+    }));
 }

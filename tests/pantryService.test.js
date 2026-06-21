@@ -15,6 +15,66 @@ test('impide borrar alimentos usados por recetas', async () => {
   );
 });
 
+test('permite editar nombre y cantidad de un alimento existente', async () => {
+  const { service, rice } = await createServiceWithRecipe();
+
+  const updatedRice = await service.updatePantryItem(rice.id, {
+    name: 'Arroz integral',
+    quantity: 750,
+    unit: 'g',
+  });
+
+  assert.equal(updatedRice.id, rice.id);
+  assert.equal(updatedRice.name, 'Arroz integral');
+  assert.equal(updatedRice.quantity, 750);
+  assert.equal(updatedRice.unit, 'g');
+});
+
+test('impide editar un alimento con un nombre duplicado', async () => {
+  const { service, rice } = await createServiceWithRecipe();
+  await service.createPantryItem({ name: 'Pasta', quantity: 300, unit: 'g' });
+
+  await assert.rejects(
+    () =>
+      service.updatePantryItem(rice.id, {
+        name: 'Pasta',
+        quantity: 500,
+        unit: 'g',
+      }),
+    /Ya existe un alimento/,
+  );
+});
+
+test('impide cambiar unidad de un alimento usado en recetas sin actualizar esas recetas', async () => {
+  const { service, rice } = await createServiceWithRecipe();
+
+  await assert.rejects(
+    () =>
+      service.updatePantryItem(rice.id, {
+        name: 'Arroz redondo',
+        quantity: 500,
+        unit: 'kg',
+      }),
+    /Actualiza la cantidad/,
+  );
+});
+
+test('cambiar unidad de un alimento actualiza cantidades en las recetas que lo usan', async () => {
+  const { service, rice, recipe } = await createServiceWithRecipe();
+
+  await service.updatePantryItem(rice.id, {
+    name: 'Arroz redondo',
+    quantity: 500,
+    unit: 'kg',
+    recipeIngredientUpdates: [{ recipeId: recipe.id, quantity: 0.1 }],
+  });
+  const dashboard = await service.getDashboard();
+  const updatedRecipe = dashboard.recipes.find((candidate) => candidate.id === recipe.id);
+
+  assert.equal(updatedRecipe.ingredients[0].pantryItemId, rice.id);
+  assert.equal(updatedRecipe.ingredients[0].quantity, 0.1);
+});
+
 test('permite sumar cantidad a un alimento existente', async () => {
   const { service, rice } = await createServiceWithRecipe();
 

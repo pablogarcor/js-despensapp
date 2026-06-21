@@ -313,6 +313,33 @@ button:focus-visible {
   gap: 12px;
 }
 
+.pantry-edit-card {
+  border-color: #91c4a8;
+  background: #f8fbf9;
+}
+
+.recipe-usage-editor {
+  display: grid;
+  gap: 8px;
+  border-top: 1px solid rgba(24, 35, 30, 0.1);
+  padding-top: 10px;
+}
+
+.recipe-usage-row {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: 6px;
+  border: 1px solid #d8e0da;
+  border-radius: 8px;
+  background: #ffffff;
+  padding: 10px;
+}
+
+.recipe-usage-row span {
+  color: #60736a;
+  font-size: 0.82rem;
+}
+
 .stock-form {
   display: grid;
   grid-template-columns: minmax(0, 1fr);

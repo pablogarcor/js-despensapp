@@ -21,6 +21,7 @@ export class PantryApp {
     this.state = {
       activeView: 'pantry',
       dashboard: null,
+      editingPantryItemId: null,
       ingredientRows: [createIngredientRow()],
       editingRecipeId: null,
       editRecipeDraft: null,
@@ -138,6 +139,16 @@ export class PantryApp {
       if (action === 'delete-pantry-item') {
         await this.service.deletePantryItem(id);
         this.showToast('Alimento eliminado.');
+      }
+
+      if (action === 'edit-pantry-item') {
+        this.state.editingPantryItemId = id;
+        shouldRefresh = false;
+      }
+
+      if (action === 'cancel-edit-pantry-item') {
+        this.state.editingPantryItemId = null;
+        shouldRefresh = false;
       }
 
       if (action === 'delete-recipe') {
@@ -263,6 +274,18 @@ export class PantryApp {
 
         form.reset();
         this.showToast('Stock actualizado.');
+      }
+
+      if (form.matches('[data-form="pantry-item-edit"]')) {
+        const data = new FormData(form);
+        await this.service.updatePantryItem(data.get('pantryItemId'), {
+          name: data.get('name'),
+          quantity: data.get('quantity'),
+          unit: data.get('unit'),
+          recipeIngredientUpdates: this.readPantryRecipeUpdatesFromForm(data),
+        });
+        this.state.editingPantryItemId = null;
+        this.showToast('Alimento actualizado.');
       }
 
       if (form.matches('[data-form="recipe"]')) {
@@ -426,6 +449,22 @@ export class PantryApp {
 
     return itemIds.map((pantryItemId, index) => ({
       pantryItemId,
+      quantity: quantities[index],
+    }));
+  }
+
+  /**
+   * Lee cantidades de recetas afectadas al editar un alimento.
+   *
+   * @param {FormData} data Datos del formulario.
+   * @returns {Array<{recipeId: string, quantity: FormDataEntryValue}>} Cantidades por receta.
+   */
+  readPantryRecipeUpdatesFromForm(data) {
+    const recipeIds = data.getAll('recipeIngredientRecipeId');
+    const quantities = data.getAll('recipeIngredientQuantity');
+
+    return recipeIds.map((recipeId, index) => ({
+      recipeId,
       quantity: quantities[index],
     }));
   }
@@ -615,7 +654,7 @@ export class PantryApp {
             <label>
               Unidad
               <select name="unit" required>
-                ${DEFAULT_UNITS.map((unit) => `<option value="${unit}">${unit}</option>`).join('')}
+                ${renderUnitOptions()}
               </select>
             </label>
           </div>
@@ -625,7 +664,7 @@ export class PantryApp {
 
       <section class="list-section" aria-label="Alimentos guardados">
         ${dashboard.pantryItems.length === 0 ? this.renderEmptyState('Todavia no hay alimentos.') : ''}
-        ${dashboard.pantryItems.map((item) => this.renderPantryItem(item)).join('')}
+        ${dashboard.pantryItems.map((item) => this.renderPantryItem(item, dashboard.recipes)).join('')}
       </section>
     `;
   }
@@ -634,9 +673,14 @@ export class PantryApp {
    * Renderiza un alimento.
    *
    * @param {import('../domain/types.js').PantryItem} item Alimento.
+   * @param {import('../domain/types.js').Recipe[]} recipes Recetas.
    * @returns {string} HTML.
    */
-  renderPantryItem(item) {
+  renderPantryItem(item, recipes) {
+    if (this.state.editingPantryItemId === item.id) {
+      return this.renderPantryItemEditForm(item, recipes);
+    }
+
     return `
       <article class="list-card pantry-card">
         <div class="pantry-card-main">
@@ -644,9 +688,14 @@ export class PantryApp {
             <h3>${escapeHtml(item.name)}</h3>
             <p>${formatQuantity(item.quantity)} ${escapeHtml(item.unit)}</p>
           </div>
-          <button class="icon-button" type="button" aria-label="Eliminar ${escapeAttribute(item.name)}" data-action="delete-pantry-item" data-id="${item.id}">
-            x
-          </button>
+          <div class="inline-actions">
+            <button class="button ghost small" type="button" data-action="edit-pantry-item" data-id="${item.id}">
+              Editar
+            </button>
+            <button class="icon-button" type="button" aria-label="Eliminar ${escapeAttribute(item.name)}" data-action="delete-pantry-item" data-id="${item.id}">
+              x
+            </button>
+          </div>
         </div>
         <form class="stock-form" data-form="pantry-stock">
           <input type="hidden" name="pantryItemId" value="${escapeAttribute(item.id)}" />
@@ -660,6 +709,91 @@ export class PantryApp {
           </div>
         </form>
       </article>
+    `;
+  }
+
+  /**
+   * Renderiza el formulario inline para editar un alimento.
+   *
+   * @param {import('../domain/types.js').PantryItem} item Alimento.
+   * @param {import('../domain/types.js').Recipe[]} recipes Recetas.
+   * @returns {string} HTML.
+   */
+  renderPantryItemEditForm(item, recipes) {
+    const affectedRecipes = recipes.filter((recipe) =>
+      recipe.ingredients.some((ingredient) => ingredient.pantryItemId === item.id),
+    );
+
+    return `
+      <article class="list-card pantry-card pantry-edit-card">
+        <form class="stacked-form" data-form="pantry-item-edit">
+          <input type="hidden" name="pantryItemId" value="${escapeAttribute(item.id)}" />
+          <label>
+            Nombre
+            <input name="name" type="text" autocomplete="off" value="${escapeAttribute(item.name)}" required />
+          </label>
+          <div class="form-grid">
+            <label>
+              Cantidad
+              <input name="quantity" type="number" inputmode="decimal" step="0.01" min="0" value="${item.quantity}" required />
+            </label>
+            <label>
+              Unidad
+              <select name="unit" required>
+                ${renderUnitOptions(item.unit)}
+              </select>
+            </label>
+          </div>
+          ${this.renderPantryRecipeUsageFields(item, affectedRecipes)}
+          <div class="form-actions">
+            <button class="button" type="submit">Guardar</button>
+            <button class="button ghost" type="button" data-action="cancel-edit-pantry-item">Cancelar</button>
+          </div>
+        </form>
+      </article>
+    `;
+  }
+
+  /**
+   * Renderiza recetas que usan un alimento para actualizar cantidades si cambia la unidad.
+   *
+   * @param {import('../domain/types.js').PantryItem} item Alimento editado.
+   * @param {import('../domain/types.js').Recipe[]} affectedRecipes Recetas afectadas.
+   * @returns {string} HTML.
+   */
+  renderPantryRecipeUsageFields(item, affectedRecipes) {
+    if (affectedRecipes.length === 0) {
+      return '';
+    }
+
+    return `
+      <div class="recipe-usage-editor">
+        <div class="section-heading compact">
+          <h3>Recetas que usan ${escapeHtml(item.name)}</h3>
+        </div>
+        ${affectedRecipes.map((recipe) => {
+          const ingredient = recipe.ingredients.find((candidate) => candidate.pantryItemId === item.id);
+
+          return `
+            <div class="recipe-usage-row">
+              <input type="hidden" name="recipeIngredientRecipeId" value="${escapeAttribute(recipe.id)}" />
+              <label>
+                ${escapeHtml(recipe.name)}
+                <input
+                  name="recipeIngredientQuantity"
+                  type="number"
+                  inputmode="decimal"
+                  step="0.01"
+                  min="0.01"
+                  value="${ingredient.quantity}"
+                  required
+                />
+              </label>
+              <span>${formatQuantity(ingredient.quantity)} ${escapeHtml(item.unit)} actuales</span>
+            </div>
+          `;
+        }).join('')}
+      </div>
     `;
   }
 
@@ -1193,6 +1327,26 @@ function formatDate(isoDate) {
     day: 'numeric',
     month: 'short',
   }).format(fromISODate(isoDate));
+}
+
+/**
+ * Renderiza opciones de unidad conservando unidades importadas no predefinidas.
+ *
+ * @param {string} [selectedUnit] Unidad seleccionada.
+ * @returns {string} HTML de opciones.
+ */
+function renderUnitOptions(selectedUnit) {
+  const units = selectedUnit && !DEFAULT_UNITS.includes(selectedUnit)
+    ? [...DEFAULT_UNITS, selectedUnit]
+    : [...DEFAULT_UNITS];
+
+  return units
+    .map((unit) => `
+      <option value="${escapeAttribute(unit)}" ${selectedUnit === unit ? 'selected' : ''}>
+        ${escapeHtml(unit)}
+      </option>
+    `)
+    .join('');
 }
 
 /**

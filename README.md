@@ -52,6 +52,8 @@ Las reglas viven en `src/services/pantryService.js`:
 - No se puede borrar un alimento si alguna receta lo usa.
 - Se puede sumar o restar cantidad a un alimento existente manteniendo su unidad.
 - Al restar stock manualmente, la cantidad nunca baja de cero.
+- Se puede editar nombre, cantidad y unidad de un alimento existente conservando su identificador.
+- Si cambias la unidad de un alimento usado en recetas, debes revisar y guardar la cantidad por racion de cada receta afectada.
 - No se puede borrar una receta si esta planificada.
 - Se puede editar una receta existente para cambiar nombre, momentos del dia, ingredientes y cantidades.
 - Una receta planificada no puede perder una franja si ya hay comidas planificadas de esa receta en esa franja.
@@ -111,17 +113,18 @@ npm test         # tests de negocio con node:test
 1. En **Despensa**, anade alimentos con cantidad y unidad.
 2. Si compras mas de un alimento existente, usa **Sumar** en su tarjeta para incrementar el stock sin duplicarlo.
 3. Si un alimento se gasta fuera del plan o se pone malo, usa **Restar** para descontarlo manualmente.
-4. En **Recetas**, crea recetas usando solo alimentos existentes. Cada ingrediente representa cantidad por racion.
-5. Usa **Editar** en una receta para modificar ingredientes, cantidades, nombre o momentos del dia.
-6. En **Plan**, indica raciones y pulsa **Planificar semana**.
-7. La app rellena los proximos 7 dias y calcula si falta algo.
-8. Si eliminas una comida del plan, el hueco aparece dentro de su dia con un selector de recetas compatibles para anadirla manualmente.
-9. Pulsa **Completar huecos** para rellenar automaticamente los huecos restantes sin borrar las comidas ya planificadas.
-10. Si falta comida, la **lista de la compra** aparece cerrada por defecto pero indica claramente si falta compra o si el plan esta cubierto.
-11. Las comidas del plan que no se podrian cocinar quedan marcadas en su tarjeta para verlo de un vistazo.
-12. Al desplegar la lista de compra, muestra alimentos agregados por unidad y las **comidas afectadas**, con receta, fecha, franja y faltas concretas.
-13. Cuando una comida ya paso, la app la muestra como pendiente: si marcas **Hecha**, descuenta ingredientes; si marcas **No hecha**, solo elimina la planificacion.
-14. En **Datos**, usa **Exportar copia** para descargar un backup JSON o **Importar y reemplazar** para restaurarlo.
+4. Usa **Editar** en un alimento para corregir nombre, cantidad total o unidad. Si aparece en recetas, veras esas recetas en el mismo formulario para ajustar sus cantidades.
+5. En **Recetas**, crea recetas usando solo alimentos existentes. Cada ingrediente representa cantidad por racion.
+6. Usa **Editar** en una receta para modificar ingredientes, cantidades, nombre o momentos del dia.
+7. En **Plan**, indica raciones y pulsa **Planificar semana**.
+8. La app rellena los proximos 7 dias y calcula si falta algo.
+9. Si eliminas una comida del plan, el hueco aparece dentro de su dia con un selector de recetas compatibles para anadirla manualmente.
+10. Pulsa **Completar huecos** para rellenar automaticamente los huecos restantes sin borrar las comidas ya planificadas.
+11. Si falta comida, la **lista de la compra** aparece cerrada por defecto pero indica claramente si falta compra o si el plan esta cubierto.
+12. Las comidas del plan que no se podrian cocinar quedan marcadas en su tarjeta para verlo de un vistazo.
+13. Al desplegar la lista de compra, muestra alimentos agregados por unidad y las **comidas afectadas**, con receta, fecha, franja y faltas concretas.
+14. Cuando una comida ya paso, la app la muestra como pendiente: si marcas **Hecha**, descuenta ingredientes; si marcas **No hecha**, solo elimina la planificacion.
+15. En **Configuracion**, usa **Exportar copia** para descargar un backup JSON o **Importar y reemplazar** para restaurarlo.
 
 ## Importar y exportar
 
@@ -141,11 +144,11 @@ La importacion valida estructura, ids duplicados y relaciones entre alimentos, r
 - No hay conversion automatica entre unidades. Una receta usa la misma unidad definida por cada alimento.
 - No hay sincronizacion entre dispositivos ni usuarios.
 - Los datos demo se insertan solo la primera vez para facilitar pruebas.
-- No hay edicion de alimentos ni comidas planificadas todavia; el MVP permite crear, borrar y ajustar stock.
+- No hay edicion de comidas planificadas todavia; el MVP permite crear, borrar y ajustar stock.
 
 ## Siguientes pasos recomendados
 
-- Edicion de alimentos y comidas planificadas.
+- Edicion de comidas planificadas.
 - Conversor de unidades controlado.
 - Historial de comidas hechas.
 - PWA instalable y cache offline.
