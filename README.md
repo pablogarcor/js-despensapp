@@ -53,6 +53,7 @@ Las reglas viven en `src/services/pantryService.js`:
 
 - No se puede borrar un alimento si alguna receta lo usa.
 - No se puede vaciar la despensa si alguna receta usa alimentos guardados.
+- Se puede borrar todo desde configuracion para reiniciar despensa, recetas y comidas planificadas a la vez.
 - Se puede sumar o restar cantidad a un alimento existente manteniendo su unidad.
 - Al restar stock manualmente, la cantidad nunca baja de cero.
 - Se puede editar nombre, cantidad y unidad de un alimento existente conservando su identificador.
@@ -196,6 +197,7 @@ Si el deploy falla con `HttpError: Not Found` y el mensaje `Ensure GitHub Pages 
 16. Al desplegar la lista de compra, muestra alimentos agregados por unidad y las **comidas afectadas**, con receta, fecha, franja y faltas concretas.
 17. Cuando una comida ya paso, la app la muestra como pendiente: si marcas **Hecha**, descuenta ingredientes; si marcas **No hecha**, solo elimina la planificacion.
 18. En **Configuracion**, usa **Exportar copia** para descargar un backup JSON o **Importar y reemplazar** para restaurarlo.
+19. Usa **Borrar todo** en **Configuracion** para reiniciar despensa, recetas y planificacion.
 
 ## Importar y exportar
 

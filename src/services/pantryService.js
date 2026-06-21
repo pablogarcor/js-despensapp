@@ -116,6 +116,34 @@ export class PantryService {
   }
 
   /**
+   * Borra todos los datos principales de usuario sin validar dependencias.
+   *
+   * Esta operacion se usa para reiniciar la app completa, por eso limpia las
+   * tablas relacionadas en una sola accion y mantiene la tabla `meta`.
+   *
+   * @returns {Promise<import('../domain/types.js').ImportSummary>} Totales eliminados por tabla.
+   */
+  async clearAllData() {
+    const [pantryItems, recipes, plannedMeals] = await Promise.all([
+      this.database.getAll('pantryItems'),
+      this.database.getAll('recipes'),
+      this.database.getAll('plannedMeals'),
+    ]);
+
+    await this.database.replaceStores({
+      pantryItems: [],
+      recipes: [],
+      plannedMeals: [],
+    });
+
+    return {
+      pantryItems: pantryItems.length,
+      recipes: recipes.length,
+      plannedMeals: plannedMeals.length,
+    };
+  }
+
+  /**
    * Crea un alimento de despensa validando duplicados por nombre.
    *
    * @param {Object} params Datos de entrada.

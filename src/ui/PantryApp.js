@@ -216,6 +216,22 @@ export class PantryApp {
         this.showToast(`${deletedCount} comidas eliminadas del plan.`);
       }
 
+      if (action === 'clear-all-data') {
+        if (!window.confirm('Borrar todo eliminara despensa, recetas y planificacion.')) {
+          shouldRefresh = false;
+        } else {
+          const summary = await this.service.clearAllData();
+          this.state.editingPantryItemId = null;
+          this.state.editingRecipeId = null;
+          this.state.editRecipeDraft = null;
+          this.state.editIngredientRows = [];
+          this.state.editingPlannedMealId = null;
+          this.showToast(
+            `Eliminados ${summary.pantryItems} alimentos, ${summary.recipes} recetas y ${summary.plannedMeals} comidas.`,
+          );
+        }
+      }
+
       if (action === 'resolve-meal') {
         await this.service.resolvePastMeal(id, actionElement.dataset.cooked === 'true');
         this.showToast('Comida pendiente resuelta.');
@@ -1102,6 +1118,9 @@ export class PantryApp {
         </div>
 
         <button class="button full" type="button" data-action="export-backup">Exportar copia</button>
+        <button class="button ghost full danger-action" type="button" data-action="clear-all-data" ${totalStoredMeals + dashboard.recipes.length + dashboard.pantryItems.length === 0 ? 'disabled' : ''}>
+          Borrar todo
+        </button>
       </section>
 
       <section class="panel">

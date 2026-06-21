@@ -283,6 +283,12 @@ button:focus-visible {
   color: #243b30;
 }
 
+.button.danger-action {
+  border-color: #edc3b6;
+  background: #fff4f1;
+  color: #8c3a2a;
+}
+
 .button.small {
   min-height: 36px;
   padding: 6px 10px;
