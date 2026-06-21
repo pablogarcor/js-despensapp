@@ -520,6 +520,35 @@ button:focus-visible {
   margin: 2px 0;
 }
 
+.meal-card.is-unavailable {
+  align-items: flex-start;
+  flex-wrap: wrap;
+  border-color: #d89a87;
+  background: #fff8f5;
+}
+
+.meal-card.is-unavailable > div {
+  min-width: 0;
+  flex: 1 1 auto;
+}
+
+.meal-shortage {
+  margin-top: 4px;
+  color: #7a3425;
+  font-weight: 800;
+}
+
+.meal-status-badge {
+  flex: 0 0 auto;
+  border-radius: 8px;
+  background: #fff0eb;
+  color: #7a3425;
+  padding: 4px 8px;
+  font-size: 0.76rem;
+  font-weight: 850;
+  white-space: nowrap;
+}
+
 .missing-meal-card {
   align-items: end;
   flex-wrap: wrap;

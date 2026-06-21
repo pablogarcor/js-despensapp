@@ -744,7 +744,7 @@ export class PantryApp {
       .map(([date, meals]) => `
         <section class="day-group">
           <h3>${formatDate(date)}</h3>
-          ${meals.map((meal) => this.renderPlannedMeal(meal, dashboard.recipes)).join('')}
+          ${meals.map((meal) => this.renderPlannedMeal(meal, dashboard.recipes, dashboard.unavailableMeals)).join('')}
           ${dashboard.missingPlanSlots
             .filter((slot) => slot.date === date)
             .map((slot) => this.renderMissingMealSlot(slot, dashboard.recipes))
@@ -759,18 +759,29 @@ export class PantryApp {
    *
    * @param {import('../domain/types.js').PlannedMeal} meal Comida.
    * @param {import('../domain/types.js').Recipe[]} recipes Recetas.
+   * @param {import('../domain/types.js').UnavailablePlannedMeal[]} unavailableMeals Comidas sin stock suficiente.
    * @returns {string} HTML.
    */
-  renderPlannedMeal(meal, recipes) {
+  renderPlannedMeal(meal, recipes, unavailableMeals) {
     const recipe = recipes.find((candidate) => candidate.id === meal.recipeId);
+    const unavailableMeal = unavailableMeals.find((candidate) => candidate.plannedMealId === meal.id);
+    const missingIngredientNames = unavailableMeal?.missingIngredients
+      .map((ingredient) => ingredient.name)
+      .join(', ');
 
     return `
-      <article class="meal-card">
+      <article class="meal-card ${unavailableMeal ? 'is-unavailable' : ''}">
         <div>
           <span>${MEAL_TYPE_LABELS[meal.mealType]}</span>
           <strong>${escapeHtml(recipe?.name ?? 'Receta eliminada')}</strong>
           <small>${meal.servings} raciones</small>
+          ${
+            unavailableMeal
+              ? `<small class="meal-shortage">Faltan: ${escapeHtml(missingIngredientNames)}</small>`
+              : ''
+          }
         </div>
+        ${unavailableMeal ? '<span class="meal-status-badge">Faltan alimentos</span>' : ''}
         <button class="icon-button" type="button" aria-label="Eliminar comida" data-action="delete-planned-meal" data-id="${meal.id}">
           x
         </button>
