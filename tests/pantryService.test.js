@@ -304,6 +304,19 @@ test('permite anadir una comida manual en un hueco libre', async () => {
   assert.equal(dashboard.missingPlanSlots.length, 20);
 });
 
+test('muestra huecos de la siguiente semana aunque el plan este vacio', async () => {
+  const { service } = await createServiceWithRecipe();
+  const dashboard = await service.getDashboard();
+
+  assert.equal(dashboard.plannedMeals.length, 0);
+  assert.equal(dashboard.missingPlanSlots.length, 7 * MEAL_TYPES.length);
+  assert.equal(dashboard.missingPlanSlots[0].date, '2026-06-21');
+  assert.deepEqual(
+    dashboard.missingPlanSlots.slice(0, MEAL_TYPES.length).map((slot) => slot.mealType),
+    MEAL_TYPES,
+  );
+});
+
 test('impide anadir dos comidas en el mismo dia y franja', async () => {
   const { service, recipe } = await createServiceWithRecipe();
   const plannedMeal = {

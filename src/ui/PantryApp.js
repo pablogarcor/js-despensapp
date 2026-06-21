@@ -1042,7 +1042,11 @@ export class PantryApp {
       ${this.renderShoppingList(dashboard)}
 
       <section class="list-section" aria-label="Comidas planificadas">
-        ${dashboard.plannedMeals.length === 0 ? this.renderEmptyState('Aun no hay comidas planificadas.') : ''}
+        ${
+          dashboard.plannedMeals.length === 0 && dashboard.missingPlanSlots.length === 0
+            ? this.renderEmptyState('Aun no hay comidas planificadas.')
+            : ''
+        }
         ${this.renderPlanGroups(dashboard)}
       </section>
     `;
@@ -1187,7 +1191,7 @@ export class PantryApp {
    * @returns {string} HTML.
    */
   renderPlanGroups(dashboard) {
-    if (dashboard.plannedMeals.length === 0) {
+    if (dashboard.plannedMeals.length === 0 && dashboard.missingPlanSlots.length === 0) {
       return '';
     }
 

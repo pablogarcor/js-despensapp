@@ -182,9 +182,9 @@ Si el deploy falla con `HttpError: Not Found` y el mensaje `Ensure GitHub Pages 
 4. Usa **Editar** en un alimento para corregir nombre, cantidad total o unidad. Si aparece en recetas, veras esas recetas en el mismo formulario para ajustar sus cantidades.
 5. En **Recetas**, crea recetas usando solo alimentos existentes. Cada ingrediente representa cantidad por racion.
 6. Usa **Editar** en una receta para modificar ingredientes, cantidades, nombre o momentos del dia.
-7. En **Plan**, indica raciones y pulsa **Planificar semana**.
-8. La app rellena los proximos 7 dias y calcula si falta algo.
-9. Si eliminas una comida del plan, el hueco aparece dentro de su dia con un selector de recetas compatibles para anadirla manualmente.
+7. En **Plan**, la app muestra por defecto los huecos de los proximos 7 dias para poder anadir comidas manualmente.
+8. Si prefieres automatizar, indica raciones y pulsa **Planificar semana** para rellenar todos los huecos.
+9. Si eliminas una comida del plan, el hueco vuelve a aparecer dentro de su dia con un selector de recetas compatibles.
 10. Pulsa **Completar huecos** para rellenar automaticamente los huecos restantes sin borrar las comidas ya planificadas.
 11. Usa **Editar** en una comida planificada para cambiar receta o raciones.
 12. Si falta comida, la **lista de la compra** aparece cerrada por defecto pero indica claramente si falta compra o si el plan esta cubierto.
