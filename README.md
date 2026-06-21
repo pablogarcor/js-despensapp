@@ -73,6 +73,9 @@ Las reglas viven en `src/services/pantryService.js`:
 
 ```text
 .
+├── .github
+│   └── workflows
+│       └── deploy-pages.yml # CI/CD hacia GitHub Pages
 ├── index.html
 ├── public
 │   ├── manifest.webmanifest # Metadatos de instalacion PWA
@@ -123,6 +126,7 @@ Para probar instalacion PWA real en movil hace falta servir la app por HTTPS. Lo
 ```bash
 npm run dev      # servidor de desarrollo
 npm run build    # build de produccion
+npm run build:github-pages # build con base /js-despensapp/
 npm run preview  # previsualizacion del build
 npm run pwa:icons # regenera los iconos PNG de la PWA
 npm test         # tests de negocio con node:test
@@ -143,6 +147,30 @@ El service worker usa dos estrategias:
 - **Cache-first para assets**: CSS, JS, iconos y manifest se sirven desde cache cuando ya existen.
 
 Los datos siguen viviendo en IndexedDB. La PWA permite abrir la app offline tras una primera carga con conexion, pero no sincroniza datos entre dispositivos.
+
+## Despliegue en GitHub Pages
+
+El repositorio esta preparado para desplegarse como sitio de proyecto en:
+
+```text
+https://pablogarcor.github.io/js-despensapp/
+```
+
+La configuracion vive en `.github/workflows/deploy-pages.yml`. En cada push a `master`, GitHub Actions:
+
+1. Instala dependencias con `npm ci`.
+2. Ejecuta `npm test`.
+3. Genera el build con `npm run build:github-pages`.
+4. Publica `dist/` con el flujo oficial de GitHub Pages.
+
+Configuracion necesaria en GitHub:
+
+1. Entra en **Settings > Pages**.
+2. En **Build and deployment**, selecciona **Source: GitHub Actions**.
+3. No configures **Custom domain** mientras no quieras dominio propio.
+4. Haz push a `master` y revisa el workflow en la pestana **Actions**.
+
+`npm run build:github-pages` usa `--base=/js-despensapp/`, necesario porque GitHub Pages sirve este repositorio bajo un subdirectorio. La PWA usa rutas relativas al scope, asi que manifest, iconos y service worker funcionan tanto en local como en GitHub Pages.
 
 ## Flujo de uso
 

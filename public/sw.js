@@ -1,17 +1,17 @@
 const APP_CACHE = 'despensapp-app-v1';
 const RUNTIME_CACHE = 'despensapp-runtime-v1';
-const BUILD_MANIFEST_URL = '/asset-manifest.json';
+const BUILD_MANIFEST_URL = createAppPath('asset-manifest.json');
 const PRECACHE_URLS = [
-  '/',
-  '/index.html',
-  '/manifest.webmanifest',
-  '/offline.html',
-  '/icons/despensapp-icon.svg',
-  '/icons/icon-180.png',
-  '/icons/icon-192.png',
-  '/icons/icon-512.png',
-  '/icons/maskable-icon-512.png',
-];
+  '',
+  'index.html',
+  'manifest.webmanifest',
+  'offline.html',
+  'icons/despensapp-icon.svg',
+  'icons/icon-180.png',
+  'icons/icon-192.png',
+  'icons/icon-512.png',
+  'icons/maskable-icon-512.png',
+].map(createAppPath);
 
 self.addEventListener('install', (event) => {
   event.waitUntil(installAppShell());
@@ -138,11 +138,11 @@ function collectBuildAssetUrls(value, urls) {
  */
 function normalizeBuildAssetUrl(value) {
   if (value.startsWith('/assets/')) {
-    return value;
+    return createAppPath(value.slice(1));
   }
 
   if (value.startsWith('assets/')) {
-    return `/${value}`;
+    return createAppPath(value);
   }
 
   return null;
@@ -182,16 +182,16 @@ async function handleNavigation(request) {
     const response = await fetch(request);
 
     if (response.ok) {
-      await cache.put(new Request('/'), response.clone());
+      await cache.put(new Request(createAppPath('')), response.clone());
     }
 
     return response;
   } catch (error) {
     return (
       (await cache.match(request)) ||
-      (await cache.match('/')) ||
-      (await cache.match('/index.html')) ||
-      (await cache.match('/offline.html')) ||
+      (await cache.match(createAppPath(''))) ||
+      (await cache.match(createAppPath('index.html'))) ||
+      (await cache.match(createAppPath('offline.html'))) ||
       createOfflineResponse()
     );
   }
@@ -253,10 +253,20 @@ function shouldUseCacheFirst(request) {
   const { pathname } = new URL(request.url);
 
   return (
-    pathname.startsWith('/assets/') ||
-    pathname.startsWith('/icons/') ||
-    pathname === '/asset-manifest.json' ||
-    pathname === '/manifest.webmanifest' ||
-    pathname === '/offline.html'
+    pathname.startsWith(createAppPath('assets/')) ||
+    pathname.startsWith(createAppPath('icons/')) ||
+    pathname === createAppPath('asset-manifest.json') ||
+    pathname === createAppPath('manifest.webmanifest') ||
+    pathname === createAppPath('offline.html')
   );
+}
+
+/**
+ * Construye rutas absolutas dentro del scope actual de la PWA.
+ *
+ * @param {string} path Ruta relativa al scope del service worker.
+ * @returns {string} Path absoluto compatible con despliegues en subdirectorio.
+ */
+function createAppPath(path) {
+  return new URL(path, self.registration.scope).pathname;
 }
