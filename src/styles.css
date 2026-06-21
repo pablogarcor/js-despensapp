@@ -274,6 +274,33 @@ button:focus-visible {
   flex-direction: column;
 }
 
+.pantry-card {
+  align-items: stretch;
+  flex-direction: column;
+}
+
+.pantry-card-main {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.stock-form {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  align-items: end;
+  gap: 8px;
+  border-top: 1px solid rgba(24, 35, 30, 0.1);
+  padding-top: 10px;
+}
+
+.stock-actions {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 8px;
+}
+
 .list-card p,
 .meal-card p {
   margin: 4px 0 0;
@@ -608,6 +635,10 @@ button:focus-visible {
 @media (min-width: 640px) {
   .app-shell {
     padding-top: 32px;
+  }
+
+  .stock-form {
+    grid-template-columns: minmax(0, 1fr) auto;
   }
 
   .plan-actions {

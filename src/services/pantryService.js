@@ -105,6 +105,60 @@ export class PantryService {
   }
 
   /**
+   * Suma cantidad a un alimento existente manteniendo su unidad.
+   *
+   * @param {string} pantryItemId Identificador del alimento.
+   * @param {number} quantityToAdd Cantidad positiva que se anadira al stock.
+   * @returns {Promise<import('../domain/types.js').PantryItem>} Alimento actualizado.
+   */
+  async addPantryItemQuantity(pantryItemId, quantityToAdd) {
+    const pantryItem = await this.database.get('pantryItems', pantryItemId);
+
+    if (!pantryItem) {
+      throw new DomainError('El alimento no existe.', 'PANTRY_NOT_FOUND');
+    }
+
+    const parsedQuantity = parsePositiveQuantity(
+      quantityToAdd,
+      'La cantidad a anadir debe ser mayor que cero.',
+    );
+    const updatedItem = {
+      ...pantryItem,
+      quantity: roundQuantity(pantryItem.quantity + parsedQuantity),
+      updatedAt: this.now().toISOString(),
+    };
+
+    return this.database.put('pantryItems', updatedItem);
+  }
+
+  /**
+   * Resta cantidad de un alimento existente sin permitir stock negativo.
+   *
+   * @param {string} pantryItemId Identificador del alimento.
+   * @param {number} quantityToSubtract Cantidad positiva que se descontara del stock.
+   * @returns {Promise<import('../domain/types.js').PantryItem>} Alimento actualizado.
+   */
+  async subtractPantryItemQuantity(pantryItemId, quantityToSubtract) {
+    const pantryItem = await this.database.get('pantryItems', pantryItemId);
+
+    if (!pantryItem) {
+      throw new DomainError('El alimento no existe.', 'PANTRY_NOT_FOUND');
+    }
+
+    const parsedQuantity = parsePositiveQuantity(
+      quantityToSubtract,
+      'La cantidad a restar debe ser mayor que cero.',
+    );
+    const updatedItem = {
+      ...pantryItem,
+      quantity: roundQuantity(Math.max(0, pantryItem.quantity - parsedQuantity)),
+      updatedAt: this.now().toISOString(),
+    };
+
+    return this.database.put('pantryItems', updatedItem);
+  }
+
+  /**
    * Elimina un alimento si no aparece como ingrediente de ninguna receta.
    *
    * @param {string} pantryItemId Identificador del alimento.

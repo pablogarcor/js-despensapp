@@ -15,6 +15,50 @@ test('impide borrar alimentos usados por recetas', async () => {
   );
 });
 
+test('permite sumar cantidad a un alimento existente', async () => {
+  const { service, rice } = await createServiceWithRecipe();
+
+  const updatedRice = await service.addPantryItemQuantity(rice.id, 250.5);
+
+  assert.equal(updatedRice.quantity, 750.5);
+  assert.equal(updatedRice.unit, 'g');
+});
+
+test('impide sumar una cantidad no positiva a un alimento', async () => {
+  const { service, rice } = await createServiceWithRecipe();
+
+  await assert.rejects(
+    () => service.addPantryItemQuantity(rice.id, 0),
+    /mayor que cero/,
+  );
+});
+
+test('permite restar cantidad a un alimento existente', async () => {
+  const { service, rice } = await createServiceWithRecipe();
+
+  const updatedRice = await service.subtractPantryItemQuantity(rice.id, 120.25);
+
+  assert.equal(updatedRice.quantity, 379.75);
+  assert.equal(updatedRice.unit, 'g');
+});
+
+test('restar mas cantidad que el stock disponible deja el alimento a cero', async () => {
+  const { service, rice } = await createServiceWithRecipe();
+
+  const updatedRice = await service.subtractPantryItemQuantity(rice.id, 999);
+
+  assert.equal(updatedRice.quantity, 0);
+});
+
+test('impide restar una cantidad no positiva a un alimento', async () => {
+  const { service, rice } = await createServiceWithRecipe();
+
+  await assert.rejects(
+    () => service.subtractPantryItemQuantity(rice.id, 0),
+    /mayor que cero/,
+  );
+});
+
 test('impide borrar recetas planificadas', async () => {
   const { service, recipe } = await createServiceWithRecipe();
   await service.planNextWeek({ servings: 1 });

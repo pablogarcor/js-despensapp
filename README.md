@@ -50,6 +50,8 @@ La planificacion automatica genera 7 dias desde manana, con desayuno, comida y c
 Las reglas viven en `src/services/pantryService.js`:
 
 - No se puede borrar un alimento si alguna receta lo usa.
+- Se puede sumar o restar cantidad a un alimento existente manteniendo su unidad.
+- Al restar stock manualmente, la cantidad nunca baja de cero.
 - No se puede borrar una receta si esta planificada.
 - No puede haber dos comidas planificadas en la misma fecha y momento del dia.
 - Una comida manual solo puede usar recetas compatibles con su momento del dia.
@@ -104,15 +106,17 @@ npm test         # tests de negocio con node:test
 ## Flujo de uso
 
 1. En **Despensa**, anade alimentos con cantidad y unidad.
-2. En **Recetas**, crea recetas usando solo alimentos existentes. Cada ingrediente representa cantidad por racion.
-3. En **Plan**, indica raciones y pulsa **Planificar semana**.
-4. La app rellena los proximos 7 dias y calcula si falta algo.
-5. Si eliminas una comida del plan, el hueco aparece dentro de su dia con un selector de recetas compatibles para anadirla manualmente.
-6. Pulsa **Completar huecos** para rellenar automaticamente los huecos restantes sin borrar las comidas ya planificadas.
-7. Si falta comida, la **lista de la compra** aparece cerrada por defecto pero indica claramente si falta compra o si el plan esta cubierto.
-8. Las comidas del plan que no se podrian cocinar quedan marcadas en su tarjeta para verlo de un vistazo.
-9. Al desplegar la lista de compra, muestra alimentos agregados por unidad y las **comidas afectadas**, con receta, fecha, franja y faltas concretas.
-10. Cuando una comida ya paso, la app la muestra como pendiente: si marcas **Hecha**, descuenta ingredientes; si marcas **No hecha**, solo elimina la planificacion.
+2. Si compras mas de un alimento existente, usa **Sumar** en su tarjeta para incrementar el stock sin duplicarlo.
+3. Si un alimento se gasta fuera del plan o se pone malo, usa **Restar** para descontarlo manualmente.
+4. En **Recetas**, crea recetas usando solo alimentos existentes. Cada ingrediente representa cantidad por racion.
+5. En **Plan**, indica raciones y pulsa **Planificar semana**.
+6. La app rellena los proximos 7 dias y calcula si falta algo.
+7. Si eliminas una comida del plan, el hueco aparece dentro de su dia con un selector de recetas compatibles para anadirla manualmente.
+8. Pulsa **Completar huecos** para rellenar automaticamente los huecos restantes sin borrar las comidas ya planificadas.
+9. Si falta comida, la **lista de la compra** aparece cerrada por defecto pero indica claramente si falta compra o si el plan esta cubierto.
+10. Las comidas del plan que no se podrian cocinar quedan marcadas en su tarjeta para verlo de un vistazo.
+11. Al desplegar la lista de compra, muestra alimentos agregados por unidad y las **comidas afectadas**, con receta, fecha, franja y faltas concretas.
+12. Cuando una comida ya paso, la app la muestra como pendiente: si marcas **Hecha**, descuenta ingredientes; si marcas **No hecha**, solo elimina la planificacion.
 
 ## Limitaciones conscientes del MVP
 

@@ -180,6 +180,20 @@ export class PantryApp {
         this.showToast('Alimento anadido.');
       }
 
+      if (form.matches('[data-form="pantry-stock"]')) {
+        const data = new FormData(form);
+        const stockAction = event.submitter?.dataset.stockAction ?? 'add';
+
+        if (stockAction === 'subtract') {
+          await this.service.subtractPantryItemQuantity(data.get('pantryItemId'), data.get('quantity'));
+        } else {
+          await this.service.addPantryItemQuantity(data.get('pantryItemId'), data.get('quantity'));
+        }
+
+        form.reset();
+        this.showToast('Stock actualizado.');
+      }
+
       if (form.matches('[data-form="recipe"]')) {
         const data = new FormData(form);
         await this.service.createRecipe({
@@ -456,14 +470,27 @@ export class PantryApp {
    */
   renderPantryItem(item) {
     return `
-      <article class="list-card">
-        <div>
-          <h3>${escapeHtml(item.name)}</h3>
-          <p>${formatQuantity(item.quantity)} ${escapeHtml(item.unit)}</p>
+      <article class="list-card pantry-card">
+        <div class="pantry-card-main">
+          <div>
+            <h3>${escapeHtml(item.name)}</h3>
+            <p>${formatQuantity(item.quantity)} ${escapeHtml(item.unit)}</p>
+          </div>
+          <button class="icon-button" type="button" aria-label="Eliminar ${escapeAttribute(item.name)}" data-action="delete-pantry-item" data-id="${item.id}">
+            x
+          </button>
         </div>
-        <button class="icon-button" type="button" aria-label="Eliminar ${escapeAttribute(item.name)}" data-action="delete-pantry-item" data-id="${item.id}">
-          x
-        </button>
+        <form class="stock-form" data-form="pantry-stock">
+          <input type="hidden" name="pantryItemId" value="${escapeAttribute(item.id)}" />
+          <label>
+            Ajustar ${escapeHtml(item.unit)}
+            <input name="quantity" type="number" inputmode="decimal" step="0.01" min="0.01" placeholder="0" required />
+          </label>
+          <div class="stock-actions">
+            <button class="button small" type="submit" data-stock-action="add">Sumar</button>
+            <button class="button ghost small" type="submit" data-stock-action="subtract">Restar</button>
+          </div>
+        </form>
       </article>
     `;
   }
