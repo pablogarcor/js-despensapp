@@ -27,6 +27,7 @@ export class PantryApp {
       pantryFormOpen: false,
       recipeFormOpen: false,
       planActionsOpen: false,
+      selectedPlanDate: null,
       editingPantryItemId: null,
       ingredientRows: [createIngredientRow()],
       editingRecipeId: null,
@@ -279,6 +280,11 @@ export class PantryApp {
         shouldRefresh = false;
       }
 
+      if (action === 'scroll-plan-day') {
+        this.state.selectedPlanDate = actionElement.dataset.date;
+        shouldRefresh = false;
+      }
+
       if (action === 'clear-all-data') {
         if (!window.confirm('Borrar todo eliminara despensa, recetas y planificacion.')) {
           shouldRefresh = false;
@@ -339,6 +345,10 @@ export class PantryApp {
         await this.refresh();
       } else {
         this.render();
+      }
+
+      if (action === 'scroll-plan-day') {
+        this.scrollToPlanDay(actionElement.dataset.date);
       }
     });
   }
@@ -579,6 +589,21 @@ export class PantryApp {
     if (typeof searchInput.setSelectionRange === 'function') {
       searchInput.setSelectionRange(selectionStart, selectionEnd);
     }
+  }
+
+  /**
+   * Desplaza la planificacion hasta el dia indicado.
+   *
+   * @param {string} date Fecha YYYY-MM-DD.
+   */
+  scrollToPlanDay(date) {
+    const dayElement = this.root.querySelector(`[data-plan-day="${date}"]`);
+
+    if (!dayElement) {
+      return;
+    }
+
+    dayElement.scrollIntoView({ behavior: 'smooth', block: 'start' });
   }
 
   /**
@@ -1356,7 +1381,7 @@ export class PantryApp {
     const isActionsOpen = this.state.planActionsOpen;
 
     return `
-      <section class="panel action-panel ${isActionsOpen ? '' : 'is-collapsed'}">
+      <section class="panel action-panel plan-toolbar ${isActionsOpen ? '' : 'is-collapsed'}">
         <div class="section-heading">
           <div>
             <p class="eyebrow">Siguiente semana</p>
@@ -1366,6 +1391,8 @@ export class PantryApp {
             ${isActionsOpen ? 'Ocultar' : 'Acciones'}
           </button>
         </div>
+
+        ${this.renderPlanDayStrip(dashboard)}
 
         ${
           isActionsOpen
@@ -1394,6 +1421,37 @@ export class PantryApp {
         }
         ${this.renderPlanGroups(dashboard)}
       </section>
+    `;
+  }
+
+  /**
+   * Renderiza una navegacion compacta por los dias planificados.
+   *
+   * @param {import('../domain/types.js').DashboardSnapshot} dashboard Snapshot.
+   * @returns {string} HTML.
+   */
+  renderPlanDayStrip(dashboard) {
+    const days = getPlanDaySummaries(dashboard);
+
+    if (days.length === 0) {
+      return '';
+    }
+
+    return `
+      <nav class="plan-day-strip" aria-label="Dias del plan">
+        ${days.map((day) => `
+          <button
+            class="plan-day-chip ${day.statusClass} ${this.state.selectedPlanDate === day.date ? 'is-selected' : ''}"
+            type="button"
+            data-action="scroll-plan-day"
+            data-date="${escapeAttribute(day.date)}"
+            aria-label="Ir a ${escapeAttribute(day.longLabel)}"
+          >
+            <span>${escapeHtml(day.weekday)}</span>
+            <strong>${escapeHtml(day.dayNumber)}</strong>
+          </button>
+        `).join('')}
+      </nav>
     `;
   }
 
@@ -1564,7 +1622,7 @@ export class PantryApp {
     return [...groups.entries()]
       .sort(([leftDate], [rightDate]) => leftDate.localeCompare(rightDate))
       .map(([date, meals]) => `
-        <section class="day-group">
+        <section class="day-group" id="plan-day-${escapeAttribute(date)}" data-plan-day="${escapeAttribute(date)}">
           <h3>${formatDate(date)}</h3>
           ${meals.map((meal) => this.renderPlannedMeal(meal, dashboard.recipes, dashboard.unavailableMeals)).join('')}
           ${dashboard.missingPlanSlots
@@ -1757,6 +1815,46 @@ function formatDate(isoDate) {
     day: 'numeric',
     month: 'short',
   }).format(fromISODate(isoDate));
+}
+
+/**
+ * Resume cada dia del plan para la navegacion semanal.
+ *
+ * @param {import('../domain/types.js').DashboardSnapshot} dashboard Snapshot.
+ * @returns {Array<{date: string, weekday: string, dayNumber: string, longLabel: string, statusClass: string}>} Dias.
+ */
+function getPlanDaySummaries(dashboard) {
+  const dates = new Set();
+
+  for (const meal of dashboard.plannedMeals) {
+    dates.add(meal.date);
+  }
+
+  for (const slot of dashboard.missingPlanSlots) {
+    dates.add(slot.date);
+  }
+
+  return [...dates]
+    .sort((leftDate, rightDate) => leftDate.localeCompare(rightDate))
+    .map((date) => {
+      const hasMissingFood = dashboard.unavailableMeals.some((meal) => meal.date === date);
+      const hasOpenSlots = dashboard.missingPlanSlots.some((slot) => slot.date === date);
+      const dateValue = fromISODate(date);
+
+      return {
+        date,
+        weekday: new Intl.DateTimeFormat('es-ES', { weekday: 'short' })
+          .format(dateValue)
+          .replace('.', ''),
+        dayNumber: new Intl.DateTimeFormat('es-ES', { day: 'numeric' }).format(dateValue),
+        longLabel: new Intl.DateTimeFormat('es-ES', {
+          weekday: 'long',
+          day: 'numeric',
+          month: 'long',
+        }).format(dateValue),
+        statusClass: hasMissingFood ? 'has-shortage' : hasOpenSlots ? 'has-open-slots' : 'is-complete',
+      };
+    });
 }
 
 /**
