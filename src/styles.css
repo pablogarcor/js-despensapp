@@ -275,6 +275,12 @@ button:disabled {
   background: var(--color-primary-soft);
 }
 
+.action-panel {
+  position: sticky;
+  top: calc(10px + env(safe-area-inset-top));
+  z-index: 12;
+}
+
 .section-heading {
   display: flex;
   align-items: flex-start;
@@ -286,6 +292,10 @@ button:disabled {
 .section-heading.compact {
   align-items: center;
   margin-bottom: 10px;
+}
+
+.action-panel.is-collapsed .section-heading {
+  margin-bottom: 0;
 }
 
 .section-heading h2 {
@@ -1029,6 +1039,10 @@ summary:focus-visible {
   .notice-panel,
   .status-panel {
     padding: 18px;
+  }
+
+  .action-panel {
+    top: 76px;
   }
 
   .stock-form {

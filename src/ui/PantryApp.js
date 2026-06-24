@@ -24,6 +24,9 @@ export class PantryApp {
       dashboard: null,
       pantrySearch: '',
       recipeSearch: '',
+      pantryFormOpen: false,
+      recipeFormOpen: false,
+      planActionsOpen: false,
       editingPantryItemId: null,
       ingredientRows: [createIngredientRow()],
       editingRecipeId: null,
@@ -160,7 +163,18 @@ export class PantryApp {
         const deletedCount = await this.service.clearPantryItems();
         this.state.editingPantryItemId = null;
         this.state.pantrySearch = '';
+        this.state.pantryFormOpen = false;
         this.showToast(`${deletedCount} alimentos eliminados de la despensa.`);
+      }
+
+      if (action === 'show-pantry-form') {
+        this.state.pantryFormOpen = true;
+        shouldRefresh = false;
+      }
+
+      if (action === 'hide-pantry-form') {
+        this.state.pantryFormOpen = false;
+        shouldRefresh = false;
       }
 
       if (action === 'clear-pantry-search') {
@@ -189,7 +203,18 @@ export class PantryApp {
         this.state.editRecipeDraft = null;
         this.state.editIngredientRows = [];
         this.state.recipeSearch = '';
+        this.state.recipeFormOpen = false;
         this.showToast(`${deletedCount} recetas eliminadas.`);
+      }
+
+      if (action === 'show-recipe-form') {
+        this.state.recipeFormOpen = true;
+        shouldRefresh = false;
+      }
+
+      if (action === 'hide-recipe-form') {
+        this.state.recipeFormOpen = false;
+        shouldRefresh = false;
       }
 
       if (action === 'clear-recipe-search') {
@@ -240,7 +265,18 @@ export class PantryApp {
 
       if (action === 'clear-plan') {
         const deletedCount = await this.service.clearCurrentAndFutureMeals();
+        this.state.planActionsOpen = false;
         this.showToast(`${deletedCount} comidas eliminadas del plan.`);
+      }
+
+      if (action === 'show-plan-actions') {
+        this.state.planActionsOpen = true;
+        shouldRefresh = false;
+      }
+
+      if (action === 'hide-plan-actions') {
+        this.state.planActionsOpen = false;
+        shouldRefresh = false;
       }
 
       if (action === 'clear-all-data') {
@@ -255,6 +291,9 @@ export class PantryApp {
           this.state.editingPlannedMealId = null;
           this.state.pantrySearch = '';
           this.state.recipeSearch = '';
+          this.state.pantryFormOpen = true;
+          this.state.recipeFormOpen = true;
+          this.state.planActionsOpen = false;
           this.showToast(
             `Eliminados ${summary.pantryItems} alimentos, ${summary.recipes} recetas y ${summary.plannedMeals} comidas.`,
           );
@@ -328,6 +367,7 @@ export class PantryApp {
           unit: data.get('unit'),
         });
         form.reset();
+        this.state.pantryFormOpen = false;
         this.showToast('Alimento anadido.');
       }
 
@@ -365,6 +405,7 @@ export class PantryApp {
           ingredients: this.readIngredientsFromForm(data),
         });
         this.state.ingredientRows = [createIngredientRow()];
+        this.state.recipeFormOpen = false;
         this.showToast('Receta creada.');
       }
 
@@ -394,6 +435,7 @@ export class PantryApp {
           mode === 'complete'
             ? `${result.plannedMeals.length} huecos completados.`
             : 'Semana planificada.';
+        this.state.planActionsOpen = false;
         this.showToast(`${createdMessage}${skippedMessage}`);
       }
 
@@ -878,42 +920,55 @@ export class PantryApp {
    */
   renderPantryView(dashboard) {
     const filteredPantryItems = this.filterPantryItems(dashboard.pantryItems);
+    const isFormOpen = this.state.pantryFormOpen || dashboard.pantryItems.length === 0;
 
     return `
-      <section class="panel">
+      <section class="panel action-panel ${isFormOpen ? '' : 'is-collapsed'}">
         <div class="section-heading">
           <div>
             <p class="eyebrow">Inventario</p>
             <h2>Despensa</h2>
           </div>
-          <span class="counter">${dashboard.pantryItems.length}</span>
+          ${
+            dashboard.pantryItems.length === 0
+              ? '<span class="counter">0</span>'
+              : `<button class="button ghost small" type="button" data-action="${isFormOpen ? 'hide-pantry-form' : 'show-pantry-form'}">
+                  ${isFormOpen ? 'Ocultar' : 'Añadir alimento'}
+                </button>`
+          }
         </div>
 
-        <form class="stacked-form" data-form="pantry-item">
-          <label>
-            Nombre
-            <input name="name" type="text" autocomplete="off" placeholder="Ej. Garbanzos" required />
-          </label>
-          <div class="form-grid">
-            <label>
-              Cantidad
-              <input name="quantity" type="number" inputmode="decimal" step="0.01" min="0" placeholder="0" required />
-            </label>
-            <label>
-              Unidad
-              <select name="unit" required>
-                ${renderUnitOptions()}
-              </select>
-            </label>
-          </div>
-          <button class="button full" type="submit">Añadir alimento</button>
-        </form>
+        ${
+          isFormOpen
+            ? `
+              <form class="stacked-form" data-form="pantry-item">
+                <label>
+                  Nombre
+                  <input name="name" type="text" autocomplete="off" placeholder="Ej. Garbanzos" required />
+                </label>
+                <div class="form-grid">
+                  <label>
+                    Cantidad
+                    <input name="quantity" type="number" inputmode="decimal" step="0.01" min="0" placeholder="0" required />
+                  </label>
+                  <label>
+                    Unidad
+                    <select name="unit" required>
+                      ${renderUnitOptions()}
+                    </select>
+                  </label>
+                </div>
+                <button class="button full" type="submit">Añadir alimento</button>
+              </form>
 
-        <div class="bulk-actions">
-          <button class="button ghost full" type="button" data-action="clear-pantry" ${dashboard.pantryItems.length === 0 ? 'disabled' : ''}>
-            Vaciar despensa
-          </button>
-        </div>
+              <div class="bulk-actions">
+                <button class="button ghost full" type="button" data-action="clear-pantry" ${dashboard.pantryItems.length === 0 ? 'disabled' : ''}>
+                  Vaciar despensa
+                </button>
+              </div>
+            `
+            : ''
+        }
       </section>
 
       <section class="list-section" aria-label="Alimentos guardados">
@@ -1072,51 +1127,64 @@ export class PantryApp {
    */
   renderRecipesView(dashboard) {
     const filteredRecipes = this.filterRecipes(dashboard.recipes, dashboard.pantryItems);
+    const isFormOpen = this.state.recipeFormOpen || dashboard.recipes.length === 0;
 
     return `
-      <section class="panel">
+      <section class="panel action-panel ${isFormOpen ? '' : 'is-collapsed'}">
         <div class="section-heading">
           <div>
             <p class="eyebrow">Cocina</p>
             <h2>Recetas</h2>
           </div>
-          <span class="counter">${dashboard.recipes.length}</span>
+          ${
+            dashboard.recipes.length === 0
+              ? '<span class="counter">0</span>'
+              : `<button class="button ghost small" type="button" data-action="${isFormOpen ? 'hide-recipe-form' : 'show-recipe-form'}">
+                  ${isFormOpen ? 'Ocultar' : 'Crear receta'}
+                </button>`
+          }
         </div>
 
-        <form class="stacked-form" data-form="recipe">
-          <label>
-            Nombre
-            <input name="name" type="text" autocomplete="off" placeholder="Ej. Lentejas rápidas" required />
-          </label>
+        ${
+          isFormOpen
+            ? `
+              <form class="stacked-form" data-form="recipe">
+                <label>
+                  Nombre
+                  <input name="name" type="text" autocomplete="off" placeholder="Ej. Lentejas rápidas" required />
+                </label>
 
-          <fieldset class="choice-group">
-            <legend>Momentos del dia</legend>
-            ${MEAL_TYPES.map((mealType) => `
-              <label class="checkbox-card">
-                <input type="checkbox" name="mealTypes" value="${mealType}" checked />
-                <span>${MEAL_TYPE_LABELS[mealType]}</span>
-              </label>
-            `).join('')}
-          </fieldset>
+                <fieldset class="choice-group">
+                  <legend>Momentos del dia</legend>
+                  ${MEAL_TYPES.map((mealType) => `
+                    <label class="checkbox-card">
+                      <input type="checkbox" name="mealTypes" value="${mealType}" checked />
+                      <span>${MEAL_TYPE_LABELS[mealType]}</span>
+                    </label>
+                  `).join('')}
+                </fieldset>
 
-          <div class="ingredient-builder">
-            <div class="section-heading compact">
-              <h3>Ingredientes por racion</h3>
-              <button class="button ghost small" type="button" data-action="add-ingredient-row" aria-label="Añadir ingrediente">+</button>
-            </div>
-            ${this.state.ingredientRows.map((row) => this.renderIngredientRow(row, dashboard.pantryItems)).join('')}
-          </div>
+                <div class="ingredient-builder">
+                  <div class="section-heading compact">
+                    <h3>Ingredientes por racion</h3>
+                    <button class="button ghost small" type="button" data-action="add-ingredient-row" aria-label="Añadir ingrediente">+</button>
+                  </div>
+                  ${this.state.ingredientRows.map((row) => this.renderIngredientRow(row, dashboard.pantryItems)).join('')}
+                </div>
 
-          <button class="button full" type="submit" ${dashboard.pantryItems.length === 0 ? 'disabled' : ''}>
-            Crear receta
-          </button>
-        </form>
+                <button class="button full" type="submit" ${dashboard.pantryItems.length === 0 ? 'disabled' : ''}>
+                  Crear receta
+                </button>
+              </form>
 
-        <div class="bulk-actions">
-          <button class="button ghost full" type="button" data-action="clear-recipes" ${dashboard.recipes.length === 0 ? 'disabled' : ''}>
-            Vaciar recetas
-          </button>
-        </div>
+              <div class="bulk-actions">
+                <button class="button ghost full" type="button" data-action="clear-recipes" ${dashboard.recipes.length === 0 ? 'disabled' : ''}>
+                  Vaciar recetas
+                </button>
+              </div>
+            `
+            : ''
+        }
       </section>
 
       <section class="list-section" aria-label="Recetas guardadas">
@@ -1285,25 +1353,35 @@ export class PantryApp {
    * @returns {string} HTML.
    */
   renderPlanView(dashboard) {
+    const isActionsOpen = this.state.planActionsOpen;
+
     return `
-      <section class="panel">
+      <section class="panel action-panel ${isActionsOpen ? '' : 'is-collapsed'}">
         <div class="section-heading">
           <div>
             <p class="eyebrow">Siguiente semana</p>
             <h2>Planificacion</h2>
           </div>
-          <span class="counter">${dashboard.plannedMeals.length}</span>
+          <button class="button ghost small" type="button" data-action="${isActionsOpen ? 'hide-plan-actions' : 'show-plan-actions'}">
+            ${isActionsOpen ? 'Ocultar' : 'Acciones'}
+          </button>
         </div>
 
-        <form class="plan-actions" data-form="plan-week">
-          <label>
-            Raciones por comida
-            <input name="servings" type="number" inputmode="decimal" min="0.5" step="0.5" value="1" required />
-          </label>
-          <button class="button" type="submit" data-plan-mode="reset">Planificar semana</button>
-          <button class="button ghost" type="submit" data-plan-mode="complete">Completar huecos</button>
-          <button class="button ghost" type="button" data-action="clear-plan">Vaciar plan</button>
-        </form>
+        ${
+          isActionsOpen
+            ? `
+              <form class="plan-actions" data-form="plan-week">
+                <label>
+                  Raciones por comida
+                  <input name="servings" type="number" inputmode="decimal" min="0.5" step="0.5" value="1" required />
+                </label>
+                <button class="button" type="submit" data-plan-mode="reset">Planificar semana</button>
+                <button class="button ghost" type="submit" data-plan-mode="complete">Completar huecos</button>
+                <button class="button ghost" type="button" data-action="clear-plan">Vaciar plan</button>
+              </form>
+            `
+            : ''
+        }
       </section>
 
       ${this.renderShoppingList(dashboard)}
