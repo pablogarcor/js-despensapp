@@ -1,0 +1,66 @@
+.plan-actions {
+  grid-template-columns: 1fr;
+}
+
+.plan-day-strip {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 12px;
+  overflow-x: auto;
+  padding-bottom: 2px;
+  scrollbar-width: none;
+}
+
+.plan-toolbar.is-collapsed .plan-day-strip {
+  margin-bottom: 0;
+}
+
+.plan-day-strip::-webkit-scrollbar {
+  display: none;
+}
+
+.plan-day-chip {
+  display: grid;
+  place-items: center;
+  flex: 0 0 54px;
+  min-height: 58px;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius);
+  background: var(--color-canvas-soft);
+  color: var(--color-muted);
+  padding: 7px 6px;
+  line-height: 1;
+}
+
+.plan-day-chip span {
+  font-size: 0.72rem;
+  font-weight: 820;
+  text-transform: uppercase;
+}
+
+.plan-day-chip strong {
+  color: var(--color-text);
+  font-size: 1.22rem;
+  line-height: 1.05;
+}
+
+.plan-day-chip.has-open-slots {
+  border-style: dashed;
+  background: #ffffff;
+}
+
+.plan-day-chip.has-shortage {
+  border-color: rgba(155, 91, 18, 0.28);
+  background: var(--color-warning-soft);
+  color: var(--color-warning);
+}
+
+.plan-day-chip.is-complete {
+  border-color: rgba(21, 106, 90, 0.22);
+  background: var(--color-primary-soft);
+}
+
+.plan-day-chip.is-selected {
+  border-color: var(--color-primary);
+  box-shadow: 0 0 0 3px rgba(21, 106, 90, 0.14);
+}

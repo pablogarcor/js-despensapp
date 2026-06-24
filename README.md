@@ -7,6 +7,8 @@ MVP mobile first para gestionar una despensa local, crear recetas con alimentos 
 - **Vite + JavaScript nativo**: Vite se usa solo como servidor de desarrollo y bundler. No hay framework de UI porque el MVP no necesita router, estado global ni componentes complejos.
 - **IndexedDB**: es persistente, funciona en navegadores moviles modernos y permite modelar tablas locales sin servidor.
 - **PWA nativa sin plugin**: se usa un `manifest.webmanifest`, un service worker propio e iconos locales. No se anade `vite-plugin-pwa` porque el caso actual se resuelve con pocas APIs estandar.
+- **UI separada por responsabilidad**: `PantryApp` coordina estado, eventos y llamadas al servicio; los renders de cada pantalla viven en `src/ui/render/` y los helpers compartidos en `src/ui/renderUtils.js` y `src/ui/uiState.js`.
+- **CSS por capas**: `src/styles.css` solo importa modulos pequenos de `src/styles/` para mantener base, formularios, listas, planificacion y responsive separados sin introducir un framework de estilos.
 - **`asset-manifest.json` de Vite**: el build emite un manifest de assets para que el service worker pueda precachear los archivos con hash sin hardcodearlos.
 - **JSDoc**: documenta tipos, servicios y funciones sin introducir TypeScript en esta fase.
 - **Node test runner**: los tests usan `node:test`, asi que no se anade Vitest/Jest para mantener pocas dependencias.
@@ -102,9 +104,13 @@ Las reglas viven en `src/services/pantryService.js`:
 │   ├── pwa
 │   │   └── registerServiceWorker.js # Registro seguro del service worker
 │   ├── ui
-│   │   └── PantryApp.js       # Controlador y render de la SPA
+│   │   ├── PantryApp.js       # Controlador de estado, eventos y servicio
+│   │   ├── render             # Renders agrupados por vista
+│   │   ├── renderUtils.js     # Escape HTML, formato y helpers de render
+│   │   └── uiState.js         # Estado efimero de formularios y toasts
 │   ├── main.js                # Bootstrap de la app
-│   └── styles.css             # UI mobile first
+│   ├── styles                 # CSS por capa/componente visual
+│   └── styles.css             # Entrada de estilos con imports ordenados
 ├── vite.config.js             # Build manifest para precache PWA
 └── tests
     └── pantryService.test.js  # Tests de reglas criticas

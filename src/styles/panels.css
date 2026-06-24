@@ -1,0 +1,97 @@
+.panel,
+.notice-panel,
+.status-panel {
+  margin-bottom: 14px;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius);
+  background: var(--color-surface);
+  box-shadow: var(--shadow-soft);
+}
+
+.panel,
+.notice-panel,
+.status-panel {
+  padding: 16px;
+}
+
+.notice-panel {
+  border-color: rgba(155, 91, 18, 0.28);
+  background: var(--color-warning-soft);
+}
+
+.status-panel {
+  border-color: rgba(163, 59, 43, 0.24);
+  background: var(--color-danger-soft);
+}
+
+.status-panel.ok {
+  border-color: rgba(21, 106, 90, 0.22);
+  background: var(--color-primary-soft);
+}
+
+.action-panel {
+  position: sticky;
+  top: calc(10px + env(safe-area-inset-top));
+  z-index: 12;
+}
+
+.section-heading {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 14px;
+}
+
+.section-heading.compact {
+  align-items: center;
+  margin-bottom: 10px;
+}
+
+.action-panel.is-collapsed:not(.plan-toolbar) .section-heading {
+  margin-bottom: 0;
+}
+
+.plan-toolbar .section-heading {
+  margin-bottom: 12px;
+}
+
+.section-heading h2 {
+  color: var(--color-text);
+  font-size: 1.32rem;
+  line-height: 1.08;
+}
+
+.section-heading h3,
+.day-group h3 {
+  color: var(--color-text);
+  font-size: 1rem;
+}
+
+.counter {
+  align-items: center;
+  flex: 0 0 auto;
+  min-width: 44px;
+  min-height: 38px;
+  padding: 6px 10px;
+  font-size: 1rem;
+}
+
+.stacked-form,
+.plan-actions {
+  display: grid;
+  gap: 12px;
+}
+
+.bulk-actions {
+  display: grid;
+  gap: 8px;
+  margin-top: 12px;
+  padding-top: 12px;
+  border-top: 1px solid rgba(30, 37, 34, 0.08);
+}
+
+.settings-actions {
+  display: grid;
+  gap: 10px;
+}

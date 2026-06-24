@@ -1,0 +1,132 @@
+@media (max-width: 390px) {
+  .app-shell {
+    padding-right: 12px;
+    padding-left: 12px;
+  }
+
+  .app-header h1 {
+    font-size: 1.58rem;
+  }
+
+  .brand-logo {
+    width: 38px;
+    height: 38px;
+  }
+
+  .summary-item {
+    min-height: 54px;
+    padding: 8px;
+    font-size: 0.72rem;
+  }
+
+  .summary-item strong {
+    font-size: 1.12rem;
+  }
+
+  .choice-group {
+    grid-template-columns: 1fr;
+  }
+
+  .ingredient-row {
+    grid-template-columns: minmax(0, 1fr) 74px 38px;
+  }
+}
+
+@media (min-width: 640px) {
+  .app-shell {
+    padding-top: 32px;
+    padding-bottom: 44px;
+  }
+
+  .tabs {
+    position: sticky;
+    top: 0;
+    right: auto;
+    bottom: auto;
+    left: auto;
+    width: 100%;
+    max-width: none;
+    margin: 0 0 16px;
+    box-shadow: 0 10px 22px rgba(31, 37, 34, 0.08);
+  }
+
+  .tab {
+    min-height: 44px;
+  }
+
+  .panel,
+  .notice-panel,
+  .status-panel {
+    padding: 18px;
+  }
+
+  .action-panel {
+    top: 76px;
+  }
+
+  .stock-form {
+    grid-template-columns: minmax(0, 1fr) auto;
+  }
+
+  .plan-actions {
+    grid-template-columns: 1fr auto auto auto;
+    align-items: end;
+  }
+
+  .meal-edit-card {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .meal-edit-card .form-actions {
+    grid-column: 1 / -1;
+  }
+}
+
+@media (min-width: 860px) {
+  .app-shell {
+    padding-right: 24px;
+    padding-left: 24px;
+  }
+
+  .summary-strip {
+    grid-template-columns: repeat(3, 1fr);
+  }
+
+  .view-layout {
+    width: 100%;
+  }
+
+  .view-pantry,
+  .view-recipes,
+  .view-plan {
+    display: grid;
+    grid-template-columns: minmax(0, 0.95fr) minmax(0, 1.05fr);
+    gap: 16px;
+    align-items: start;
+  }
+
+  .view-pantry > .panel,
+  .view-recipes > .panel,
+  .view-plan > .panel,
+  .view-plan > .status-panel {
+    grid-column: 1;
+  }
+
+  .view-pantry > .list-section,
+  .view-recipes > .list-section,
+  .view-plan > .list-section {
+    grid-column: 2;
+    grid-row: 1 / span 4;
+  }
+
+  .view-settings {
+    display: grid;
+    max-width: 680px;
+    margin: 0 auto;
+    gap: 14px;
+  }
+
+  .settings-actions {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}

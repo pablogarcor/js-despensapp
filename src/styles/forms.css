@@ -1,0 +1,95 @@
+.form-grid {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(108px, 0.52fr);
+  gap: 10px;
+}
+
+label,
+legend {
+  color: var(--color-muted);
+  font-size: 0.84rem;
+  font-weight: 780;
+}
+
+input,
+select {
+  width: 100%;
+  min-height: 48px;
+  margin-top: 6px;
+  border: 1px solid var(--color-border-strong);
+  border-radius: var(--radius);
+  background: var(--color-canvas-soft);
+  color: var(--color-text);
+  padding: 11px 12px;
+}
+
+select {
+  appearance: none;
+  background-image: url("data:image/svg+xml,%3Csvg width='20' height='20' viewBox='0 0 20 20' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='m5.5 7.5 4.5 4.5 4.5-4.5' fill='none' stroke='%2366716b' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E");
+  background-position: right 12px center;
+  background-repeat: no-repeat;
+  background-size: 18px 18px;
+  padding-right: 40px;
+}
+
+input[type="file"] {
+  padding: 9px 10px;
+}
+
+input[type="search"] {
+  appearance: none;
+}
+
+input[type="search"]::-webkit-search-cancel-button {
+  display: none;
+}
+
+input:hover,
+select:hover {
+  border-color: #aaa397;
+}
+
+input:focus,
+select:focus,
+button:focus-visible,
+summary:focus-visible {
+  outline: 3px solid rgba(33, 91, 145, 0.2);
+  outline-offset: 2px;
+}
+
+.button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 46px;
+  border: 1px solid var(--color-primary);
+  border-radius: var(--radius);
+  background: var(--color-primary);
+  color: #ffffff;
+  padding: 10px 14px;
+  box-shadow: 0 8px 18px rgba(21, 106, 90, 0.16);
+  font-weight: 820;
+}
+
+.button.full {
+  width: 100%;
+}
+
+.button.ghost {
+  border-color: var(--color-border);
+  background: #ffffff;
+  color: var(--color-text);
+  box-shadow: none;
+}
+
+.button.danger-action {
+  border-color: rgba(163, 59, 43, 0.24);
+  background: var(--color-danger-soft);
+  color: var(--color-danger);
+}
+
+.button.small {
+  min-height: 36px;
+  padding: 6px 10px;
+  font-size: 0.86rem;
+}

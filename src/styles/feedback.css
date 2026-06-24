@@ -1,0 +1,51 @@
+.empty-state {
+  margin: 0 0 14px;
+  border: 1px dashed var(--color-border-strong);
+  border-radius: var(--radius);
+  background: rgba(255, 255, 255, 0.62);
+  color: var(--color-muted);
+  padding: 14px;
+  font-weight: 680;
+}
+
+.toast {
+  position: fixed;
+  z-index: 50;
+  top: calc(12px + env(safe-area-inset-top));
+  left: max(12px, env(safe-area-inset-left));
+  right: max(12px, env(safe-area-inset-right));
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  width: min(calc(100% - 24px), 560px);
+  margin: 0 auto;
+  border: 1px solid rgba(21, 106, 90, 0.28);
+  border-radius: var(--radius);
+  background: #f1faf6;
+  color: var(--color-primary-strong);
+  box-shadow: var(--shadow-lifted);
+  padding: 12px 12px 12px 14px;
+  font-weight: 740;
+}
+
+.toast.is-error {
+  border-color: rgba(163, 59, 43, 0.32);
+  background: var(--color-danger-soft);
+  color: var(--color-danger);
+}
+
+.toast-close {
+  display: inline-grid;
+  place-items: center;
+  flex: 0 0 auto;
+  width: 34px;
+  height: 34px;
+  border: 1px solid currentColor;
+  border-radius: var(--radius);
+  background: transparent;
+  color: inherit;
+  font-size: 1rem;
+  font-weight: 900;
+  line-height: 1;
+}

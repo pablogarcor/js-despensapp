@@ -1,0 +1,23 @@
+.data-stats {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 8px;
+  margin-bottom: 14px;
+}
+
+.data-stats span {
+  display: grid;
+  place-items: center;
+  min-height: 60px;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius);
+  background: var(--color-canvas-soft);
+  color: var(--color-muted);
+  font-size: 0.8rem;
+  text-align: center;
+}
+
+.data-stats strong {
+  color: var(--color-text);
+  font-size: 1.18rem;
+}

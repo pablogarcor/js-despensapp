@@ -1,0 +1,140 @@
+.shopping-dropdown {
+  display: block;
+}
+
+.shopping-dropdown summary {
+  list-style: none;
+}
+
+.shopping-dropdown summary::-webkit-details-marker {
+  display: none;
+}
+
+.shopping-summary {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  cursor: pointer;
+}
+
+.shopping-summary::after {
+  display: inline-grid;
+  place-items: center;
+  flex: 0 0 auto;
+  width: 30px;
+  height: 30px;
+  border: 1px solid rgba(30, 37, 34, 0.14);
+  border-radius: var(--radius);
+  color: var(--color-text);
+  content: "+";
+  font-weight: 900;
+}
+
+.shopping-summary > span:first-child {
+  min-width: 0;
+  flex: 1 1 auto;
+}
+
+.shopping-dropdown[open] .shopping-summary::after {
+  content: "-";
+}
+
+.shopping-summary strong,
+.shopping-summary small {
+  display: block;
+}
+
+.shopping-summary small {
+  margin-top: 2px;
+  color: var(--color-muted);
+  font-size: 0.82rem;
+}
+
+.shopping-badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 30px;
+  border-radius: var(--radius);
+  padding: 4px 8px;
+  font-size: 0.76rem;
+  font-weight: 850;
+  white-space: nowrap;
+}
+
+.shopping-badge.is-warning {
+  background: #ffffff;
+  color: var(--color-warning);
+}
+
+.shopping-badge.is-ok {
+  background: #ffffff;
+  color: var(--color-primary-strong);
+}
+
+.shopping-dropdown-content {
+  margin-top: 12px;
+  border-top: 1px solid rgba(30, 37, 34, 0.1);
+  padding-top: 12px;
+}
+
+.shopping-ok-text {
+  margin: 0;
+  color: var(--color-primary-strong);
+  font-weight: 760;
+}
+
+.shopping-list {
+  display: grid;
+  gap: 8px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.shopping-list li {
+  display: flex;
+  justify-content: space-between;
+  gap: 16px;
+  border-top: 1px solid rgba(30, 37, 34, 0.1);
+  padding-top: 8px;
+}
+
+.unavailable-meals {
+  display: grid;
+  gap: 8px;
+  margin-top: 14px;
+  border-top: 1px solid rgba(30, 37, 34, 0.1);
+  padding-top: 12px;
+}
+
+.unavailable-meals h4 {
+  margin: 0;
+  color: var(--color-danger);
+  font-size: 0.9rem;
+}
+
+.unavailable-meal {
+  display: grid;
+  gap: 8px;
+  border: 1px solid rgba(163, 59, 43, 0.22);
+  border-radius: var(--radius);
+  background: #fffaf7;
+  padding: 10px;
+}
+
+.unavailable-meal span {
+  display: block;
+  color: var(--color-muted);
+  font-size: 0.82rem;
+}
+
+.unavailable-meal ul {
+  display: grid;
+  gap: 4px;
+  margin: 0;
+  padding-left: 18px;
+  color: var(--color-danger);
+  font-size: 0.88rem;
+}
