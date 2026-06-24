@@ -56,12 +56,6 @@ export const pantryViewMethods = {
                 </div>
                 <button class="button full" type="submit">Añadir alimento</button>
               </form>
-
-              <div class="bulk-actions">
-                <button class="button ghost full" type="button" data-action="clear-pantry" ${dashboard.pantryItems.length === 0 ? 'disabled' : ''}>
-                  Vaciar despensa
-                </button>
-              </div>
             `
             : ''
         }

@@ -164,14 +164,6 @@ export class PantryApp {
         this.showToast('Alimento eliminado.');
       }
 
-      if (action === 'clear-pantry') {
-        const deletedCount = await this.service.clearPantryItems();
-        this.state.editingPantryItemId = null;
-        this.state.pantrySearch = '';
-        this.state.pantryFormOpen = false;
-        this.showToast(`${deletedCount} alimentos eliminados de la despensa.`);
-      }
-
       if (action === 'show-pantry-form') {
         this.state.pantryFormOpen = true;
         shouldRefresh = false;
@@ -200,16 +192,6 @@ export class PantryApp {
       if (action === 'delete-recipe') {
         await this.service.deleteRecipe(id);
         this.showToast('Receta eliminada.');
-      }
-
-      if (action === 'clear-recipes') {
-        const deletedCount = await this.service.clearRecipes();
-        this.state.editingRecipeId = null;
-        this.state.editRecipeDraft = null;
-        this.state.editIngredientRows = [];
-        this.state.recipeSearch = '';
-        this.state.recipeFormOpen = false;
-        this.showToast(`${deletedCount} recetas eliminadas.`);
       }
 
       if (action === 'show-recipe-form') {

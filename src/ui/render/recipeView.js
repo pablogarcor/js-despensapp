@@ -72,12 +72,6 @@ export const recipeViewMethods = {
                   Crear receta
                 </button>
               </form>
-
-              <div class="bulk-actions">
-                <button class="button ghost full" type="button" data-action="clear-recipes" ${dashboard.recipes.length === 0 ? 'disabled' : ''}>
-                  Vaciar recetas
-                </button>
-              </div>
             `
             : ''
         }
