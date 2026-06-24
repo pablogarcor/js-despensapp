@@ -29,7 +29,7 @@ function writePng(outputPath, pngBuffer) {
 }
 
 /**
- * Genera el icono raster de Despensapp usando solo APIs nativas de Node.
+ * Genera el icono raster de DespensApp usando solo APIs nativas de Node.
  *
  * @param {number} size Tamano final en pixeles.
  * @param {boolean} maskable True para dejar mas margen seguro en iconos maskable.

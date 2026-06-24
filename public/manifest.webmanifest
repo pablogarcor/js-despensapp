@@ -1,7 +1,7 @@
 {
   "id": ".",
-  "name": "Despensapp",
-  "short_name": "Despensapp",
+  "name": "DespensApp",
+  "short_name": "DespensApp",
   "description": "Gestiona tu despensa, recetas y plan semanal desde el movil.",
   "lang": "es",
   "dir": "ltr",

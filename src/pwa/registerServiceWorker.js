@@ -15,7 +15,7 @@ export function registerServiceWorker() {
     navigator.serviceWorker
       .register(SERVICE_WORKER_URL, { scope: SERVICE_WORKER_SCOPE })
       .catch((error) => {
-        console.warn('[Despensapp] No se pudo registrar el service worker.', error);
+        console.warn('[DespensApp] No se pudo registrar el service worker.', error);
       });
   });
 }

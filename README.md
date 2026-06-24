@@ -1,4 +1,4 @@
-# Despensapp
+# DespensApp
 
 MVP mobile first para gestionar una despensa local, crear recetas con alimentos existentes y planificar las comidas de la siguiente semana. La app funciona sin backend: los datos se guardan en IndexedDB dentro del navegador.
 

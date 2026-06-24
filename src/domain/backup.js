@@ -39,7 +39,7 @@ export function validateBackup(backup) {
   }
 
   if (backup.app !== BACKUP_APP_ID || backup.schemaVersion !== BACKUP_SCHEMA_VERSION) {
-    throw new DomainError('El archivo no pertenece a una version compatible de Despensapp.', 'BACKUP_VERSION');
+    throw new DomainError('El archivo no pertenece a una version compatible de DespensApp.', 'BACKUP_VERSION');
   }
 
   if (!isPlainObject(backup.data)) {

@@ -93,7 +93,7 @@ async function readBuildManifestUrls() {
     collectBuildAssetUrls(manifest, urls);
     return [...urls];
   } catch (error) {
-    console.warn('[Despensapp] No se pudo leer el manifest de assets.', error);
+    console.warn('[DespensApp] No se pudo leer el manifest de assets.', error);
     return [];
   }
 }
@@ -163,7 +163,7 @@ async function cacheRequests(cache, urls) {
       try {
         await cache.add(new Request(url, { cache: 'reload' }));
       } catch (error) {
-        console.warn(`[Despensapp] No se pudo cachear ${url}.`, error);
+        console.warn(`[DespensApp] No se pudo cachear ${url}.`, error);
       }
     }),
   );
@@ -203,7 +203,7 @@ async function handleNavigation(request) {
  * @returns {Response} Respuesta HTML offline.
  */
 function createOfflineResponse() {
-  return new Response('<h1>Despensapp</h1><p>No hay conexion.</p>', {
+  return new Response('<h1>DespensApp</h1><p>No hay conexion.</p>', {
     headers: { 'Content-Type': 'text/html; charset=utf-8' },
     status: 503,
     statusText: 'Offline',

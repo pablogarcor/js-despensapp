@@ -66,28 +66,34 @@ export class PantryApp {
       return;
     }
 
+    const logoUrl = `${import.meta.env.BASE_URL}icons/despensapp-icon.svg`;
+
     this.root.innerHTML = `
       <div class="app-shell">
         <header class="app-header">
-          <div>
-            <div class="brand-row">
-              <h1>Despensapp</h1>
-              <button
-                class="settings-button ${this.state.activeView === 'settings' ? 'is-active' : ''}"
-                type="button"
-                data-view="settings"
-                aria-label="Abrir configuracion"
-                aria-pressed="${this.state.activeView === 'settings'}"
-              >
-                &#9881;
-              </button>
+          <div class="brand-row">
+            <img class="brand-logo" src="${logoUrl}" alt="" aria-hidden="true" />
+            <div class="brand-copy">
+              <p class="app-kicker">Despensa local</p>
+              <h1>DespensApp</h1>
             </div>
           </div>
-          <div class="header-stat" aria-label="Resumen de despensa">
-            <strong>${dashboard.pantryItems.length}</strong>
-            <span>alimentos</span>
-          </div>
+          <button
+            class="settings-button ${this.state.activeView === 'settings' ? 'is-active' : ''}"
+            type="button"
+            data-view="settings"
+            aria-label="Abrir configuracion"
+            aria-pressed="${this.state.activeView === 'settings'}"
+          >
+            &#9881;
+          </button>
         </header>
+
+        <section class="summary-strip" aria-label="Resumen">
+          <span class="summary-item"><strong>${dashboard.pantryItems.length}</strong> alimentos</span>
+          <span class="summary-item"><strong>${dashboard.recipes.length}</strong> recetas</span>
+          <span class="summary-item"><strong>${dashboard.plannedMeals.length}</strong> comidas</span>
+        </section>
 
         ${this.renderPendingMeals(dashboard)}
         ${this.renderToast()}
@@ -98,7 +104,7 @@ export class PantryApp {
           ${this.renderTab('plan', 'Plan')}
         </nav>
 
-        <main>
+        <main class="view-layout view-${this.state.activeView}">
           ${this.renderActiveView(dashboard)}
         </main>
       </div>
@@ -635,7 +641,7 @@ export class PantryApp {
   renderTab(view, label) {
     const isActive = this.state.activeView === view;
     return `
-      <button class="tab ${isActive ? 'is-active' : ''}" type="button" data-view="${view}" aria-pressed="${isActive}">
+      <button class="tab ${isActive ? 'is-active' : ''}" type="button" data-view="${view}" aria-pressed="${isActive}" ${isActive ? 'aria-current="page"' : ''}>
         ${label}
       </button>
     `;
@@ -748,7 +754,7 @@ export class PantryApp {
               </select>
             </label>
           </div>
-          <button class="button full" type="submit">añadir alimento</button>
+          <button class="button full" type="submit">Añadir alimento</button>
         </form>
 
         <div class="bulk-actions">
@@ -929,7 +935,7 @@ export class PantryApp {
           <div class="ingredient-builder">
             <div class="section-heading compact">
               <h3>Ingredientes por racion</h3>
-              <button class="button ghost small" type="button" data-action="add-ingredient-row">+</button>
+              <button class="button ghost small" type="button" data-action="add-ingredient-row" aria-label="Añadir ingrediente">+</button>
             </div>
             ${this.state.ingredientRows.map((row) => this.renderIngredientRow(row, dashboard.pantryItems)).join('')}
           </div>
@@ -1073,7 +1079,7 @@ export class PantryApp {
           <div class="ingredient-builder">
             <div class="section-heading compact">
               <h3>Ingredientes por racion</h3>
-              <button class="button ghost small" type="button" data-action="add-edit-ingredient-row">+</button>
+              <button class="button ghost small" type="button" data-action="add-edit-ingredient-row" aria-label="Añadir ingrediente">+</button>
             </div>
             ${rows.map((row) =>
               this.renderIngredientRow(row, pantryItems, {
@@ -1429,7 +1435,7 @@ export class PantryApp {
           Raciones
           <input name="servings" type="number" inputmode="decimal" min="0.5" step="0.5" value="1" required />
         </label>
-        <button class="button small" type="submit">añadir</button>
+        <button class="button small" type="submit">Añadir</button>
       </form>
     `;
   }
