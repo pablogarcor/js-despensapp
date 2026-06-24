@@ -22,6 +22,8 @@ export class PantryApp {
     this.state = {
       activeView: 'pantry',
       dashboard: null,
+      pantrySearch: '',
+      recipeSearch: '',
       editingPantryItemId: null,
       ingredientRows: [createIngredientRow()],
       editingRecipeId: null,
@@ -42,6 +44,7 @@ export class PantryApp {
     this.root.addEventListener('click', (event) => this.handleClick(event));
     this.root.addEventListener('submit', (event) => this.handleSubmit(event));
     this.root.addEventListener('change', (event) => this.handleChange(event));
+    this.root.addEventListener('input', (event) => this.handleInput(event));
     await this.refresh();
   }
 
@@ -156,7 +159,13 @@ export class PantryApp {
       if (action === 'clear-pantry') {
         const deletedCount = await this.service.clearPantryItems();
         this.state.editingPantryItemId = null;
+        this.state.pantrySearch = '';
         this.showToast(`${deletedCount} alimentos eliminados de la despensa.`);
+      }
+
+      if (action === 'clear-pantry-search') {
+        this.state.pantrySearch = '';
+        shouldRefresh = false;
       }
 
       if (action === 'edit-pantry-item') {
@@ -179,7 +188,13 @@ export class PantryApp {
         this.state.editingRecipeId = null;
         this.state.editRecipeDraft = null;
         this.state.editIngredientRows = [];
+        this.state.recipeSearch = '';
         this.showToast(`${deletedCount} recetas eliminadas.`);
+      }
+
+      if (action === 'clear-recipe-search') {
+        this.state.recipeSearch = '';
+        shouldRefresh = false;
       }
 
       if (action === 'edit-recipe') {
@@ -238,6 +253,8 @@ export class PantryApp {
           this.state.editRecipeDraft = null;
           this.state.editIngredientRows = [];
           this.state.editingPlannedMealId = null;
+          this.state.pantrySearch = '';
+          this.state.recipeSearch = '';
           this.showToast(
             `Eliminados ${summary.pantryItems} alimentos, ${summary.recipes} recetas y ${summary.plannedMeals} comidas.`,
           );
@@ -470,6 +487,55 @@ export class PantryApp {
 
     if (event.target.matches('[name="ingredientQuantity"]')) {
       editRow.quantity = event.target.value;
+    }
+  }
+
+  /**
+   * Filtra listas locales mientras el usuario escribe en los buscadores.
+   *
+   * @param {InputEvent} event Evento de input.
+   */
+  handleInput(event) {
+    const searchInput = event.target.closest('[data-search]');
+
+    if (!searchInput) {
+      return;
+    }
+
+    const searchTarget = searchInput.dataset.search;
+    const selectionStart = searchInput.selectionStart ?? searchInput.value.length;
+    const selectionEnd = searchInput.selectionEnd ?? searchInput.value.length;
+
+    if (searchTarget === 'pantry') {
+      this.state.pantrySearch = searchInput.value;
+    }
+
+    if (searchTarget === 'recipe') {
+      this.state.recipeSearch = searchInput.value;
+    }
+
+    this.render();
+    this.restoreSearchFocus(searchTarget, selectionStart, selectionEnd);
+  }
+
+  /**
+   * Devuelve el foco al buscador tras re-renderizar la lista filtrada.
+   *
+   * @param {string} searchTarget Buscador que disparo el render.
+   * @param {number} selectionStart Inicio de seleccion.
+   * @param {number} selectionEnd Fin de seleccion.
+   */
+  restoreSearchFocus(searchTarget, selectionStart, selectionEnd) {
+    const searchInput = this.root.querySelector(`[data-search="${searchTarget}"]`);
+
+    if (!searchInput) {
+      return;
+    }
+
+    searchInput.focus({ preventScroll: true });
+
+    if (typeof searchInput.setSelectionRange === 'function') {
+      searchInput.setSelectionRange(selectionStart, selectionEnd);
     }
   }
 
@@ -721,12 +787,98 @@ export class PantryApp {
   }
 
   /**
+   * Renderiza un buscador local para listas largas.
+   *
+   * @param {Object} params Configuracion.
+   * @param {'pantry' | 'recipe'} params.target Tipo de lista.
+   * @param {string} params.label Etiqueta visible.
+   * @param {string} params.placeholder Texto de ejemplo.
+   * @param {string} params.value Busqueda actual.
+   * @param {number} params.visibleCount Elementos visibles.
+   * @param {number} params.totalCount Elementos totales.
+   * @returns {string} HTML.
+   */
+  renderSearchControl({ target, label, placeholder, value, visibleCount, totalCount }) {
+    if (totalCount === 0) {
+      return '';
+    }
+
+    const clearAction = target === 'pantry' ? 'clear-pantry-search' : 'clear-recipe-search';
+
+    return `
+      <div class="search-toolbar" role="search">
+        <div class="search-row">
+          <label>
+            <span class="search-label-row">
+              <span>${label}</span>
+              <small>${visibleCount} de ${totalCount}</small>
+            </span>
+            <input
+              type="search"
+              data-search="${target}"
+              autocomplete="off"
+              placeholder="${escapeAttribute(placeholder)}"
+              value="${escapeAttribute(value)}"
+              aria-label="${escapeAttribute(label)}"
+            />
+          </label>
+          ${
+            value
+              ? `<button class="search-clear" type="button" data-action="${clearAction}" aria-label="Limpiar busqueda">x</button>`
+              : ''
+          }
+        </div>
+      </div>
+    `;
+  }
+
+  /**
+   * Filtra alimentos por nombre usando busqueda tolerante a mayusculas y acentos.
+   *
+   * @param {import('../domain/types.js').PantryItem[]} pantryItems Alimentos.
+   * @returns {import('../domain/types.js').PantryItem[]} Alimentos filtrados.
+   */
+  filterPantryItems(pantryItems) {
+    const query = normalizeSearchText(this.state.pantrySearch);
+
+    if (!query) {
+      return pantryItems;
+    }
+
+    return pantryItems.filter((item) => matchesSearchText(item.name, query));
+  }
+
+  /**
+   * Filtra recetas por nombre de receta o ingrediente.
+   *
+   * @param {import('../domain/types.js').Recipe[]} recipes Recetas.
+   * @param {import('../domain/types.js').PantryItem[]} pantryItems Alimentos para resolver ingredientes.
+   * @returns {import('../domain/types.js').Recipe[]} Recetas filtradas.
+   */
+  filterRecipes(recipes, pantryItems) {
+    const query = normalizeSearchText(this.state.recipeSearch);
+
+    if (!query) {
+      return recipes;
+    }
+
+    const pantryById = new Map(pantryItems.map((item) => [item.id, item]));
+
+    return recipes.filter((recipe) =>
+      matchesSearchText(recipe.name, query) ||
+      recipe.ingredients.some((ingredient) => matchesSearchText(pantryById.get(ingredient.pantryItemId)?.name, query)),
+    );
+  }
+
+  /**
    * Renderiza la vista de despensa.
    *
    * @param {import('../domain/types.js').DashboardSnapshot} dashboard Snapshot.
    * @returns {string} HTML.
    */
   renderPantryView(dashboard) {
+    const filteredPantryItems = this.filterPantryItems(dashboard.pantryItems);
+
     return `
       <section class="panel">
         <div class="section-heading">
@@ -765,8 +917,21 @@ export class PantryApp {
       </section>
 
       <section class="list-section" aria-label="Alimentos guardados">
+        ${this.renderSearchControl({
+          target: 'pantry',
+          label: 'Buscar alimento',
+          placeholder: 'Ej. Garbanzos',
+          value: this.state.pantrySearch,
+          visibleCount: filteredPantryItems.length,
+          totalCount: dashboard.pantryItems.length,
+        })}
         ${dashboard.pantryItems.length === 0 ? this.renderEmptyState('Todavia no hay alimentos.') : ''}
-        ${dashboard.pantryItems.map((item) => this.renderPantryItem(item, dashboard.recipes)).join('')}
+        ${
+          dashboard.pantryItems.length > 0 && filteredPantryItems.length === 0
+            ? this.renderEmptyState('No hay alimentos que coincidan.')
+            : ''
+        }
+        ${filteredPantryItems.map((item) => this.renderPantryItem(item, dashboard.recipes)).join('')}
       </section>
     `;
   }
@@ -906,6 +1071,8 @@ export class PantryApp {
    * @returns {string} HTML.
    */
   renderRecipesView(dashboard) {
+    const filteredRecipes = this.filterRecipes(dashboard.recipes, dashboard.pantryItems);
+
     return `
       <section class="panel">
         <div class="section-heading">
@@ -953,8 +1120,21 @@ export class PantryApp {
       </section>
 
       <section class="list-section" aria-label="Recetas guardadas">
+        ${this.renderSearchControl({
+          target: 'recipe',
+          label: 'Buscar receta',
+          placeholder: 'Ej. Lentejas o tomate',
+          value: this.state.recipeSearch,
+          visibleCount: filteredRecipes.length,
+          totalCount: dashboard.recipes.length,
+        })}
         ${dashboard.recipes.length === 0 ? this.renderEmptyState('Todavia no hay recetas.') : ''}
-        ${dashboard.recipes.map((recipe) => this.renderRecipe(recipe, dashboard.pantryItems)).join('')}
+        ${
+          dashboard.recipes.length > 0 && filteredRecipes.length === 0
+            ? this.renderEmptyState('No hay recetas que coincidan.')
+            : ''
+        }
+        ${filteredRecipes.map((recipe) => this.renderRecipe(recipe, dashboard.pantryItems)).join('')}
       </section>
     `;
   }
@@ -1499,6 +1679,31 @@ function formatDate(isoDate) {
     day: 'numeric',
     month: 'short',
   }).format(fromISODate(isoDate));
+}
+
+/**
+ * Normaliza texto de busqueda para comparar sin acentos ni mayusculas.
+ *
+ * @param {unknown} value Texto original.
+ * @returns {string} Texto normalizado.
+ */
+function normalizeSearchText(value) {
+  return String(value ?? '')
+    .trim()
+    .toLocaleLowerCase('es')
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '');
+}
+
+/**
+ * Comprueba si un texto contiene la busqueda normalizada.
+ *
+ * @param {unknown} value Texto candidato.
+ * @param {string} normalizedQuery Busqueda ya normalizada.
+ * @returns {boolean} True si coincide.
+ */
+function matchesSearchText(value, normalizedQuery) {
+  return normalizeSearchText(value).includes(normalizedQuery);
 }
 
 /**
