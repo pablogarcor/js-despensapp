@@ -28,7 +28,7 @@
   }
 
   .ingredient-row {
-    grid-template-columns: minmax(0, 1fr) 74px 38px;
+    grid-template-columns: minmax(0, 1fr) 74px 48px;
   }
 }
 
