@@ -33,6 +33,7 @@ export class PantryApp {
       recipeFormOpen: false,
       planActionsOpen: false,
       selectedPlanDate: null,
+      activeNoteSlotKey: null,
       editingPantryItemId: null,
       ingredientRows: [createIngredientRow()],
       editingRecipeId: null,
@@ -104,7 +105,7 @@ export class PantryApp {
         <section class="summary-strip" aria-label="Resumen">
           <span class="summary-item"><strong>${dashboard.pantryItems.length}</strong> alimentos</span>
           <span class="summary-item"><strong>${dashboard.recipes.length}</strong> recetas</span>
-          <span class="summary-item"><strong>${dashboard.plannedMeals.length}</strong> comidas</span>
+          <span class="summary-item"><strong>${dashboard.plannedMeals.length}</strong> plan</span>
         </section>
 
         ${this.renderPendingMeals(dashboard)}
@@ -285,8 +286,18 @@ export class PantryApp {
         shouldRefresh = false;
       }
 
+      if (action === 'show-note-slot') {
+        this.state.activeNoteSlotKey = actionElement.dataset.slotKey;
+        shouldRefresh = false;
+      }
+
+      if (action === 'hide-note-slot') {
+        this.state.activeNoteSlotKey = null;
+        shouldRefresh = false;
+      }
+
       if (action === 'clear-all-data') {
-        if (!window.confirm('Borrar todo eliminara despensa, recetas y planificacion.')) {
+        if (!window.confirm('Borrar todo eliminara despensa, recetas, planificacion y compra.')) {
           shouldRefresh = false;
         } else {
           const summary = await this.service.clearAllData();
@@ -295,13 +306,14 @@ export class PantryApp {
           this.state.editRecipeDraft = null;
           this.state.editIngredientRows = [];
           this.state.editingPlannedMealId = null;
+          this.state.activeNoteSlotKey = null;
           this.state.pantrySearch = '';
           this.state.recipeSearch = '';
           this.state.pantryFormOpen = true;
           this.state.recipeFormOpen = true;
           this.state.planActionsOpen = false;
           this.showToast(
-            `Eliminados ${summary.pantryItems} alimentos, ${summary.recipes} recetas y ${summary.plannedMeals} comidas.`,
+            `Eliminados ${summary.pantryItems} alimentos, ${summary.recipes} recetas, ${summary.plannedMeals} planes y ${summary.shoppingItems} compras.`,
           );
         }
       }
@@ -468,6 +480,28 @@ export class PantryApp {
         });
         this.state.editingPlannedMealId = null;
         this.showToast('Comida actualizada.');
+      }
+
+      if (form.matches('[data-form="planned-note"]')) {
+        const data = new FormData(form);
+        await this.service.createPlannedNote({
+          date: data.get('date'),
+          mealType: data.get('mealType'),
+          title: data.get('title'),
+          note: data.get('note'),
+        });
+        this.state.activeNoteSlotKey = null;
+        this.showToast('Hueco marcado como no cocinar.');
+      }
+
+      if (form.matches('[data-form="planned-note-edit"]')) {
+        const data = new FormData(form);
+        await this.service.updatePlannedNote(data.get('plannedMealId'), {
+          title: data.get('title'),
+          note: data.get('note'),
+        });
+        this.state.editingPlannedMealId = null;
+        this.showToast('No cocinar actualizado.');
       }
 
       if (form.matches('[data-form="import-backup"]')) {

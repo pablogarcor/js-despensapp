@@ -1,9 +1,9 @@
 import { DomainError } from './errors.js';
-import { MEAL_TYPES } from './types.js';
+import { MEAL_TYPES, PLAN_NOTE_TITLES, PLANNED_MEAL_KINDS } from './types.js';
 
 export const BACKUP_APP_ID = 'despensapp';
-export const BACKUP_SCHEMA_VERSION = 2;
-const SUPPORTED_BACKUP_SCHEMA_VERSIONS = Object.freeze([1, 2]);
+export const BACKUP_SCHEMA_VERSION = 3;
+const SUPPORTED_BACKUP_SCHEMA_VERSIONS = Object.freeze([1, 2, 3]);
 
 /**
  * Construye un backup JSON versionado de los datos locales.
@@ -54,7 +54,7 @@ export function validateBackup(backup) {
 
   const pantryItems = validatePantryItems(backup.data.pantryItems);
   const recipes = validateRecipes(backup.data.recipes, pantryItems);
-  const plannedMeals = validatePlannedMeals(backup.data.plannedMeals, recipes);
+  const plannedMeals = validatePlannedMeals(backup.data.plannedMeals, recipes, backup.schemaVersion);
   const shoppingItems =
     backup.schemaVersion >= 2
       ? validateShoppingItems(backup.data.shoppingItems, pantryItems)
@@ -138,9 +138,10 @@ function validateRecipes(records, pantryItems) {
  *
  * @param {unknown} records Registros de entrada.
  * @param {import('./types.js').Recipe[]} recipes Recetas validadas.
+ * @param {number} schemaVersion Version del backup.
  * @returns {import('./types.js').PlannedMeal[]} Comidas saneadas.
  */
-function validatePlannedMeals(records, recipes) {
+function validatePlannedMeals(records, recipes, schemaVersion) {
   assertArray(records, 'El backup debe incluir una lista de comidas planificadas.');
   assertUniqueIds(records, 'Hay comidas planificadas duplicadas en el backup.');
 
@@ -155,6 +156,39 @@ function validatePlannedMeals(records, recipes) {
     const id = parseRequiredString(record.id, 'Hay una comida planificada sin identificador.');
     const date = parseDate(record.date);
     const mealType = parseMealType(record.mealType);
+    const kind =
+      schemaVersion >= 3
+        ? parsePlannedMealKind(record.kind ?? 'recipe')
+        : 'recipe';
+
+    const slotKey = `${date}__${mealType}`;
+
+    if (occupiedSlots.has(slotKey)) {
+      throw new DomainError('Hay dos comidas planificadas en la misma fecha y franja.', 'BACKUP_MEAL_DUPLICATED');
+    }
+
+    occupiedSlots.add(slotKey);
+
+    if (kind === 'note') {
+      const title = parsePlanNoteTitle(record.title);
+      const note = parseOptionalText(record.note);
+
+      if (title === 'Otro motivo' && !note) {
+        throw new DomainError('Hay una planificacion sin cocina sin detalle.', 'BACKUP_MEAL_NOTE_REQUIRED');
+      }
+
+      return {
+        id,
+        kind,
+        date,
+        mealType,
+        title,
+        note,
+        createdAt: parseOptionalString(record.createdAt),
+        updatedAt: parseOptionalString(record.updatedAt),
+      };
+    }
+
     const recipeId = parseRequiredString(record.recipeId, 'Hay una comida planificada sin receta.');
     const servings = parsePositiveNumber(record.servings, 'Hay una comida planificada con raciones invalidas.');
     const recipe = recipesById.get(recipeId);
@@ -167,16 +201,9 @@ function validatePlannedMeals(records, recipes) {
       throw new DomainError('Hay una comida planificada con una receta incompatible.', 'BACKUP_MEAL_COMPATIBILITY');
     }
 
-    const slotKey = `${date}__${mealType}`;
-
-    if (occupiedSlots.has(slotKey)) {
-      throw new DomainError('Hay dos comidas planificadas en la misma fecha y franja.', 'BACKUP_MEAL_DUPLICATED');
-    }
-
-    occupiedSlots.add(slotKey);
-
     return {
       id,
+      kind: 'recipe',
       date,
       mealType,
       recipeId,
@@ -322,6 +349,37 @@ function parseMealType(value) {
 }
 
 /**
+ * Valida el tipo de una comida planificada.
+ *
+ * @param {unknown} value Valor de entrada.
+ * @returns {import('./types.js').PlannedMealKind} Tipo valido.
+ */
+function parsePlannedMealKind(value) {
+  if (!PLANNED_MEAL_KINDS.includes(value)) {
+    throw new DomainError('Hay un tipo de planificacion invalido en el backup.', 'BACKUP_MEAL_KIND');
+  }
+
+  return value;
+}
+
+/**
+ * Valida un titulo de nota de plan.
+ *
+ * @param {unknown} value Valor de entrada.
+ * @returns {string} Titulo saneado.
+ */
+function parsePlanNoteTitle(value) {
+  const title = parseRequiredString(value, 'Hay una planificacion sin cocina sin motivo.');
+  const normalizedTitle = title === 'Nota libre' ? 'Otro motivo' : title;
+
+  if (!PLAN_NOTE_TITLES.includes(normalizedTitle)) {
+    throw new DomainError('Hay una planificacion sin cocina con motivo invalido.', 'BACKUP_MEAL_NOTE_TITLE');
+  }
+
+  return normalizedTitle;
+}
+
+/**
  * Valida el origen de una entrada de compra.
  *
  * @param {unknown} value Valor de entrada.
@@ -389,6 +447,16 @@ function parseRequiredString(value, errorMessage) {
  */
 function parseOptionalString(value) {
   return typeof value === 'string' && value.trim() !== '' ? value : new Date().toISOString();
+}
+
+/**
+ * Valida texto opcional conservando vacio.
+ *
+ * @param {unknown} value Valor de entrada.
+ * @returns {string} Texto saneado.
+ */
+function parseOptionalText(value) {
+  return typeof value === 'string' ? value.trim() : '';
 }
 
 /**

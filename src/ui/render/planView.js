@@ -1,4 +1,4 @@
-import { MEAL_TYPE_LABELS } from '../../domain/types.js';
+import { MEAL_TYPE_LABELS, PLAN_NOTE_TITLES } from '../../domain/types.js';
 import { escapeAttribute, escapeHtml, formatDate, formatQuantity, getPlanDaySummaries } from '../renderUtils.js';
 
 /**
@@ -44,7 +44,7 @@ export const planViewMethods = {
       <section class="list-section" aria-label="Comidas planificadas">
         ${
           dashboard.plannedMeals.length === 0 && dashboard.missingPlanSlots.length === 0
-            ? this.renderEmptyState('Aun no hay comidas planificadas.')
+            ? this.renderEmptyState('Aun no hay planificacion.')
             : ''
         }
         ${this.renderPlanGroups(dashboard)}
@@ -115,7 +115,15 @@ export const planViewMethods = {
 
   renderPlannedMeal(meal, recipes, unavailableMeals) {
     if (this.state.editingPlannedMealId === meal.id) {
+      if (meal.kind === 'note') {
+        return this.renderPlannedNoteEditForm(meal);
+      }
+
       return this.renderPlannedMealEditForm(meal, recipes);
+    }
+
+    if (meal.kind === 'note') {
+      return this.renderPlannedNote(meal);
     }
 
     const recipe = recipes.find((candidate) => candidate.id === meal.recipeId);
@@ -142,6 +150,27 @@ export const planViewMethods = {
             Editar
           </button>
           <button class="icon-button" type="button" aria-label="Eliminar comida" data-action="delete-planned-meal" data-id="${meal.id}">
+            x
+          </button>
+        </div>
+      </article>
+    `;
+  },
+
+  renderPlannedNote(meal) {
+    return `
+      <article class="meal-card note-meal-card">
+        <div>
+          <span>${MEAL_TYPE_LABELS[meal.mealType]}</span>
+          <strong>${escapeHtml(meal.title)}</strong>
+          ${meal.note ? `<small>${escapeHtml(meal.note)}</small>` : ''}
+        </div>
+        <span class="meal-status-badge note-status-badge">No cocina</span>
+        <div class="inline-actions">
+          <button class="button ghost small" type="button" data-action="edit-planned-meal" data-id="${meal.id}">
+            Editar
+          </button>
+          <button class="icon-button" type="button" aria-label="Eliminar no cocinar" data-action="delete-planned-meal" data-id="${meal.id}">
             x
           </button>
         </div>
@@ -178,8 +207,40 @@ export const planViewMethods = {
     `;
   },
 
+  renderPlannedNoteEditForm(meal) {
+    return `
+      <form class="meal-card meal-edit-card note-edit-card" data-form="planned-note-edit">
+        <input type="hidden" name="plannedMealId" value="${escapeAttribute(meal.id)}" />
+        <p class="meal-edit-date">${formatDate(meal.date)} · ${MEAL_TYPE_LABELS[meal.mealType]}</p>
+        <label>
+          Motivo
+          <select name="title" required>
+            ${PLAN_NOTE_TITLES.map((title) => `
+              <option value="${escapeAttribute(title)}" ${meal.title === title ? 'selected' : ''}>
+                ${escapeHtml(title)}
+              </option>
+            `).join('')}
+          </select>
+        </label>
+        <label>
+          Detalle
+          <input name="note" type="text" autocomplete="off" value="${escapeAttribute(meal.note ?? '')}" />
+        </label>
+        <div class="form-actions">
+          <button class="button small" type="submit">Guardar</button>
+          <button class="button ghost small" type="button" data-action="cancel-edit-planned-meal">Cancelar</button>
+        </div>
+      </form>
+    `;
+  },
+
   renderMissingMealSlot(slot, recipes) {
     const compatibleRecipes = recipes.filter((recipe) => recipe.mealTypes.includes(slot.mealType));
+    const slotKey = `${slot.date}__${slot.mealType}`;
+
+    if (this.state.activeNoteSlotKey === slotKey) {
+      return this.renderPlannedNoteForm(slot, slotKey);
+    }
 
     if (compatibleRecipes.length === 0) {
       return `
@@ -188,6 +249,9 @@ export const planViewMethods = {
             <span>${MEAL_TYPE_LABELS[slot.mealType]}</span>
             <strong>Sin receta compatible</strong>
           </div>
+          <button class="button ghost small" type="button" data-action="show-note-slot" data-slot-key="${escapeAttribute(slotKey)}">
+            No cocinar
+          </button>
         </article>
       `;
     }
@@ -209,6 +273,34 @@ export const planViewMethods = {
           <input name="servings" type="number" inputmode="decimal" min="0.5" step="0.5" value="1" required />
         </label>
         <button class="button small" type="submit">Añadir</button>
+        <button class="button ghost small" type="button" data-action="show-note-slot" data-slot-key="${escapeAttribute(slotKey)}">
+          No cocinar
+        </button>
+      </form>
+    `;
+  },
+
+  renderPlannedNoteForm(slot, slotKey) {
+    return `
+      <form class="missing-meal-card note-meal-form" data-form="planned-note">
+        <input type="hidden" name="date" value="${escapeAttribute(slot.date)}" />
+        <input type="hidden" name="mealType" value="${escapeAttribute(slot.mealType)}" />
+        <label>
+          Motivo
+          <select name="title" required>
+            ${PLAN_NOTE_TITLES.map((title) => `
+              <option value="${escapeAttribute(title)}">${escapeHtml(title)}</option>
+            `).join('')}
+          </select>
+        </label>
+        <label>
+          Detalle
+          <input name="note" type="text" autocomplete="off" placeholder="Ej. cena fuera" />
+        </label>
+        <button class="button small" type="submit">Guardar</button>
+        <button class="button ghost small" type="button" data-action="hide-note-slot" data-slot-key="${escapeAttribute(slotKey)}">
+          Cancelar
+        </button>
       </form>
     `;
   }

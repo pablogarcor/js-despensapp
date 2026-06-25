@@ -13,7 +13,7 @@ import {
   sortPlannedMeals,
   toISODate,
 } from '../domain/planning.js';
-import { MEAL_TYPES } from '../domain/types.js';
+import { MEAL_TYPES, PLAN_NOTE_TITLES } from '../domain/types.js';
 
 const GENERATED_SHOPPING_PREFIX = 'shopping_generated_';
 
@@ -50,8 +50,9 @@ export class PantryService {
       this.database.getAll('shoppingItems'),
     ]);
     const today = toISODate(this.now());
-    const plannedMeals = sortPlannedMeals(allMeals.filter((meal) => meal.date >= today));
-    const pendingMeals = sortPlannedMeals(allMeals.filter((meal) => meal.date < today));
+    const normalizedAllMeals = normalizePlannedMeals(allMeals);
+    const plannedMeals = sortPlannedMeals(normalizedAllMeals.filter((meal) => meal.date >= today));
+    const pendingMeals = sortPlannedMeals(normalizedAllMeals.filter((meal) => meal.date < today));
     const missingPlanSlots = findMissingMealSlots({
       plannedMeals,
       referenceDate: this.now(),
@@ -88,7 +89,7 @@ export class PantryService {
     return createBackup({
       pantryItems: sortByName(pantryItems),
       recipes: sortByName(recipes),
-      plannedMeals: sortPlannedMeals(plannedMeals),
+      plannedMeals: sortPlannedMeals(normalizePlannedMeals(plannedMeals)),
       shoppingItems: sortShoppingItems(shoppingItems),
       exportedAt: this.now().toISOString(),
     });
@@ -703,7 +704,10 @@ export class PantryService {
 
     const normalizedMealTypes = normalizeMealTypes(mealTypes);
     const incompatiblePlannedMeal = plannedMeals.find(
-      (meal) => meal.recipeId === recipeId && !normalizedMealTypes.includes(meal.mealType),
+      (meal) =>
+        isRecipePlannedMeal(meal) &&
+        meal.recipeId === recipeId &&
+        !normalizedMealTypes.includes(meal.mealType),
     );
 
     if (incompatiblePlannedMeal) {
@@ -741,7 +745,9 @@ export class PantryService {
       throw new DomainError('La receta no existe.', 'RECIPE_NOT_FOUND');
     }
 
-    const blockingMeal = plannedMeals.find((meal) => meal.recipeId === recipeId);
+    const blockingMeal = plannedMeals.find(
+      (meal) => isRecipePlannedMeal(meal) && meal.recipeId === recipeId,
+    );
 
     if (blockingMeal) {
       throw new DomainError(
@@ -764,7 +770,9 @@ export class PantryService {
       this.database.getAll('plannedMeals'),
     ]);
     const recipeIds = new Set(recipes.map((recipe) => recipe.id));
-    const blockingMeal = plannedMeals.find((meal) => recipeIds.has(meal.recipeId));
+    const blockingMeal = plannedMeals.find(
+      (meal) => isRecipePlannedMeal(meal) && recipeIds.has(meal.recipeId),
+    );
 
     if (blockingMeal) {
       throw new DomainError(
@@ -899,6 +907,7 @@ export class PantryService {
     const now = this.now().toISOString();
     const plannedMeal = {
       id: createId('meal'),
+      kind: 'recipe',
       date: cleanDate,
       mealType: cleanMealType,
       recipeId: cleanRecipeId,
@@ -908,6 +917,56 @@ export class PantryService {
     };
 
     return this.database.put('plannedMeals', plannedMeal);
+  }
+
+  /**
+   * Anade una entrada de No cocinar a un hueco libre de la semana planificada.
+   *
+   * Estas entradas ocupan franja y fecha, pero no tienen receta, raciones ni compra asociada.
+   *
+   * @param {Object} params Datos de entrada.
+   * @param {string} params.date Fecha YYYY-MM-DD.
+   * @param {import('../domain/types.js').MealType} params.mealType Franja del dia.
+   * @param {string} params.title Motivo predefinido.
+   * @param {string} [params.note] Detalle libre opcional.
+   * @returns {Promise<import('../domain/types.js').PlannedMeal>} Entrada creada.
+   */
+  async createPlannedNote({ date, mealType, title, note = '' }) {
+    const cleanDate = cleanText(date);
+    const cleanMealType = cleanText(mealType);
+    const { title: cleanTitle, note: cleanNote } = normalizePlanNoteInput({ title, note });
+    const allowedDates = getNextSevenDates(this.now());
+
+    if (!allowedDates.includes(cleanDate)) {
+      throw new DomainError('Solo puedes marcar no cocinar dentro de los proximos siete dias.', 'DATE_OUT_OF_PLAN');
+    }
+
+    if (!MEAL_TYPES.includes(cleanMealType)) {
+      throw new DomainError('La franja de comida no es valida.', 'MEAL_TYPE_INVALID');
+    }
+
+    const plannedMeals = await this.database.getAll('plannedMeals');
+    const occupiedMeal = plannedMeals.find(
+      (meal) => meal.date === cleanDate && meal.mealType === cleanMealType,
+    );
+
+    if (occupiedMeal) {
+      throw new DomainError('Ya existe una comida planificada para ese hueco.', 'PLANNED_MEAL_DUPLICATED');
+    }
+
+    const now = this.now().toISOString();
+    const plannedNote = {
+      id: createId('meal'),
+      kind: 'note',
+      date: cleanDate,
+      mealType: cleanMealType,
+      title: cleanTitle,
+      note: cleanNote,
+      createdAt: now,
+      updatedAt: now,
+    };
+
+    return this.database.put('plannedMeals', plannedNote);
   }
 
   /**
@@ -932,6 +991,10 @@ export class PantryService {
       throw new DomainError('La comida planificada no existe.', 'PLANNED_MEAL_NOT_FOUND');
     }
 
+    if (!isRecipePlannedMeal(plannedMeal)) {
+      throw new DomainError('Esta planificacion es de no cocinar, no una receta.', 'PLANNED_MEAL_KIND_INVALID');
+    }
+
     if (!recipe) {
       throw new DomainError('La receta no existe.', 'RECIPE_NOT_FOUND');
     }
@@ -944,6 +1007,38 @@ export class PantryService {
       ...plannedMeal,
       recipeId: cleanRecipeId,
       servings: parsedServings,
+      updatedAt: this.now().toISOString(),
+    };
+
+    return this.database.put('plannedMeals', updatedMeal);
+  }
+
+  /**
+   * Actualiza una entrada de No cocinar conservando fecha y franja.
+   *
+   * @param {string} plannedMealId Identificador de la entrada.
+   * @param {Object} params Datos de entrada.
+   * @param {string} params.title Titulo predefinido.
+   * @param {string} [params.note] Detalle libre opcional.
+   * @returns {Promise<import('../domain/types.js').PlannedMeal>} Entrada actualizada.
+   */
+  async updatePlannedNote(plannedMealId, { title, note = '' }) {
+    const plannedMeal = await this.database.get('plannedMeals', plannedMealId);
+    const { title: cleanTitle, note: cleanNote } = normalizePlanNoteInput({ title, note });
+
+    if (!plannedMeal) {
+      throw new DomainError('La comida planificada no existe.', 'PLANNED_MEAL_NOT_FOUND');
+    }
+
+    if (!isNotePlannedMeal(plannedMeal)) {
+      throw new DomainError('Esta planificacion no es de no cocinar.', 'PLANNED_MEAL_KIND_INVALID');
+    }
+
+    const updatedMeal = {
+      ...plannedMeal,
+      kind: 'note',
+      title: cleanTitle,
+      note: cleanNote,
       updatedAt: this.now().toISOString(),
     };
 
@@ -993,7 +1088,7 @@ export class PantryService {
       throw new DomainError('La comida planificada no existe.', 'PLANNED_MEAL_NOT_FOUND');
     }
 
-    if (wasCooked) {
+    if (wasCooked && isRecipePlannedMeal(meal)) {
       await this.consumeRecipeIngredients(meal.recipeId, meal.servings);
     }
 
@@ -1070,6 +1165,76 @@ export class PantryService {
  */
 function sortByName(records) {
   return [...records].sort((left, right) => left.name.localeCompare(right.name, 'es'));
+}
+
+/**
+ * Normaliza comidas antiguas que no tienen `kind`.
+ *
+ * @param {import('../domain/types.js').PlannedMeal[]} plannedMeals Comidas guardadas.
+ * @returns {import('../domain/types.js').PlannedMeal[]} Comidas normalizadas.
+ */
+function normalizePlannedMeals(plannedMeals) {
+  return plannedMeals.map((meal) => ({
+    ...meal,
+    kind: meal.kind ?? 'recipe',
+    title: meal.kind === 'note' ? normalizePlanNoteTitle(meal.title) : meal.title,
+  }));
+}
+
+/**
+ * Indica si una planificacion consume una receta.
+ *
+ * @param {import('../domain/types.js').PlannedMeal} plannedMeal Planificacion.
+ * @returns {boolean} True si es comida con receta.
+ */
+function isRecipePlannedMeal(plannedMeal) {
+  return (plannedMeal.kind ?? 'recipe') === 'recipe';
+}
+
+/**
+ * Indica si una planificacion es una nota sin receta.
+ *
+ * @param {import('../domain/types.js').PlannedMeal} plannedMeal Planificacion.
+ * @returns {boolean} True si es nota.
+ */
+function isNotePlannedMeal(plannedMeal) {
+  return plannedMeal.kind === 'note';
+}
+
+/**
+ * Valida y sanea una nota de plan.
+ *
+ * @param {Object} params Datos de entrada.
+ * @param {string} params.title Titulo.
+ * @param {string} params.note Detalle opcional.
+ * @returns {{title: string, note: string}} Nota saneada.
+ */
+function normalizePlanNoteInput({ title, note }) {
+  const cleanTitle = normalizePlanNoteTitle(cleanText(title));
+  const cleanNote = cleanText(note);
+
+  if (!PLAN_NOTE_TITLES.includes(cleanTitle)) {
+    throw new DomainError('Selecciona un motivo valido para no cocinar.', 'PLAN_NOTE_TITLE_INVALID');
+  }
+
+  if (cleanTitle === 'Otro motivo' && !cleanNote) {
+    throw new DomainError('Escribe el motivo para no cocinar.', 'PLAN_NOTE_REQUIRED');
+  }
+
+  return {
+    title: cleanTitle,
+    note: cleanNote,
+  };
+}
+
+/**
+ * Normaliza titulos antiguos de notas de plan.
+ *
+ * @param {string} title Titulo guardado o introducido.
+ * @returns {string} Titulo actual.
+ */
+function normalizePlanNoteTitle(title) {
+  return title === 'Nota libre' ? 'Otro motivo' : title;
 }
 
 /**

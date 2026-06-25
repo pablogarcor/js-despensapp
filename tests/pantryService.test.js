@@ -149,7 +149,7 @@ test('exporta un backup versionado con datos locales', async () => {
   const backup = await service.exportBackup();
 
   assert.equal(backup.app, 'despensapp');
-  assert.equal(backup.schemaVersion, 2);
+  assert.equal(backup.schemaVersion, 3);
   assert.equal(backup.data.pantryItems.length, 1);
   assert.equal(backup.data.recipes.length, 1);
   assert.equal(backup.data.plannedMeals.length, 21);
@@ -200,6 +200,27 @@ test('importa backups version 1 sin lista de compra', async () => {
   assert.equal(dashboard.shoppingExtras.length, 0);
 });
 
+test('exporta e importa notas de plan en backups version 3', async () => {
+  const source = await createServiceWithRecipe();
+  await source.service.createPlannedNote({
+    date: '2026-06-21',
+    mealType: 'dinner',
+    title: 'Congelado',
+    note: 'Crema preparada',
+  });
+  const backup = await source.service.exportBackup();
+  const targetDatabase = new MemoryDatabase();
+  const targetService = new PantryService(targetDatabase, { now: () => fixedDate });
+
+  const summary = await targetService.importBackup(JSON.stringify(backup));
+  const dashboard = await targetService.getDashboard();
+
+  assert.equal(summary.plannedMeals, 1);
+  assert.equal(dashboard.plannedMeals[0].kind, 'note');
+  assert.equal(dashboard.plannedMeals[0].title, 'Congelado');
+  assert.equal(dashboard.plannedMeals[0].note, 'Crema preparada');
+});
+
 test('rechaza backups con relaciones invalidas sin reemplazar los datos actuales', async () => {
   const { service } = await createServiceWithRecipe();
   const invalidBackup = {
@@ -240,6 +261,22 @@ test('impide borrar recetas planificadas', async () => {
     () => service.deleteRecipe(recipe.id),
     /esta planificada/,
   );
+});
+
+test('las notas planificadas no bloquean recetas', async () => {
+  const { service, recipe } = await createServiceWithRecipe();
+  await service.createPlannedNote({
+    date: '2026-06-21',
+    mealType: 'breakfast',
+    title: 'Comer fuera',
+  });
+
+  await service.deleteRecipe(recipe.id);
+  const dashboard = await service.getDashboard();
+
+  assert.equal(dashboard.recipes.length, 0);
+  assert.equal(dashboard.plannedMeals.length, 1);
+  assert.equal(dashboard.plannedMeals[0].kind, 'note');
 });
 
 test('permite vaciar recetas si no estan planificadas', async () => {
@@ -467,6 +504,94 @@ test('permite añadir una comida manual en un hueco libre', async () => {
   assert.equal(meal.servings, 1.5);
   assert.equal(dashboard.plannedMeals.length, 1);
   assert.equal(dashboard.missingPlanSlots.length, 20);
+});
+
+test('permite añadir una nota manual en un hueco libre sin generar compra', async () => {
+  const { service } = await createServiceWithRecipe();
+
+  const note = await service.createPlannedNote({
+    date: '2026-06-21',
+    mealType: 'dinner',
+    title: 'Sobras',
+    note: 'Arroz de ayer',
+  });
+  const dashboard = await service.getDashboard();
+
+  assert.equal(note.kind, 'note');
+  assert.equal(note.title, 'Sobras');
+  assert.equal(note.note, 'Arroz de ayer');
+  assert.equal(dashboard.plannedMeals.length, 1);
+  assert.equal(dashboard.missingPlanSlots.length, 20);
+  assert.equal(dashboard.shoppingList.length, 0);
+  assert.equal(dashboard.unavailableMeals.length, 0);
+});
+
+test('impide añadir una nota duplicando una fecha y franja ocupada', async () => {
+  const { service } = await createServiceWithRecipe();
+  await service.createPlannedNote({
+    date: '2026-06-21',
+    mealType: 'dinner',
+    title: 'Congelado',
+  });
+
+  await assert.rejects(
+    () =>
+      service.createPlannedNote({
+        date: '2026-06-21',
+        mealType: 'dinner',
+        title: 'Comer fuera',
+      }),
+    /Ya existe una comida planificada/,
+  );
+});
+
+test('permite editar una nota planificada conservando fecha y franja', async () => {
+  const { service } = await createServiceWithRecipe();
+  const note = await service.createPlannedNote({
+    date: '2026-06-21',
+    mealType: 'lunch',
+    title: 'Comer fuera',
+  });
+
+  const updatedNote = await service.updatePlannedNote(note.id, {
+    title: 'Otro motivo',
+    note: 'Cumpleanos',
+  });
+
+  assert.equal(updatedNote.id, note.id);
+  assert.equal(updatedNote.date, '2026-06-21');
+  assert.equal(updatedNote.mealType, 'lunch');
+  assert.equal(updatedNote.title, 'Otro motivo');
+  assert.equal(updatedNote.note, 'Cumpleanos');
+});
+
+test('normaliza el motivo antiguo Nota libre a Otro motivo', async () => {
+  const { service } = await createServiceWithRecipe();
+
+  const note = await service.createPlannedNote({
+    date: '2026-06-21',
+    mealType: 'lunch',
+    title: 'Nota libre',
+    note: 'Plan flexible',
+  });
+
+  assert.equal(note.title, 'Otro motivo');
+});
+
+test('resolver una nota pasada no descuenta ingredientes', async () => {
+  const { service, rice } = await createServiceWithRecipe();
+  const note = await service.createPlannedNote({
+    date: '2026-06-21',
+    mealType: 'dinner',
+    title: 'Sobras',
+  });
+
+  await service.resolvePastMeal(note.id, true);
+  const dashboard = await service.getDashboard();
+  const updatedRice = dashboard.pantryItems.find((item) => item.id === rice.id);
+
+  assert.equal(updatedRice.quantity, 500);
+  assert.equal(dashboard.plannedMeals.length, 0);
 });
 
 test('muestra huecos de la siguiente semana aunque el plan este vacio', async () => {

@@ -4,6 +4,11 @@
  */
 
 /**
+ * @typedef {'recipe' | 'note'} PlannedMealKind
+ * Tipo de ocupacion de un hueco del plan.
+ */
+
+/**
  * @typedef {Object} PantryItem
  * @property {string} id Identificador estable del alimento.
  * @property {string} name Nombre visible del alimento.
@@ -32,10 +37,13 @@
 /**
  * @typedef {Object} PlannedMeal
  * @property {string} id Identificador estable de la comida planificada.
+ * @property {PlannedMealKind} [kind] Tipo de plan. Los registros antiguos sin valor se tratan como `recipe`.
  * @property {string} date Fecha en formato YYYY-MM-DD.
  * @property {MealType} mealType Momento del dia.
- * @property {string} recipeId Identificador de la receta planificada.
- * @property {number} servings Numero de raciones que se prepararan.
+ * @property {string} [recipeId] Identificador de la receta planificada.
+ * @property {number} [servings] Numero de raciones que se prepararan.
+ * @property {string} [title] Titulo de una nota de plan.
+ * @property {string} [note] Detalle libre de una nota de plan.
  * @property {string} createdAt Fecha ISO de creacion.
  * @property {string} updatedAt Fecha ISO de ultima modificacion.
  */
@@ -104,7 +112,7 @@
 /**
  * @typedef {Object} PantryBackup
  * @property {'despensapp'} app Identificador de la aplicacion.
- * @property {1 | 2} schemaVersion Version del formato de backup.
+ * @property {1 | 2 | 3} schemaVersion Version del formato de backup.
  * @property {string} exportedAt Fecha ISO de exportacion.
  * @property {BackupData} data Datos exportados.
  */
@@ -138,3 +146,7 @@ export const MEAL_TYPE_LABELS = Object.freeze({
 });
 
 export const DEFAULT_UNITS = Object.freeze(['g', 'kg', 'ml', 'l', 'ud', 'rebanadas']);
+
+export const PLANNED_MEAL_KINDS = Object.freeze(['recipe', 'note']);
+
+export const PLAN_NOTE_TITLES = Object.freeze(['Sobras', 'Comer fuera', 'Congelado', 'Otro motivo']);

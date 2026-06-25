@@ -23,7 +23,7 @@ export const commonRenderMethods = {
       <section class="notice-panel" aria-label="Comidas pendientes">
         <div>
           <p class="eyebrow">Pendiente</p>
-          <h2>Confirma comidas pasadas</h2>
+          <h2>Resuelve plan pasado</h2>
         </div>
         <div class="pending-list">
           ${dashboard.pendingMeals.map((meal) => this.renderPendingMeal(meal, dashboard)).join('')}
@@ -34,20 +34,37 @@ export const commonRenderMethods = {
 
   renderPendingMeal(meal, dashboard) {
     const recipe = dashboard.recipes.find((candidate) => candidate.id === meal.recipeId);
+    const isNote = meal.kind === 'note';
 
     return `
-      <article class="pending-card">
+      <article class="pending-card ${isNote ? 'note-pending-card' : ''}">
         <div>
           <strong>${formatDate(meal.date)} · ${MEAL_TYPE_LABELS[meal.mealType]}</strong>
-          <span>${escapeHtml(recipe?.name ?? 'Receta eliminada')} · ${meal.servings} raciones</span>
+          <span>
+            ${
+              isNote
+                ? `${escapeHtml(meal.title)}${meal.note ? ` · ${escapeHtml(meal.note)}` : ''}`
+                : `${escapeHtml(recipe?.name ?? 'Receta eliminada')} · ${meal.servings} raciones`
+            }
+          </span>
         </div>
         <div class="inline-actions">
-          <button class="button small" type="button" data-action="resolve-meal" data-id="${meal.id}" data-cooked="true">
-            Hecha
-          </button>
-          <button class="button ghost small" type="button" data-action="resolve-meal" data-id="${meal.id}" data-cooked="false">
-            No hecha
-          </button>
+          ${
+            isNote
+              ? `
+                <button class="button small" type="button" data-action="resolve-meal" data-id="${meal.id}" data-cooked="false">
+                  Resolver
+                </button>
+              `
+              : `
+                <button class="button small" type="button" data-action="resolve-meal" data-id="${meal.id}" data-cooked="true">
+                  Hecha
+                </button>
+                <button class="button ghost small" type="button" data-action="resolve-meal" data-id="${meal.id}" data-cooked="false">
+                  No hecha
+                </button>
+              `
+          }
         </div>
       </article>
     `;

@@ -40,6 +40,20 @@
   flex: 1 1 auto;
 }
 
+.note-meal-card {
+  border-color: rgba(33, 91, 145, 0.22);
+  background: #f7fbff;
+}
+
+.note-meal-card > div {
+  min-width: 0;
+  flex: 1 1 auto;
+}
+
+.note-meal-card small {
+  overflow-wrap: anywhere;
+}
+
 .meal-shortage {
   margin-top: 4px;
   color: var(--color-danger);
@@ -55,6 +69,11 @@
   font-size: 0.74rem;
   font-weight: 850;
   white-space: nowrap;
+}
+
+.note-status-badge {
+  background: #eef5fb;
+  color: #215b91;
 }
 
 .meal-edit-card {
@@ -89,6 +108,15 @@
   padding: 10px 14px;
 }
 
+.note-meal-form label:first-of-type,
+.note-meal-form label:last-of-type {
+  flex: 1 1 170px;
+}
+
+.note-edit-card label {
+  min-width: 0;
+}
+
 .pending-list {
   display: grid;
   gap: 8px;
@@ -97,6 +125,10 @@
 .pending-card {
   align-items: flex-start;
   background: rgba(255, 255, 255, 0.76);
+}
+
+.note-pending-card {
+  border-color: rgba(33, 91, 145, 0.22);
 }
 
 .inline-actions {

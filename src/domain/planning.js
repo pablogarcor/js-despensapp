@@ -95,6 +95,10 @@ export function calculateShoppingList({ pantryItems, recipes, plannedMeals }) {
   const requiredByItem = new Map();
 
   for (const meal of plannedMeals) {
+    if ((meal.kind ?? 'recipe') !== 'recipe') {
+      continue;
+    }
+
     const recipe = recipesById.get(meal.recipeId);
     if (!recipe) {
       continue;
@@ -152,6 +156,10 @@ export function calculateUnavailablePlannedMeals({ pantryItems, recipes, planned
   const unavailableMeals = [];
 
   for (const meal of sortPlannedMeals(plannedMeals)) {
+    if ((meal.kind ?? 'recipe') !== 'recipe') {
+      continue;
+    }
+
     const recipe = recipesById.get(meal.recipeId);
 
     if (!recipe) {
@@ -266,6 +274,7 @@ export function buildRandomMealsForSlots({
     const now = new Date().toISOString();
     plannedMeals.push({
       id: createId('meal'),
+      kind: 'recipe',
       date: slot.date,
       mealType: slot.mealType,
       recipeId: selectedRecipe.id,

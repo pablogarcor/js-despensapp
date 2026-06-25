@@ -19,7 +19,7 @@ export const settingsViewMethods = {
         <div class="data-stats" aria-label="Datos guardados">
           <span><strong>${dashboard.pantryItems.length}</strong> alimentos</span>
           <span><strong>${dashboard.recipes.length}</strong> recetas</span>
-          <span><strong>${totalStoredMeals}</strong> comidas</span>
+          <span><strong>${totalStoredMeals}</strong> plan</span>
           <span><strong>${totalShoppingItems}</strong> compra</span>
         </div>
 

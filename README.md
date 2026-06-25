@@ -39,15 +39,18 @@ Regla importante: todos los ingredientes deben existir previamente en `pantryIte
 
 ### `plannedMeals`
 
-Comidas planificadas.
+Huecos ocupados del plan semanal. Pueden ser comidas con receta o entradas de **No cocinar**.
 
 - `id`: identificador local.
+- `kind`: `recipe` para comida con receta o `note` para una entrada de **No cocinar**. Los datos antiguos sin `kind` se interpretan como `recipe`.
 - `date`: fecha `YYYY-MM-DD`.
 - `mealType`: desayuno, comida o cena.
-- `recipeId`: receta planificada.
-- `servings`: raciones.
+- `recipeId`: receta planificada cuando `kind` es `recipe`.
+- `servings`: raciones cuando `kind` es `recipe`.
+- `title`: motivo cuando `kind` es `note`: `Sobras`, `Comer fuera`, `Congelado` u `Otro motivo`.
+- `note`: detalle opcional del motivo.
 
-La planificacion automatica genera 7 dias desde manana, con desayuno, comida y cena. Las comidas pasadas se mantienen hasta que el usuario confirme si se hicieron.
+La planificacion automatica genera 7 dias desde manana, con desayuno, comida y cena. Las comidas y entradas de **No cocinar** pasadas se mantienen hasta que el usuario las resuelva.
 
 ### `shoppingItems`
 
@@ -81,6 +84,9 @@ Las reglas viven en `src/services/pantryService.js`:
 - Una comida manual solo puede usar recetas compatibles con su momento del dia.
 - Una comida editada conserva su fecha y momento del dia; solo puede cambiar receta y raciones.
 - Una comida editada solo puede usar una receta compatible con su momento del dia.
+- Una entrada de **No cocinar** ocupa fecha y franja igual que una comida, pero no tiene receta ni raciones.
+- Una entrada de **No cocinar** no bloquea borrar recetas, no genera lista de compra y no descuenta despensa al resolverse.
+- `Otro motivo` debe incluir detalle.
 - Una receta no puede repetir el mismo alimento.
 - Una comida hecha descuenta `cantidad por racion * raciones`.
 - La despensa no baja de cero si se confirma una comida aunque falten alimentos.
@@ -213,28 +219,29 @@ Si el deploy falla con `HttpError: Not Found` y el mensaje `Ensure GitHub Pages 
 8. Si prefieres automatizar, indica raciones y pulsa **Planificar semana** para rellenar todos los huecos.
 9. Si eliminas una comida del plan, el hueco vuelve a aparecer dentro de su dia con un selector de recetas compatibles.
 10. Pulsa **Completar huecos** para rellenar automaticamente los huecos restantes sin borrar las comidas ya planificadas.
-11. Usa **Editar** en una comida planificada para cambiar receta o raciones.
-12. En **Plan**, el resumen de compra indica si hay compra pendiente o si el plan esta cubierto, con acceso directo a **Compra**.
-13. Las comidas del plan que no se podrian cocinar quedan marcadas en su tarjeta para verlo de un vistazo.
-14. En **Compra**, puedes marcar alimentos como comprados, anadir extras manuales y ver las **comidas afectadas**, con receta, fecha, franja y faltas concretas.
-15. Pulsa **Compra hecha** en **Compra** para sumar a la despensa las entradas marcadas. Los faltantes del plan actualizan alimentos existentes; los extras actualizan alimentos con la misma unidad o crean uno nuevo.
-16. Cuando una comida ya paso, la app la muestra como pendiente: si marcas **Hecha**, descuenta ingredientes; si marcas **No hecha**, solo elimina la planificacion.
-17. En **Configuracion**, usa **Exportar copia** para descargar un backup JSON o **Importar y reemplazar** para restaurarlo.
-18. Usa **Borrar todo** en **Configuracion** para reiniciar despensa, recetas, planificacion y compra.
+11. En un hueco libre, usa **No cocinar** para bloquearlo como `Sobras`, `Comer fuera`, `Congelado` u `Otro motivo` sin crear una receta falsa.
+12. Usa **Editar** en una comida planificada para cambiar receta o raciones, o en **No cocinar** para cambiar motivo y detalle.
+13. En **Plan**, el resumen de compra indica si hay compra pendiente o si el plan esta cubierto, con acceso directo a **Compra**.
+14. Las comidas del plan que no se podrian cocinar quedan marcadas en su tarjeta para verlo de un vistazo.
+15. En **Compra**, puedes marcar alimentos como comprados, anadir extras manuales y ver las **comidas afectadas**, con receta, fecha, franja y faltas concretas.
+16. Pulsa **Compra hecha** en **Compra** para sumar a la despensa las entradas marcadas. Los faltantes del plan actualizan alimentos existentes; los extras actualizan alimentos con la misma unidad o crean uno nuevo.
+17. Cuando una comida ya paso, la app la muestra como pendiente: si marcas **Hecha**, descuenta ingredientes; si marcas **No hecha**, solo elimina la planificacion. Las entradas de **No cocinar** pasadas se resuelven sin tocar despensa.
+18. En **Configuracion**, usa **Exportar copia** para descargar un backup JSON o **Importar y reemplazar** para restaurarlo.
+19. Usa **Borrar todo** en **Configuracion** para reiniciar despensa, recetas, planificacion y compra.
 
 ## Importar y exportar
 
 La app exporta un JSON con:
 
 - `app: "despensapp"`.
-- `schemaVersion: 2`.
+- `schemaVersion: 3`.
 - `exportedAt`.
 - `data.pantryItems`.
 - `data.recipes`.
 - `data.plannedMeals`.
 - `data.shoppingItems`.
 
-La importacion valida estructura, ids duplicados y relaciones entre alimentos, recetas, comidas y compras antes de reemplazar los datos actuales. Los backups de `schemaVersion: 1` siguen importandose y se cargan con lista de compra vacia. En este MVP la importacion siempre es de tipo **reemplazar**, no fusionar.
+La importacion valida estructura, ids duplicados y relaciones entre alimentos, recetas, comidas, entradas de **No cocinar** y compras antes de reemplazar los datos actuales. Los backups de `schemaVersion: 1` siguen importandose y se cargan con lista de compra vacia; los de `schemaVersion: 1` y `2` interpretan las comidas planificadas antiguas como `recipe`. En este MVP la importacion siempre es de tipo **reemplazar**, no fusionar.
 
 ## Limitaciones conscientes del MVP
 

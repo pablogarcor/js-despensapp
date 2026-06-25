@@ -1,5 +1,5 @@
 const DB_NAME = 'despensapp';
-const DB_VERSION = 2;
+const DB_VERSION = 3;
 
 /**
  * Cliente minimo para IndexedDB con una API basada en promesas.
@@ -22,8 +22,9 @@ export class IndexedDbClient {
     this.db = await new Promise((resolve, reject) => {
       const request = indexedDB.open(DB_NAME, DB_VERSION);
 
-      request.onupgradeneeded = () => {
+      request.onupgradeneeded = (event) => {
         const database = request.result;
+        const oldVersion = event.oldVersion;
 
         if (!database.objectStoreNames.contains('pantryItems')) {
           const pantryStore = database.createObjectStore('pantryItems', { keyPath: 'id' });
@@ -49,6 +50,27 @@ export class IndexedDbClient {
 
         if (!database.objectStoreNames.contains('meta')) {
           database.createObjectStore('meta', { keyPath: 'key' });
+        }
+
+        if (oldVersion < 3 && database.objectStoreNames.contains('plannedMeals')) {
+          const mealStore = request.transaction.objectStore('plannedMeals');
+          const cursorRequest = mealStore.openCursor();
+
+          cursorRequest.onsuccess = () => {
+            const cursor = cursorRequest.result;
+
+            if (!cursor) {
+              return;
+            }
+
+            const meal = cursor.value;
+
+            if (!meal.kind) {
+              cursor.update({ ...meal, kind: 'recipe' });
+            }
+
+            cursor.continue();
+          };
         }
       };
 
