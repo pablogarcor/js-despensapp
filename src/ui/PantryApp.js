@@ -240,6 +240,18 @@ export class PantryApp {
         this.showToast('Comida eliminada del plan.');
       }
 
+      if (action === 'delete-shopping-extra') {
+        await this.service.deleteShoppingExtra(id);
+        this.showToast('Extra eliminado.');
+      }
+
+      if (action === 'apply-shopping-purchase') {
+        const summary = await this.service.applyShoppingPurchase();
+        const createdText =
+          summary.createdPantryItems > 0 ? ` ${summary.createdPantryItems} alimentos nuevos.` : '';
+        this.showToast(`${summary.purchasedItems} compras sumadas a la despensa.${createdText}`);
+      }
+
       if (action === 'edit-planned-meal') {
         this.state.editingPlannedMealId = id;
         shouldRefresh = false;
@@ -471,8 +483,19 @@ export class PantryApp {
         form.reset();
         this.state.activeView = 'settings';
         this.showToast(
-          `Importados ${summary.pantryItems} alimentos, ${summary.recipes} recetas y ${summary.plannedMeals} comidas.`,
+          `Importados ${summary.pantryItems} alimentos, ${summary.recipes} recetas, ${summary.plannedMeals} comidas y ${summary.shoppingItems} compras.`,
         );
+      }
+
+      if (form.matches('[data-form="shopping-extra"]')) {
+        const data = new FormData(form);
+        await this.service.createShoppingExtra({
+          name: data.get('name'),
+          quantity: data.get('quantity'),
+          unit: data.get('unit'),
+        });
+        form.reset();
+        this.showToast('Extra anadido a la compra.');
       }
 
       await this.refresh();
@@ -484,7 +507,21 @@ export class PantryApp {
    *
    * @param {Event} event Evento change.
    */
-  handleChange(event) {
+  async handleChange(event) {
+    const shoppingCheck = event.target.closest('[data-shopping-check]');
+
+    if (shoppingCheck) {
+      if (this.state.isBusy) {
+        return;
+      }
+
+      await this.runSafely(async () => {
+        await this.service.setShoppingItemChecked(shoppingCheck.value, shoppingCheck.checked);
+        await this.refresh();
+      });
+      return;
+    }
+
     const rowElement = event.target.closest('[data-ingredient-row]');
 
     if (rowElement) {

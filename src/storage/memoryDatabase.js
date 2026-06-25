@@ -9,6 +9,7 @@ export class MemoryDatabase {
       ['pantryItems', new Map()],
       ['recipes', new Map()],
       ['plannedMeals', new Map()],
+      ['shoppingItems', new Map()],
       ['meta', new Map()],
     ]);
   }

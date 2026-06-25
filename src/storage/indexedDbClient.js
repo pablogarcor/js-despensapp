@@ -1,5 +1,5 @@
 const DB_NAME = 'despensapp';
-const DB_VERSION = 1;
+const DB_VERSION = 2;
 
 /**
  * Cliente minimo para IndexedDB con una API basada en promesas.
@@ -39,6 +39,12 @@ export class IndexedDbClient {
           const mealStore = database.createObjectStore('plannedMeals', { keyPath: 'id' });
           mealStore.createIndex('by_date', 'date', { unique: false });
           mealStore.createIndex('by_recipe', 'recipeId', { unique: false });
+        }
+
+        if (!database.objectStoreNames.contains('shoppingItems')) {
+          const shoppingStore = database.createObjectStore('shoppingItems', { keyPath: 'id' });
+          shoppingStore.createIndex('by_kind', 'kind', { unique: false });
+          shoppingStore.createIndex('by_pantry_item', 'pantryItemId', { unique: false });
         }
 
         if (!database.objectStoreNames.contains('meta')) {

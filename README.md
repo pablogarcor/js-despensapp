@@ -49,13 +49,26 @@ Comidas planificadas.
 
 La planificacion automatica genera 7 dias desde manana, con desayuno, comida y cena. Las comidas pasadas se mantienen hasta que el usuario confirme si se hicieron.
 
+### `shoppingItems`
+
+Estado persistente de la lista de compra accionable.
+
+- `id`: identificador local de la entrada.
+- `kind`: `generated` cuando viene de faltantes del plan o `extra` cuando lo anade el usuario.
+- `pantryItemId`: alimento asociado en entradas generadas por el plan.
+- `name`, `quantity`, `unit`: datos de un extra manual.
+- `checked`: indica si esta marcado como comprado.
+- `createdAt`, `updatedAt`: auditoria local.
+
+Las cantidades generadas por el plan no se duplican en esta tabla: se calculan desde recetas, comidas planificadas y despensa, y `shoppingItems` solo conserva su estado de marcado.
+
 ## Reglas de integridad
 
 Las reglas viven en `src/services/pantryService.js`:
 
 - No se puede borrar un alimento si alguna receta lo usa.
 - No se puede vaciar la despensa si alguna receta usa alimentos guardados.
-- Se puede borrar todo desde configuracion para reiniciar despensa, recetas y comidas planificadas a la vez.
+- Se puede borrar todo desde configuracion para reiniciar despensa, recetas, comidas planificadas y lista de compra a la vez.
 - Se puede sumar o restar cantidad a un alimento existente manteniendo su unidad.
 - Al restar stock manualmente, la cantidad nunca baja de cero.
 - Se puede editar nombre, cantidad y unidad de un alimento existente conservando su identificador.
@@ -73,6 +86,11 @@ Las reglas viven en `src/services/pantryService.js`:
 - La despensa no baja de cero si se confirma una comida aunque falten alimentos.
 - La lista de la compra se calcula agregando todo lo que requiere el plan futuro y comparandolo con la despensa.
 - La lista de la compra tambien senala que comidas del plan no se podrian preparar, indicando receta, fecha, franja y alimentos que faltan.
+- Los alimentos generados por el plan se pueden marcar como comprados sin guardar una copia de su cantidad calculada.
+- Los extras manuales de compra se guardan con nombre, cantidad, unidad y estado de marcado.
+- Al marcar **Compra hecha**, los faltantes generados suman stock a su alimento existente.
+- Al marcar **Compra hecha**, los extras suman stock a un alimento existente con la misma unidad o crean un alimento nuevo.
+- Un extra no puede aplicarse si ya existe un alimento con el mismo nombre y otra unidad.
 
 ## Estructura
 
@@ -196,29 +214,32 @@ Si el deploy falla con `HttpError: Not Found` y el mensaje `Ensure GitHub Pages 
 9. Si eliminas una comida del plan, el hueco vuelve a aparecer dentro de su dia con un selector de recetas compatibles.
 10. Pulsa **Completar huecos** para rellenar automaticamente los huecos restantes sin borrar las comidas ya planificadas.
 11. Usa **Editar** en una comida planificada para cambiar receta o raciones.
-12. Si falta comida, la **lista de la compra** aparece cerrada por defecto pero indica claramente si falta compra o si el plan esta cubierto.
+12. Si falta comida, la **lista de la compra** aparece cerrada por defecto pero indica claramente si hay compra pendiente o si el plan esta cubierto.
 13. Las comidas del plan que no se podrian cocinar quedan marcadas en su tarjeta para verlo de un vistazo.
-14. Al desplegar la lista de compra, muestra alimentos agregados por unidad y las **comidas afectadas**, con receta, fecha, franja y faltas concretas.
-15. Cuando una comida ya paso, la app la muestra como pendiente: si marcas **Hecha**, descuenta ingredientes; si marcas **No hecha**, solo elimina la planificacion.
-16. En **Configuracion**, usa **Exportar copia** para descargar un backup JSON o **Importar y reemplazar** para restaurarlo.
-17. Usa **Borrar todo** en **Configuracion** para reiniciar despensa, recetas y planificacion.
+14. Al desplegar la lista de compra, puedes marcar alimentos como comprados, anadir extras manuales y ver las **comidas afectadas**, con receta, fecha, franja y faltas concretas.
+15. Pulsa **Compra hecha** para sumar a la despensa las entradas marcadas. Los faltantes del plan actualizan alimentos existentes; los extras actualizan alimentos con la misma unidad o crean uno nuevo.
+16. Cuando una comida ya paso, la app la muestra como pendiente: si marcas **Hecha**, descuenta ingredientes; si marcas **No hecha**, solo elimina la planificacion.
+17. En **Configuracion**, usa **Exportar copia** para descargar un backup JSON o **Importar y reemplazar** para restaurarlo.
+18. Usa **Borrar todo** en **Configuracion** para reiniciar despensa, recetas, planificacion y compra.
 
 ## Importar y exportar
 
 La app exporta un JSON con:
 
 - `app: "despensapp"`.
-- `schemaVersion: 1`.
+- `schemaVersion: 2`.
 - `exportedAt`.
 - `data.pantryItems`.
 - `data.recipes`.
 - `data.plannedMeals`.
+- `data.shoppingItems`.
 
-La importacion valida estructura, ids duplicados y relaciones entre alimentos, recetas y comidas antes de reemplazar los datos actuales. En este MVP la importacion siempre es de tipo **reemplazar**, no fusionar.
+La importacion valida estructura, ids duplicados y relaciones entre alimentos, recetas, comidas y compras antes de reemplazar los datos actuales. Los backups de `schemaVersion: 1` siguen importandose y se cargan con lista de compra vacia. En este MVP la importacion siempre es de tipo **reemplazar**, no fusionar.
 
 ## Limitaciones conscientes del MVP
 
 - No hay conversion automatica entre unidades. Una receta usa la misma unidad definida por cada alimento.
+- La lista de compra no organiza por pasillos, tiendas ni precios.
 - No hay sincronizacion entre dispositivos ni usuarios.
 - No hay sincronizacion en segundo plano, notificaciones push ni actualizaciones silenciosas de datos.
 - Los datos demo se insertan solo la primera vez para facilitar pruebas.

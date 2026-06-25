@@ -2,7 +2,8 @@ import { DomainError } from './errors.js';
 import { MEAL_TYPES } from './types.js';
 
 export const BACKUP_APP_ID = 'despensapp';
-export const BACKUP_SCHEMA_VERSION = 1;
+export const BACKUP_SCHEMA_VERSION = 2;
+const SUPPORTED_BACKUP_SCHEMA_VERSIONS = Object.freeze([1, 2]);
 
 /**
  * Construye un backup JSON versionado de los datos locales.
@@ -11,10 +12,11 @@ export const BACKUP_SCHEMA_VERSION = 1;
  * @param {import('./types.js').PantryItem[]} params.pantryItems Alimentos.
  * @param {import('./types.js').Recipe[]} params.recipes Recetas.
  * @param {import('./types.js').PlannedMeal[]} params.plannedMeals Comidas planificadas.
+ * @param {import('./types.js').ShoppingItem[]} [params.shoppingItems] Entradas de compra.
  * @param {string} params.exportedAt Fecha ISO de exportacion.
  * @returns {import('./types.js').PantryBackup} Backup serializable.
  */
-export function createBackup({ pantryItems, recipes, plannedMeals, exportedAt }) {
+export function createBackup({ pantryItems, recipes, plannedMeals, shoppingItems = [], exportedAt }) {
   return {
     app: BACKUP_APP_ID,
     schemaVersion: BACKUP_SCHEMA_VERSION,
@@ -23,6 +25,7 @@ export function createBackup({ pantryItems, recipes, plannedMeals, exportedAt })
       pantryItems,
       recipes,
       plannedMeals,
+      shoppingItems,
     },
   };
 }
@@ -38,7 +41,10 @@ export function validateBackup(backup) {
     throw new DomainError('El archivo de importacion no tiene un formato valido.', 'BACKUP_INVALID');
   }
 
-  if (backup.app !== BACKUP_APP_ID || backup.schemaVersion !== BACKUP_SCHEMA_VERSION) {
+  if (
+    backup.app !== BACKUP_APP_ID ||
+    !SUPPORTED_BACKUP_SCHEMA_VERSIONS.includes(backup.schemaVersion)
+  ) {
     throw new DomainError('El archivo no pertenece a una version compatible de DespensApp.', 'BACKUP_VERSION');
   }
 
@@ -49,11 +55,16 @@ export function validateBackup(backup) {
   const pantryItems = validatePantryItems(backup.data.pantryItems);
   const recipes = validateRecipes(backup.data.recipes, pantryItems);
   const plannedMeals = validatePlannedMeals(backup.data.plannedMeals, recipes);
+  const shoppingItems =
+    backup.schemaVersion >= 2
+      ? validateShoppingItems(backup.data.shoppingItems, pantryItems)
+      : [];
 
   return {
     pantryItems,
     recipes,
     plannedMeals,
+    shoppingItems,
   };
 }
 
@@ -177,6 +188,67 @@ function validatePlannedMeals(records, recipes) {
 }
 
 /**
+ * Valida estado y extras de lista de compra.
+ *
+ * @param {unknown} records Registros de entrada.
+ * @param {import('./types.js').PantryItem[]} pantryItems Alimentos validados.
+ * @returns {import('./types.js').ShoppingItem[]} Entradas saneadas.
+ */
+function validateShoppingItems(records, pantryItems) {
+  assertArray(records, 'El backup debe incluir una lista de compra.');
+  assertUniqueIds(records, 'Hay entradas de compra duplicadas en el backup.');
+
+  const pantryIds = new Set(pantryItems.map((item) => item.id));
+  const generatedPantryIds = new Set();
+
+  return records.map((record) => {
+    if (!isPlainObject(record)) {
+      throw new DomainError('Hay una entrada de compra con formato invalido.', 'BACKUP_SHOPPING_INVALID');
+    }
+
+    const id = parseRequiredString(record.id, 'Hay una entrada de compra sin identificador.');
+    const kind = parseShoppingItemKind(record.kind);
+    const checked = parseBoolean(record.checked, 'Hay una entrada de compra con marcado invalido.');
+    const createdAt = parseOptionalString(record.createdAt);
+    const updatedAt = parseOptionalString(record.updatedAt);
+
+    if (kind === 'generated') {
+      const pantryItemId = parseRequiredString(record.pantryItemId, 'Hay una compra generada sin alimento.');
+
+      if (!pantryIds.has(pantryItemId)) {
+        throw new DomainError('Hay una compra generada con un alimento inexistente.', 'BACKUP_SHOPPING_PANTRY');
+      }
+
+      if (generatedPantryIds.has(pantryItemId)) {
+        throw new DomainError('Hay compras generadas duplicadas para un alimento.', 'BACKUP_SHOPPING_DUPLICATED');
+      }
+
+      generatedPantryIds.add(pantryItemId);
+
+      return {
+        id,
+        kind,
+        pantryItemId,
+        checked,
+        createdAt,
+        updatedAt,
+      };
+    }
+
+    return {
+      id,
+      kind,
+      name: parseRequiredString(record.name, 'Hay un extra de compra sin nombre.'),
+      quantity: parsePositiveNumber(record.quantity, 'Hay un extra de compra con cantidad invalida.'),
+      unit: parseRequiredString(record.unit, 'Hay un extra de compra sin unidad.'),
+      checked,
+      createdAt,
+      updatedAt,
+    };
+  });
+}
+
+/**
  * Valida ingredientes de receta.
  *
  * @param {unknown} records Ingredientes.
@@ -244,6 +316,35 @@ function validateMealTypes(records) {
 function parseMealType(value) {
   if (!MEAL_TYPES.includes(value)) {
     throw new DomainError('Hay una franja de comida invalida en el backup.', 'BACKUP_MEAL_TYPE');
+  }
+
+  return value;
+}
+
+/**
+ * Valida el origen de una entrada de compra.
+ *
+ * @param {unknown} value Valor de entrada.
+ * @returns {import('./types.js').ShoppingItemKind} Tipo valido.
+ */
+function parseShoppingItemKind(value) {
+  if (value !== 'generated' && value !== 'extra') {
+    throw new DomainError('Hay un tipo de compra invalido en el backup.', 'BACKUP_SHOPPING_KIND');
+  }
+
+  return value;
+}
+
+/**
+ * Valida un booleano de backup.
+ *
+ * @param {unknown} value Valor de entrada.
+ * @param {string} errorMessage Mensaje si falla.
+ * @returns {boolean} Booleano validado.
+ */
+function parseBoolean(value, errorMessage) {
+  if (typeof value !== 'boolean') {
+    throw new DomainError(errorMessage, 'BACKUP_BOOLEAN_INVALID');
   }
 
   return value;

@@ -93,12 +93,95 @@
   list-style: none;
 }
 
-.shopping-list li {
-  display: flex;
-  justify-content: space-between;
-  gap: 16px;
+.shopping-list-row {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 8px;
   border-top: 1px solid rgba(30, 37, 34, 0.1);
   padding-top: 8px;
+}
+
+.shopping-list-row.is-checked .shopping-item-copy strong,
+.shopping-list-row.is-checked .shopping-item-quantity {
+  color: var(--color-muted);
+  text-decoration: line-through;
+}
+
+.shopping-item-check {
+  display: grid;
+  grid-template-columns: 22px minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 10px;
+  min-width: 0;
+  color: var(--color-text);
+}
+
+.shopping-item-check input {
+  width: 20px;
+  min-height: 20px;
+  margin: 0;
+  accent-color: var(--color-primary);
+}
+
+.shopping-item-copy {
+  min-width: 0;
+}
+
+.shopping-item-copy strong,
+.shopping-item-copy small {
+  display: block;
+}
+
+.shopping-item-copy strong {
+  overflow-wrap: anywhere;
+}
+
+.shopping-item-copy small {
+  margin-top: 2px;
+  color: var(--color-subtle);
+  font-size: 0.76rem;
+  font-weight: 760;
+}
+
+.shopping-item-quantity {
+  color: var(--color-text);
+  white-space: nowrap;
+}
+
+.shopping-extra-remove {
+  width: 36px;
+  height: 36px;
+}
+
+.shopping-extra-form {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(82px, 0.45fr);
+  gap: 8px;
+  margin-top: 12px;
+  border-top: 1px solid rgba(30, 37, 34, 0.1);
+  padding-top: 12px;
+}
+
+.shopping-extra-form label:first-child,
+.shopping-extra-form button {
+  grid-column: 1 / -1;
+}
+
+.shopping-purchase-actions {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  margin-top: 12px;
+  border-top: 1px solid rgba(30, 37, 34, 0.1);
+  padding-top: 12px;
+}
+
+.shopping-purchase-actions span {
+  color: var(--color-muted);
+  font-size: 0.84rem;
+  font-weight: 780;
 }
 
 .unavailable-meals {

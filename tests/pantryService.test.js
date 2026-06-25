@@ -149,10 +149,11 @@ test('exporta un backup versionado con datos locales', async () => {
   const backup = await service.exportBackup();
 
   assert.equal(backup.app, 'despensapp');
-  assert.equal(backup.schemaVersion, 1);
+  assert.equal(backup.schemaVersion, 2);
   assert.equal(backup.data.pantryItems.length, 1);
   assert.equal(backup.data.recipes.length, 1);
   assert.equal(backup.data.plannedMeals.length, 21);
+  assert.equal(backup.data.shoppingItems.length, 0);
 });
 
 test('importa un backup reemplazando datos actuales', async () => {
@@ -169,10 +170,34 @@ test('importa un backup reemplazando datos actuales', async () => {
     pantryItems: 1,
     recipes: 1,
     plannedMeals: 0,
+    shoppingItems: 0,
   });
   assert.equal(dashboard.pantryItems.length, 1);
   assert.equal(dashboard.pantryItems[0].name, 'Arroz');
   assert.equal(dashboard.recipes[0].name, 'Arroz basico');
+});
+
+test('importa backups version 1 sin lista de compra', async () => {
+  const source = await createServiceWithRecipe();
+  const backup = await source.service.exportBackup();
+  const legacyBackup = {
+    ...backup,
+    schemaVersion: 1,
+    data: {
+      pantryItems: backup.data.pantryItems,
+      recipes: backup.data.recipes,
+      plannedMeals: backup.data.plannedMeals,
+    },
+  };
+  const targetDatabase = new MemoryDatabase();
+  const targetService = new PantryService(targetDatabase, { now: () => fixedDate });
+
+  const summary = await targetService.importBackup(JSON.stringify(legacyBackup));
+  const dashboard = await targetService.getDashboard();
+
+  assert.equal(summary.shoppingItems, 0);
+  assert.equal(dashboard.shoppingList.length, 0);
+  assert.equal(dashboard.shoppingExtras.length, 0);
 });
 
 test('rechaza backups con relaciones invalidas sin reemplazar los datos actuales', async () => {
@@ -248,9 +273,21 @@ test('borra todos los datos principales aunque existan relaciones entre tablas',
   assert.equal(summary.pantryItems, 1);
   assert.equal(summary.recipes, 1);
   assert.equal(summary.plannedMeals, 21);
+  assert.equal(summary.shoppingItems, 0);
   assert.equal(dashboard.pantryItems.length, 0);
   assert.equal(dashboard.recipes.length, 0);
   assert.equal(dashboard.plannedMeals.length, 0);
+});
+
+test('borrar todos los datos limpia tambien extras de compra', async () => {
+  const { service } = await createServiceWithRecipe();
+  await service.createShoppingExtra({ name: 'Cafe', quantity: 1, unit: 'ud' });
+
+  const summary = await service.clearAllData();
+  const dashboard = await service.getDashboard();
+
+  assert.equal(summary.shoppingItems, 1);
+  assert.equal(dashboard.shoppingExtras.length, 0);
 });
 
 test('permite editar ingredientes y cantidades de una receta existente', async () => {
@@ -312,6 +349,75 @@ test('calcula lista de compra cuando el plan supera la despensa', async () => {
   assert.ok(riceShortage);
   assert.equal(riceShortage.unit, 'g');
   assert.ok(riceShortage.missingQuantity > 0);
+});
+
+test('permite marcar faltantes generados y sumar la compra a la despensa', async () => {
+  const { service, rice } = await createServiceWithRecipe();
+  await service.planNextWeek({ servings: 1 });
+  const before = await service.getDashboard();
+  const riceShortage = before.shoppingList.find((item) => item.name === 'Arroz');
+
+  await service.setShoppingItemChecked(riceShortage.shoppingItemId, true);
+  const marked = await service.getDashboard();
+  const markedRiceShortage = marked.shoppingList.find((item) => item.name === 'Arroz');
+  const summary = await service.applyShoppingPurchase();
+  const after = await service.getDashboard();
+  const updatedRice = after.pantryItems.find((item) => item.id === rice.id);
+
+  assert.equal(markedRiceShortage.checked, true);
+  assert.equal(summary.purchasedItems, 1);
+  assert.equal(summary.updatedPantryItems, 1);
+  assert.equal(summary.createdPantryItems, 0);
+  assert.equal(updatedRice.quantity, 2100);
+  assert.equal(after.shoppingList.length, 0);
+});
+
+test('limpia el marcado generado cuando se ajusta stock manualmente', async () => {
+  const { service, rice } = await createServiceWithRecipe();
+  await service.planNextWeek({ servings: 1 });
+  const before = await service.getDashboard();
+  const riceShortage = before.shoppingList.find((item) => item.name === 'Arroz');
+
+  await service.setShoppingItemChecked(riceShortage.shoppingItemId, true);
+  await service.addPantryItemQuantity(rice.id, 100);
+  const after = await service.getDashboard();
+  const updatedRiceShortage = after.shoppingList.find((item) => item.name === 'Arroz');
+
+  assert.equal(updatedRiceShortage.missingQuantity, 1500);
+  assert.equal(updatedRiceShortage.checked, false);
+});
+
+test('permite comprar extras y sumarlos a alimentos existentes o nuevos', async () => {
+  const { service, rice } = await createServiceWithRecipe();
+  const riceExtra = await service.createShoppingExtra({ name: 'Arroz', quantity: 250, unit: 'g' });
+  const milkExtra = await service.createShoppingExtra({ name: 'Leche', quantity: 2, unit: 'l' });
+
+  await service.setShoppingItemChecked(riceExtra.id, true);
+  await service.setShoppingItemChecked(milkExtra.id, true);
+  const summary = await service.applyShoppingPurchase();
+  const dashboard = await service.getDashboard();
+  const updatedRice = dashboard.pantryItems.find((item) => item.id === rice.id);
+  const milk = dashboard.pantryItems.find((item) => item.name === 'Leche');
+
+  assert.equal(summary.purchasedItems, 2);
+  assert.equal(summary.updatedPantryItems, 1);
+  assert.equal(summary.createdPantryItems, 1);
+  assert.equal(updatedRice.quantity, 750);
+  assert.equal(milk.quantity, 2);
+  assert.equal(milk.unit, 'l');
+  assert.equal(dashboard.shoppingExtras.length, 0);
+});
+
+test('impide aplicar un extra con la misma despensa pero distinta unidad', async () => {
+  const { service } = await createServiceWithRecipe();
+  const riceExtra = await service.createShoppingExtra({ name: 'Arroz', quantity: 1, unit: 'kg' });
+
+  await service.setShoppingItemChecked(riceExtra.id, true);
+
+  await assert.rejects(
+    () => service.applyShoppingPurchase(),
+    /ya existe en g/,
+  );
 });
 
 test('indica que recetas y fechas no se podrian cocinar con la despensa actual', async () => {
