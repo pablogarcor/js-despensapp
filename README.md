@@ -214,10 +214,10 @@ Si el deploy falla con `HttpError: Not Found` y el mensaje `Ensure GitHub Pages 
 9. Si eliminas una comida del plan, el hueco vuelve a aparecer dentro de su dia con un selector de recetas compatibles.
 10. Pulsa **Completar huecos** para rellenar automaticamente los huecos restantes sin borrar las comidas ya planificadas.
 11. Usa **Editar** en una comida planificada para cambiar receta o raciones.
-12. Si falta comida, la **lista de la compra** aparece cerrada por defecto pero indica claramente si hay compra pendiente o si el plan esta cubierto.
+12. En **Plan**, el resumen de compra indica si hay compra pendiente o si el plan esta cubierto, con acceso directo a **Compra**.
 13. Las comidas del plan que no se podrian cocinar quedan marcadas en su tarjeta para verlo de un vistazo.
-14. Al desplegar la lista de compra, puedes marcar alimentos como comprados, anadir extras manuales y ver las **comidas afectadas**, con receta, fecha, franja y faltas concretas.
-15. Pulsa **Compra hecha** para sumar a la despensa las entradas marcadas. Los faltantes del plan actualizan alimentos existentes; los extras actualizan alimentos con la misma unidad o crean uno nuevo.
+14. En **Compra**, puedes marcar alimentos como comprados, anadir extras manuales y ver las **comidas afectadas**, con receta, fecha, franja y faltas concretas.
+15. Pulsa **Compra hecha** en **Compra** para sumar a la despensa las entradas marcadas. Los faltantes del plan actualizan alimentos existentes; los extras actualizan alimentos con la misma unidad o crean uno nuevo.
 16. Cuando una comida ya paso, la app la muestra como pendiente: si marcas **Hecha**, descuenta ingredientes; si marcas **No hecha**, solo elimina la planificacion.
 17. En **Configuracion**, usa **Exportar copia** para descargar un backup JSON o **Importar y reemplazar** para restaurarlo.
 18. Usa **Borrar todo** en **Configuracion** para reiniciar despensa, recetas, planificacion y compra.

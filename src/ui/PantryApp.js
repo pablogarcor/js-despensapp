@@ -4,6 +4,7 @@ import { pantryViewMethods } from './render/pantryView.js';
 import { planViewMethods } from './render/planView.js';
 import { recipeViewMethods } from './render/recipeView.js';
 import { settingsViewMethods } from './render/settingsView.js';
+import { shoppingViewMethods } from './render/shoppingView.js';
 import { createIngredientRow, createUiId } from './uiState.js';
 
 /**
@@ -113,6 +114,7 @@ export class PantryApp {
           ${this.renderTab('pantry', 'Despensa')}
           ${this.renderTab('recipes', 'Recetas')}
           ${this.renderTab('plan', 'Plan')}
+          ${this.renderTab('shopping', 'Compra')}
         </nav>
 
         <main class="view-layout view-${this.state.activeView}">
@@ -763,6 +765,10 @@ export class PantryApp {
       return this.renderPlanView(dashboard);
     }
 
+    if (this.state.activeView === 'shopping') {
+      return this.renderShoppingView(dashboard);
+    }
+
     if (this.state.activeView === 'settings') {
       return this.renderSettingsView(dashboard);
     }
@@ -794,5 +800,6 @@ Object.assign(
   pantryViewMethods,
   recipeViewMethods,
   planViewMethods,
+  shoppingViewMethods,
   settingsViewMethods,
 );
