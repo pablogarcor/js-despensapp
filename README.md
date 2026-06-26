@@ -159,7 +159,6 @@ Para probar instalacion PWA real en movil hace falta servir la app por HTTPS. Lo
 ```bash
 npm run dev      # servidor de desarrollo
 npm run build    # build de produccion
-npm run build:github-pages # build con base /js-despensapp/
 npm run preview  # previsualizacion del build
 npm run pwa:icons # regenera los iconos PNG de la PWA
 npm test         # tests de negocio con node:test
@@ -183,27 +182,29 @@ Los datos siguen viviendo en IndexedDB. La PWA permite abrir la app offline tras
 
 ## Despliegue en GitHub Pages
 
-El repositorio esta preparado para desplegarse como sitio de proyecto en:
+El repositorio esta preparado para desplegar la app en el subdominio:
 
 ```text
-https://pablogarcor.github.io/js-despensapp/
+https://app.despensapp.xyz/
 ```
 
 La configuracion vive en `.github/workflows/deploy-pages.yml`. En cada push a `master`, GitHub Actions:
 
 1. Instala dependencias con `npm ci`.
 2. Ejecuta `npm test`.
-3. Genera el build con `npm run build:github-pages`.
+3. Genera el build con `npm run build`.
 4. Publica `dist/` con el flujo oficial de GitHub Pages.
 
 Configuracion necesaria en GitHub:
 
 1. Entra en **Settings > Pages**.
 2. En **Build and deployment**, selecciona **Source: GitHub Actions**.
-3. No configures **Custom domain** mientras no quieras dominio propio.
-4. Haz push a `master` y revisa el workflow en la pestana **Actions**.
+3. En **Custom domain**, configura `app.despensapp.xyz`.
+4. En el proveedor DNS, crea `app` como registro `CNAME` apuntando a `pablogarcor.github.io`.
+5. Espera a que GitHub emita el certificado y activa **Enforce HTTPS** cuando este disponible.
+6. Haz push a `master` y revisa el workflow en la pestana **Actions**.
 
-`npm run build:github-pages` usa `--base=/js-despensapp/`, necesario porque GitHub Pages sirve este repositorio bajo un subdirectorio. La PWA usa rutas relativas al scope, asi que manifest, iconos y service worker funcionan tanto en local como en GitHub Pages.
+El build usa la base raiz de Vite porque `app.despensapp.xyz` sirve la PWA desde `/`. El manifest, los iconos y el service worker usan rutas relativas al scope, asi que funcionan bajo el subdominio sin prefijo de repositorio.
 
 Si el deploy falla con `HttpError: Not Found` y el mensaje `Ensure GitHub Pages has been enabled`, el build ya se ha generado pero GitHub Pages no esta activado para el repositorio. Revisa de nuevo **Settings > Pages > Source: GitHub Actions** y vuelve a ejecutar el workflow. Los avisos de runtime de Node en las actions no son ese fallo; el workflow usa las majors actuales de las actions oficiales para evitar depender de Node 20.
 

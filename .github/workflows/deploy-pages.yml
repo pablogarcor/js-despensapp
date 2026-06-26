@@ -39,7 +39,7 @@ jobs:
         run: npm test
 
       - name: Build GitHub Pages artifact
-        run: npm run build:github-pages
+        run: npm run build
 
       - name: Upload Pages artifact
         uses: actions/upload-pages-artifact@v5
