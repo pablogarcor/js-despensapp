@@ -44,6 +44,8 @@ export const settingsViewMethods = {
           <button class="button full" type="submit">Importar y reemplazar</button>
         </form>
       </section>
+
+      ${this.renderInstallSettingsPanel()}
     `;
   }
 };

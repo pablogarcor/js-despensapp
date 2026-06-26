@@ -180,6 +180,8 @@ El service worker usa dos estrategias:
 
 Los datos siguen viviendo en IndexedDB. La PWA permite abrir la app offline tras una primera carga con conexion, pero no sincroniza datos entre dispositivos.
 
+La interfaz detecta si la sesion ya se ejecuta como PWA instalada usando `display-mode: standalone` y la senal `navigator.standalone` de iOS. Si la app se abre desde el navegador, muestra un aviso con pasos de instalacion adaptados a iOS, Android o escritorio; en navegadores compatibles usa el evento `beforeinstallprompt` para lanzar el prompt nativo. Configuracion muestra esas mismas instrucciones como una seccion estatica cuando la sesion no esta instalada.
+
 ## Despliegue en GitHub Pages
 
 El repositorio esta preparado para desplegar la app en el subdominio:

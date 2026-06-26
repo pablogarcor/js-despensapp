@@ -6,6 +6,13 @@ import { recipeViewMethods } from './render/recipeView.js';
 import { settingsViewMethods } from './render/settingsView.js';
 import { shoppingViewMethods } from './render/shoppingView.js';
 import { createIngredientRow, createUiId } from './uiState.js';
+import {
+  dismissPwaInstallPrompt,
+  getPwaInstallPromptCopy,
+  getPwaInstallPromptState,
+  promptPwaInstall,
+  watchPwaInstallPrompt,
+} from '../pwa/installPrompt.js';
 
 /**
  * Controlador de UI de la SPA.
@@ -24,9 +31,12 @@ export class PantryApp {
     this.root = root;
     this.service = service;
     this.toastTimeoutId = null;
+    this.unwatchInstallPrompt = null;
     this.state = {
       activeView: 'pantry',
       dashboard: null,
+      installPrompt: getPwaInstallPromptState(),
+      installPromptVisible: false,
       pantrySearch: '',
       recipeSearch: '',
       pantryFormOpen: false,
@@ -55,6 +65,14 @@ export class PantryApp {
     this.root.addEventListener('submit', (event) => this.handleSubmit(event));
     this.root.addEventListener('change', (event) => this.handleChange(event));
     this.root.addEventListener('input', (event) => this.handleInput(event));
+    this.unwatchInstallPrompt = watchPwaInstallPrompt((installPrompt) => {
+      this.state.installPrompt = installPrompt;
+      this.state.installPromptVisible = installPrompt.shouldShowPrompt;
+
+      if (this.state.dashboard) {
+        this.render();
+      }
+    });
     await this.refresh();
   }
 
@@ -110,6 +128,7 @@ export class PantryApp {
 
         ${this.renderPendingMeals(dashboard)}
         ${this.renderToast()}
+        ${this.renderInstallPrompt()}
 
         <nav class="tabs" aria-label="Secciones principales">
           ${this.renderTab('pantry', 'Despensa')}
@@ -152,6 +171,29 @@ export class PantryApp {
 
       if (action === 'dismiss-toast') {
         this.dismissToast();
+        shouldRefresh = false;
+      }
+
+      if (action === 'dismiss-install-prompt') {
+        dismissPwaInstallPrompt();
+        this.state.installPrompt = getPwaInstallPromptState();
+        this.state.installPromptVisible = false;
+        shouldRefresh = false;
+      }
+
+      if (action === 'install-app') {
+        const result = await promptPwaInstall();
+
+        if (result?.outcome !== 'accepted') {
+          dismissPwaInstallPrompt();
+        }
+
+        this.state.installPrompt = getPwaInstallPromptState();
+        this.state.installPromptVisible = false;
+
+        if (result?.outcome === 'accepted') {
+          this.showToast('Instalacion iniciada.');
+        }
         shouldRefresh = false;
       }
 
@@ -808,6 +850,74 @@ export class PantryApp {
     }
 
     return this.renderPantryView(dashboard);
+  }
+
+  /**
+   * Renderiza el aviso de instalacion PWA cuando procede.
+   *
+   * @returns {string} HTML del aviso.
+   */
+  renderInstallPrompt() {
+    const installPrompt = this.state.installPrompt;
+
+    if (!this.state.installPromptVisible || !installPrompt?.shouldShowPrompt) {
+      return '';
+    }
+
+    return `
+      <section class="install-prompt-backdrop" role="presentation">
+        ${this.renderInstallPromptCard({ variant: 'modal' })}
+      </section>
+    `;
+  }
+
+  /**
+   * Renderiza la seccion estatica de instalacion en configuracion.
+   *
+   * @returns {string} HTML de la seccion o cadena vacia.
+   */
+  renderInstallSettingsPanel() {
+    if (this.state.installPrompt?.isInstalled) {
+      return '';
+    }
+
+    return this.renderInstallPromptCard({ variant: 'settings' });
+  }
+
+  /**
+   * Renderiza la tarjeta compartida de instalacion PWA.
+   *
+   * @param {{variant: 'modal' | 'settings'}} options Opciones de render.
+   * @returns {string} HTML de la tarjeta.
+   */
+  renderInstallPromptCard({ variant }) {
+    const installPrompt = this.state.installPrompt;
+    const copy = getPwaInstallPromptCopy(installPrompt);
+    const isModal = variant === 'modal';
+    const titleId = isModal ? 'install-prompt-title' : 'install-settings-title';
+    const containerTag = isModal ? 'div' : 'section';
+    const containerAttributes = isModal
+      ? `class="install-prompt" role="dialog" aria-modal="true" aria-labelledby="${titleId}"`
+      : `class="panel install-prompt install-prompt-static" aria-labelledby="${titleId}"`;
+    const actions = [
+      installPrompt.canUseNativePrompt
+        ? `<button class="button" type="button" data-action="install-app">${copy.nativeButtonLabel}</button>`
+        : '',
+      isModal ? '<button class="button ghost" type="button" data-action="dismiss-install-prompt">Ahora no</button>' : '',
+    ].filter(Boolean);
+
+    return `
+      <${containerTag} ${containerAttributes}>
+        <div>
+          <p class="eyebrow">Acceso directo</p>
+          <h2 id="${titleId}">${copy.title}</h2>
+        </div>
+        <ol class="install-steps">
+          ${copy.steps.map((step) => `<li>${step}</li>`).join('')}
+        </ol>
+        ${actions.length > 0 ? `<div class="install-actions">${actions.join('')}</div>` : ''}
+      </${containerTag}>
+    `;
   }
 
   /**
