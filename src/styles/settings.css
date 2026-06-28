@@ -1,6 +1,6 @@
 .data-stats {
   display: grid;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
+  grid-template-columns: repeat(4, minmax(0, 1fr));
   gap: 8px;
   margin-bottom: 14px;
 }
@@ -8,16 +8,85 @@
 .data-stats span {
   display: grid;
   place-items: center;
-  min-height: 60px;
+  min-height: 58px;
   border: 1px solid var(--color-border);
-  border-radius: var(--radius);
-  background: var(--color-canvas-soft);
+  border-radius: var(--radius-tight);
+  background: var(--color-surface-raised);
   color: var(--color-muted);
-  font-size: 0.8rem;
+  font-size: 0.76rem;
   text-align: center;
 }
 
 .data-stats strong {
   color: var(--color-text);
-  font-size: 1.18rem;
+  font-size: 1.16rem;
+}
+
+.settings-list {
+  overflow: hidden;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius);
+  background: var(--color-surface);
+}
+
+.settings-row {
+  display: grid;
+  grid-template-columns: 36px minmax(0, 1fr);
+  align-items: center;
+  gap: 12px;
+  width: 100%;
+  min-height: 72px;
+  border: 0;
+  border-bottom: 1px solid var(--color-border);
+  background: transparent;
+  color: var(--color-text);
+  padding: 12px;
+  text-align: left;
+}
+
+.settings-row:last-child {
+  border-bottom: 0;
+}
+
+.settings-row > span:not(.settings-row-icon) {
+  font-size: 1.05rem;
+  font-weight: 720;
+}
+
+.settings-row-icon {
+  display: inline-grid;
+  place-items: center;
+  color: var(--color-muted);
+}
+
+.settings-row-icon .ui-icon {
+  width: 26px;
+  height: 26px;
+}
+
+.settings-import-row label {
+  min-width: 0;
+  color: var(--color-text);
+  font-size: 1.05rem;
+  font-weight: 720;
+}
+
+.settings-import-row input {
+  font-size: 0.86rem;
+}
+
+.settings-import-row {
+  grid-template-columns: 36px minmax(0, 1fr) auto;
+}
+
+.settings-import-row .button {
+  white-space: nowrap;
+}
+
+.settings-row.danger-action {
+  color: var(--color-danger);
+}
+
+.settings-row.danger-action .settings-row-icon {
+  color: var(--color-danger);
 }

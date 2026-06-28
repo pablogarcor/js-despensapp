@@ -19,24 +19,36 @@ export const pantryViewMethods = {
     const isFormOpen = this.state.pantryFormOpen || dashboard.pantryItems.length === 0;
 
     return `
-      <section class="panel action-panel ${isFormOpen ? '' : 'is-collapsed'}">
-        <div class="section-heading">
-          <div>
-            <p class="eyebrow">Inventario</p>
-            <h2>Despensa</h2>
-          </div>
-          ${
-            dashboard.pantryItems.length === 0
-              ? '<span class="counter">0</span>'
-              : `<button class="button ghost small" type="button" data-action="${isFormOpen ? 'hide-pantry-form' : 'show-pantry-form'}">
-                  ${isFormOpen ? 'Ocultar' : 'Añadir alimento'}
-                </button>`
-          }
+      <section class="view-heading">
+        <div>
+          <h2>Despensa</h2>
+          <p>${dashboard.pantryItems.length} alimentos guardados</p>
         </div>
-
         ${
-          isFormOpen
-            ? `
+          dashboard.pantryItems.length === 0
+            ? ''
+            : `<button class="button ghost small" type="button" data-action="${isFormOpen ? 'hide-pantry-form' : 'show-pantry-form'}">
+                ${isFormOpen ? 'Ocultar' : `${this.renderIcon('add')} Añadir`}
+              </button>`
+        }
+      </section>
+
+      ${this.renderSearchControl({
+        target: 'pantry',
+        label: 'Buscar alimento',
+        placeholder: 'Buscar en despensa...',
+        value: this.state.pantrySearch,
+        visibleCount: filteredPantryItems.length,
+        totalCount: dashboard.pantryItems.length,
+      })}
+
+      ${
+        isFormOpen
+          ? `
+            <section class="panel action-panel pantry-form-panel">
+              <div class="section-heading compact">
+                <h3>Añadir alimento</h3>
+              </div>
               <form class="stacked-form" data-form="pantry-item">
                 <label>
                   Nombre
@@ -54,23 +66,17 @@ export const pantryViewMethods = {
                     </select>
                   </label>
                 </div>
-                <button class="button full" type="submit">Añadir alimento</button>
+                <button class="button full" type="submit">${this.renderIcon('add')} Añadir alimento</button>
               </form>
-            `
-            : ''
-        }
-      </section>
+            </section>
+          `
+          : ''
+      }
 
       <section class="list-section" aria-label="Alimentos guardados">
-        ${this.renderSearchControl({
-          target: 'pantry',
-          label: 'Buscar alimento',
-          placeholder: 'Ej. Garbanzos',
-          value: this.state.pantrySearch,
-          visibleCount: filteredPantryItems.length,
-          totalCount: dashboard.pantryItems.length,
-        })}
-        ${dashboard.pantryItems.length === 0 ? this.renderEmptyState('Todavia no hay alimentos.') : ''}
+        ${
+          dashboard.pantryItems.length === 0 ? this.renderEmptyState('Todavia no hay alimentos.') : ''
+        }
         ${
           dashboard.pantryItems.length > 0 && filteredPantryItems.length === 0
             ? this.renderEmptyState('No hay alimentos que coincidan.')
@@ -90,27 +96,30 @@ export const pantryViewMethods = {
       <article class="list-card pantry-card">
         <div class="pantry-card-main">
           <div>
-            <h3>${escapeHtml(item.name)}</h3>
+            <div class="item-title-row">
+              <h3>${escapeHtml(item.name)}</h3>
+              ${renderStockBadge(item)}
+            </div>
             <p>${formatQuantity(item.quantity)} ${escapeHtml(item.unit)}</p>
           </div>
           <div class="inline-actions">
-            <button class="button ghost small" type="button" data-action="edit-pantry-item" data-id="${item.id}">
-              Editar
+            <button class="button ghost small icon-label-button" type="button" data-action="edit-pantry-item" data-id="${item.id}">
+              ${this.renderIcon('edit')} <span>Editar</span>
             </button>
             <button class="icon-button" type="button" aria-label="Eliminar ${escapeAttribute(item.name)}" data-action="delete-pantry-item" data-id="${item.id}">
-              x
+              ${this.renderIcon('delete')}
             </button>
           </div>
         </div>
         <form class="stock-form" data-form="pantry-stock">
           <input type="hidden" name="pantryItemId" value="${escapeAttribute(item.id)}" />
-          <label>
-            Ajustar ${escapeHtml(item.unit)}
+          <label class="stock-adjust-label">
+            <span>Ajuste</span>
             <input name="quantity" type="number" inputmode="decimal" step="0.01" min="0.01" placeholder="0" required />
           </label>
           <div class="stock-actions">
-            <button class="button small" type="submit" data-stock-action="add">Sumar</button>
-            <button class="button ghost small" type="submit" data-stock-action="subtract">Restar</button>
+            <button class="button small" type="submit" data-stock-action="subtract">${this.renderIcon('stockMinus')} Restar</button>
+            <button class="button small" type="submit" data-stock-action="add">${this.renderIcon('stockPlus')} Sumar</button>
           </div>
         </form>
       </article>
@@ -144,7 +153,7 @@ export const pantryViewMethods = {
           </div>
           ${this.renderPantryRecipeUsageFields(item, affectedRecipes)}
           <div class="form-actions">
-            <button class="button" type="submit">Guardar</button>
+            <button class="button" type="submit">${this.renderIcon('save')} Guardar</button>
             <button class="button ghost" type="button" data-action="cancel-edit-pantry-item">Cancelar</button>
           </div>
         </form>
@@ -188,3 +197,21 @@ export const pantryViewMethods = {
     `;
   }
 };
+
+/**
+ * Renderiza una etiqueta visual de estado de stock sin cambiar reglas de negocio.
+ *
+ * @param {import('../../domain/types.js').PantryItem} item Alimento.
+ * @returns {string} HTML de la etiqueta o cadena vacia.
+ */
+function renderStockBadge(item) {
+  if (item.quantity <= 0) {
+    return '<span class="stock-badge is-empty">Agotado</span>';
+  }
+
+  if (item.quantity <= 1) {
+    return '<span class="stock-badge is-low">Bajo stock</span>';
+  }
+
+  return '';
+}

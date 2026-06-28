@@ -33,7 +33,7 @@ export class PantryApp {
     this.toastTimeoutId = null;
     this.unwatchInstallPrompt = null;
     this.state = {
-      activeView: 'pantry',
+      activeView: 'plan',
       dashboard: null,
       installPrompt: getPwaInstallPromptState(),
       installPromptVisible: false,
@@ -93,47 +93,42 @@ export class PantryApp {
     const dashboard = this.state.dashboard;
 
     if (!dashboard) {
-      this.root.innerHTML = '<main class="app-shell"><p>Cargando...</p></main>';
+      this.root.innerHTML = '<main class="app-shell"><p class="loading-state">Cargando...</p></main>';
       return;
     }
-
-    const logoUrl = `${import.meta.env.BASE_URL}icons/despensapp-icon.svg`;
 
     this.root.innerHTML = `
       <div class="app-shell">
         <header class="app-header">
-          <div class="brand-row">
-            <img class="brand-logo" src="${logoUrl}" alt="" aria-hidden="true" />
-            <div class="brand-copy">
-              <p class="app-kicker">Despensa local</p>
-              <h1>DespensApp</h1>
-            </div>
-          </div>
           <button
-            class="settings-button ${this.state.activeView === 'settings' ? 'is-active' : ''}"
+            class="header-icon-button ${this.state.activeView === 'pantry' ? 'is-active' : ''}"
+            type="button"
+            data-view="pantry"
+            aria-label="Abrir despensa"
+            aria-pressed="${this.state.activeView === 'pantry'}"
+          >
+            ${this.renderIcon('pantry')}
+          </button>
+          <h1>DespensApp</h1>
+          <button
+            class="header-icon-button ${this.state.activeView === 'settings' ? 'is-active' : ''}"
             type="button"
             data-view="settings"
             aria-label="Abrir configuracion"
             aria-pressed="${this.state.activeView === 'settings'}"
           >
-            &#9881;
+            ${this.renderIcon('settings')}
           </button>
         </header>
-
-        <section class="summary-strip" aria-label="Resumen">
-          <span class="summary-item"><strong>${dashboard.pantryItems.length}</strong> alimentos</span>
-          <span class="summary-item"><strong>${dashboard.recipes.length}</strong> recetas</span>
-          <span class="summary-item"><strong>${dashboard.plannedMeals.length}</strong> plan</span>
-        </section>
 
         ${this.renderPendingMeals(dashboard)}
         ${this.renderToast()}
         ${this.renderInstallPrompt()}
 
         <nav class="tabs" aria-label="Secciones principales">
+          ${this.renderTab('plan', 'Plan')}
           ${this.renderTab('pantry', 'Despensa')}
           ${this.renderTab('recipes', 'Recetas')}
-          ${this.renderTab('plan', 'Plan')}
           ${this.renderTab('shopping', 'Compra')}
         </nav>
 

@@ -1,21 +1,45 @@
 .day-group {
   display: grid;
-  gap: 8px;
-  margin-top: 6px;
-  scroll-margin-top: 156px;
+  overflow: hidden;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius);
+  background: var(--color-surface);
+  scroll-margin-top: 86px;
 }
 
-.day-group h3 {
-  width: fit-content;
-  border: 1px solid rgba(222, 219, 210, 0.8);
-  border-radius: 999px;
-  background: rgba(246, 245, 241, 0.92);
-  padding: 4px 10px;
+.day-group-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  border-bottom: 1px solid var(--color-border);
+  background: #ffffff;
+  padding: 12px;
+}
+
+.day-group-header span {
   color: var(--color-muted);
+  font-size: 0.9rem;
+  font-weight: 760;
 }
 
-.meal-card span,
-.missing-meal-card span,
+.plan-slot-list {
+  display: grid;
+}
+
+.plan-slot-list > * + * {
+  border-top: 1px solid var(--color-border);
+}
+
+.meal-card,
+.missing-meal-card {
+  min-height: 62px;
+  border: 0;
+  border-radius: 0;
+  background: #fbfcff;
+  box-shadow: none;
+}
+
 .meal-card small,
 .pending-card span {
   display: block;
@@ -23,31 +47,50 @@
   font-size: 0.82rem;
 }
 
+.meal-card .meal-type-badge,
+.missing-meal-card .meal-type-badge {
+  display: inline-flex;
+  color: inherit;
+}
+
+.meal-card .meal-status-badge {
+  display: inline-flex;
+  color: #93000a;
+}
+
+.meal-card .meal-type-breakfast,
+.missing-meal-card .meal-type-breakfast {
+  color: #001f27;
+}
+
+.meal-card .meal-type-lunch,
+.missing-meal-card .meal-type-lunch {
+  color: #002116;
+}
+
+.meal-card .meal-type-dinner,
+.missing-meal-card .meal-type-dinner {
+  color: #131f00;
+}
+
+.meal-card-copy {
+  min-width: 0;
+  flex: 1 1 auto;
+}
+
 .meal-card strong {
   display: block;
-  margin: 2px 0;
+  overflow-wrap: anywhere;
 }
 
 .meal-card.is-unavailable {
-  align-items: flex-start;
-  flex-wrap: wrap;
-  border-color: rgba(163, 59, 43, 0.32);
-  background: #fffaf7;
-}
-
-.meal-card.is-unavailable > div {
-  min-width: 0;
-  flex: 1 1 auto;
+  align-items: center;
+  border-color: transparent;
+  background: #fff8f7;
 }
 
 .note-meal-card {
-  border-color: rgba(33, 91, 145, 0.22);
   background: #f7fbff;
-}
-
-.note-meal-card > div {
-  min-width: 0;
-  flex: 1 1 auto;
 }
 
 .note-meal-card small {
@@ -61,25 +104,38 @@
 }
 
 .meal-status-badge {
-  flex: 0 0 auto;
-  border-radius: var(--radius);
+  border-radius: var(--radius-tight);
   background: var(--color-danger-soft);
-  color: var(--color-danger);
-  padding: 4px 8px;
-  font-size: 0.74rem;
-  font-weight: 850;
-  white-space: nowrap;
+  color: #93000a;
+}
+
+.meal-row-icon {
+  display: inline-grid;
+  place-items: center;
+  color: var(--color-primary);
+}
+
+.meal-row-icon .ui-icon {
+  width: 21px;
+  height: 21px;
 }
 
 .note-status-badge {
-  background: #eef5fb;
-  color: #215b91;
+  background: #e6eeff;
+  color: var(--color-accent);
+}
+
+.meal-card .note-status-badge {
+  color: var(--color-accent);
 }
 
 .meal-edit-card {
   display: grid;
   grid-template-columns: 1fr;
   align-items: end;
+  border: 1px solid rgba(0, 41, 28, 0.22);
+  border-radius: var(--radius);
+  margin: 8px;
 }
 
 .meal-edit-date {
@@ -91,8 +147,11 @@
 .missing-meal-card {
   align-items: end;
   flex-wrap: wrap;
-  border-style: dashed;
-  background: rgba(255, 255, 255, 0.58);
+  background: #fbfcff;
+}
+
+.missing-meal-card > .meal-type-badge {
+  align-self: center;
 }
 
 .missing-meal-card label:first-of-type {
@@ -103,9 +162,14 @@
   flex: 0 0 92px;
 }
 
+.missing-meal-card select,
+.missing-meal-card input {
+  min-height: 40px;
+}
+
 .missing-meal-card .button {
-  min-height: 48px;
-  padding: 10px 14px;
+  min-height: 40px;
+  padding: 8px 12px;
 }
 
 .note-meal-form label:first-of-type,
@@ -119,21 +183,31 @@
 
 .pending-list {
   display: grid;
-  gap: 8px;
+  gap: 10px;
 }
 
 .pending-card {
   align-items: flex-start;
-  background: rgba(255, 255, 255, 0.76);
+  background: rgba(255, 255, 255, 0.78);
+}
+
+.pending-card-copy {
+  min-width: 0;
+  flex: 1 1 auto;
+}
+
+.pending-date {
+  margin-bottom: 3px;
+  font-weight: 800;
+  text-transform: uppercase;
+}
+
+.pending-card strong {
+  display: block;
+  color: var(--color-text);
+  font-size: 1.05rem;
 }
 
 .note-pending-card {
-  border-color: rgba(33, 91, 145, 0.22);
-}
-
-.inline-actions {
-  display: flex;
-  flex-wrap: wrap;
-  justify-content: flex-end;
-  gap: 8px;
+  border-color: rgba(32, 60, 69, 0.22);
 }

@@ -34,17 +34,17 @@ export const shoppingViewMethods = {
     const summary = getShoppingSummary(dashboard);
 
     return `
-      <section class="panel shopping-view-panel">
-        <div class="section-heading">
-          <div>
-            <p class="eyebrow">Tienda</p>
-            <h2>Compra</h2>
-          </div>
-          <span class="shopping-badge ${summary.hasShoppingItems ? 'is-warning' : 'is-ok'}">
-            ${summary.hasShoppingItems ? 'Comprar' : 'Suficiente'}
-          </span>
+      <section class="view-heading">
+        <div>
+          <h2>Lista de la Compra</h2>
+          <p>${summary.hasShoppingItems ? 'Faltan para tu plan semanal' : 'Tu plan esta cubierto'}</p>
         </div>
+        <span class="shopping-badge ${summary.hasShoppingItems ? 'is-warning' : 'is-ok'}">
+          ${summary.hasShoppingItems ? 'Comprar' : 'Suficiente'}
+        </span>
+      </section>
 
+      <section class="shopping-view-panel">
         <p class="shopping-view-status">${summary.statusText} · ${summary.affectedText}</p>
 
         <div class="shopping-content shopping-view-content">
@@ -62,14 +62,42 @@ export const shoppingViewMethods = {
 
   renderShoppingItems(dashboard) {
     return `
-      <ul class="shopping-list">
-        ${dashboard.shoppingList.map((item) => this.renderGeneratedShoppingItem(item)).join('')}
-        ${dashboard.shoppingExtras.map((item) => this.renderExtraShoppingItem(item)).join('')}
-      </ul>
+      ${
+        dashboard.shoppingList.length > 0
+          ? `
+            <section class="shopping-group">
+              <div class="shopping-group-header">
+                ${this.renderIcon('weeklyPlan')}
+                <h3>Plan semanal</h3>
+              </div>
+              <ul class="shopping-list">
+                ${dashboard.shoppingList.map((item) => this.renderGeneratedShoppingItem(item, dashboard.unavailableMeals)).join('')}
+              </ul>
+            </section>
+          `
+          : ''
+      }
+      ${
+        dashboard.shoppingExtras.length > 0
+          ? `
+            <section class="shopping-group">
+              <div class="shopping-group-header">
+                ${this.renderIcon('add')}
+                <h3>Extras</h3>
+              </div>
+              <ul class="shopping-list">
+                ${dashboard.shoppingExtras.map((item) => this.renderExtraShoppingItem(item)).join('')}
+              </ul>
+            </section>
+          `
+          : ''
+      }
     `;
   },
 
-  renderGeneratedShoppingItem(item) {
+  renderGeneratedShoppingItem(item, unavailableMeals) {
+    const affectedMeals = getAffectedMealsForItem(item, unavailableMeals);
+
     return `
       <li class="shopping-list-row ${item.checked ? 'is-checked' : ''}">
         <label class="shopping-item-check">
@@ -81,7 +109,13 @@ export const shoppingViewMethods = {
           />
           <span class="shopping-item-copy">
             <strong>${escapeHtml(item.name)}</strong>
-            <small>Plan</small>
+            ${
+              affectedMeals.length > 0
+                ? `<span class="affected-meal-tags">${affectedMeals.map((meal) => `
+                    <small>${escapeHtml(meal.recipeName)} · ${formatDate(meal.date)} · ${MEAL_TYPE_LABELS[meal.mealType]}</small>
+                  `).join('')}</span>`
+                : '<small>Plan semanal</small>'
+            }
           </span>
           <strong class="shopping-item-quantity">${formatQuantity(item.missingQuantity)} ${escapeHtml(item.unit)}</strong>
         </label>
@@ -106,7 +140,7 @@ export const shoppingViewMethods = {
           <strong class="shopping-item-quantity">${formatQuantity(item.quantity)} ${escapeHtml(item.unit)}</strong>
         </label>
         <button class="icon-button shopping-extra-remove" type="button" aria-label="Eliminar extra ${escapeAttribute(item.name)}" data-action="delete-shopping-extra" data-id="${escapeAttribute(item.id)}">
-          x
+          ${this.renderIcon('delete')}
         </button>
       </li>
     `;
@@ -129,7 +163,7 @@ export const shoppingViewMethods = {
             ${renderUnitOptions()}
           </select>
         </label>
-        <button class="button small" type="submit">Añadir</button>
+        <button class="button small" type="submit">${this.renderIcon('add')} Añadir extra</button>
       </form>
     `;
   },
@@ -143,7 +177,7 @@ export const shoppingViewMethods = {
       <div class="shopping-purchase-actions">
         <span>${checkedShoppingItems} marcados</span>
         <button class="button small" type="button" data-action="apply-shopping-purchase" ${checkedShoppingItems === 0 ? 'disabled' : ''}>
-          Compra hecha
+          ${this.renderIcon('done')} Compra hecha
         </button>
       </div>
     `;
@@ -201,4 +235,17 @@ function getShoppingSummary(dashboard) {
         ? `${dashboard.unavailableMeals.length} comidas afectadas`
         : 'Sin comidas afectadas',
   };
+}
+
+/**
+ * Busca las comidas afectadas por una entrada generada de compra.
+ *
+ * @param {import('../../domain/types.js').ShoppingListItem} item Entrada de compra.
+ * @param {import('../../domain/types.js').UnavailablePlannedMeal[]} unavailableMeals Comidas con faltas.
+ * @returns {import('../../domain/types.js').UnavailablePlannedMeal[]} Comidas afectadas.
+ */
+function getAffectedMealsForItem(item, unavailableMeals) {
+  return unavailableMeals.filter((meal) =>
+    meal.missingIngredients.some((ingredient) => ingredient.pantryItemId === item.pantryItemId),
+  );
 }

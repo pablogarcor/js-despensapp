@@ -1,26 +1,32 @@
-@media (max-width: 390px) {
+@media (max-width: 430px) {
   .app-shell {
     padding-right: 12px;
     padding-left: 12px;
   }
 
+  .app-header {
+    grid-template-columns: 44px minmax(0, 1fr) 44px;
+    padding-right: 12px;
+    padding-left: 12px;
+  }
+
   .app-header h1 {
-    font-size: 1.58rem;
+    font-size: 1.55rem;
   }
 
-  .brand-logo {
-    width: 38px;
-    height: 38px;
+  .view-heading {
+    align-items: stretch;
+    flex-direction: column;
+    gap: 10px;
   }
 
-  .summary-item {
-    min-height: 54px;
-    padding: 8px;
-    font-size: 0.72rem;
+  .view-heading > .button,
+  .view-heading > button {
+    width: 100%;
   }
 
-  .summary-item strong {
-    font-size: 1.12rem;
+  .data-stats {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 
   .choice-group {
@@ -30,42 +36,73 @@
   .ingredient-row {
     grid-template-columns: minmax(0, 1fr) 74px 48px;
   }
+
+  .stock-form {
+    grid-template-columns: 1fr;
+  }
+
+  .recipe-card {
+    gap: 10px;
+  }
+
+  .recipe-icon-tile {
+    flex-basis: 48px;
+    width: 48px;
+    height: 48px;
+  }
+
+  .recipe-card .card-header {
+    align-items: stretch;
+    flex-direction: column;
+  }
+
+  .recipe-card .inline-actions {
+    justify-content: flex-start;
+  }
+
+  .shopping-item-check {
+    grid-template-columns: 22px minmax(0, 1fr);
+  }
+
+  .shopping-item-quantity {
+    grid-column: 2;
+    justify-self: start;
+  }
+
+  .settings-import-row {
+    grid-template-columns: 36px minmax(0, 1fr);
+  }
+
+  .settings-import-row .button {
+    grid-column: 1 / -1;
+  }
 }
 
-@media (min-width: 640px) {
+@media (min-width: 720px) {
   .app-shell {
-    padding-top: 32px;
-    padding-bottom: 44px;
+    padding-right: 24px;
+    padding-left: 24px;
+  }
+
+  .app-header {
+    padding-right: max(24px, calc((100vw - 760px) / 2 + 24px));
+    padding-left: max(24px, calc((100vw - 760px) / 2 + 24px));
   }
 
   .tabs {
-    position: sticky;
-    top: 0;
-    right: auto;
-    bottom: auto;
+    right: 50%;
     left: auto;
-    width: 100%;
-    max-width: none;
-    margin: 0 0 16px;
-    box-shadow: 0 10px 22px rgba(31, 37, 34, 0.08);
-  }
-
-  .tab {
-    min-height: 44px;
+    width: min(100%, 760px);
+    border-right: 1px solid var(--color-border-strong);
+    border-left: 1px solid var(--color-border-strong);
+    transform: translateX(50%);
   }
 
   .panel,
   .notice-panel,
-  .status-panel {
+  .status-panel,
+  .settings-panel {
     padding: 18px;
-  }
-
-  .action-panel {
-    top: 76px;
-  }
-
-  .stock-form {
-    grid-template-columns: minmax(0, 1fr) auto;
   }
 
   .plan-actions {
@@ -80,53 +117,12 @@
   .meal-edit-card .form-actions {
     grid-column: 1 / -1;
   }
-}
 
-@media (min-width: 860px) {
-  .app-shell {
-    padding-right: 24px;
-    padding-left: 24px;
-  }
-
-  .summary-strip {
-    grid-template-columns: repeat(3, 1fr);
-  }
-
-  .view-layout {
-    width: 100%;
-  }
-
-  .view-pantry,
-  .view-recipes,
-  .view-plan {
-    display: grid;
-    grid-template-columns: minmax(0, 0.95fr) minmax(0, 1.05fr);
-    gap: 16px;
-    align-items: start;
-  }
-
-  .view-pantry > .panel,
-  .view-recipes > .panel,
-  .view-plan > .panel,
-  .view-plan > .status-panel {
-    grid-column: 1;
-  }
-
-  .view-pantry > .list-section,
-  .view-recipes > .list-section,
-  .view-plan > .list-section {
-    grid-column: 2;
-    grid-row: 1 / span 4;
-  }
-
-  .view-settings {
-    display: grid;
-    max-width: 680px;
-    margin: 0 auto;
-    gap: 14px;
-  }
-
-  .settings-actions {
+  .view-recipes .list-section {
     grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .view-recipes .list-section > .empty-state {
+    grid-column: 1 / -1;
   }
 }

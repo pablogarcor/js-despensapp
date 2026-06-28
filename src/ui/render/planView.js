@@ -1,4 +1,5 @@
-import { MEAL_TYPE_LABELS, PLAN_NOTE_TITLES } from '../../domain/types.js';
+import { toISODate } from '../../domain/planning.js';
+import { MEAL_TYPE_LABELS, MEAL_TYPES, PLAN_NOTE_TITLES } from '../../domain/types.js';
 import { escapeAttribute, escapeHtml, formatDate, formatQuantity, getPlanDaySummaries } from '../renderUtils.js';
 
 /**
@@ -7,17 +8,26 @@ import { escapeAttribute, escapeHtml, formatDate, formatQuantity, getPlanDaySumm
 export const planViewMethods = {
   renderPlanView(dashboard) {
     const isActionsOpen = this.state.planActionsOpen;
+    const days = getPlanDaySummaries(dashboard);
+    const planRange = formatPlanRange(days);
 
     return `
+      <section class="view-heading plan-heading">
+        <div>
+          <h2>Plan Semanal</h2>
+          ${planRange ? `<p>${planRange}</p>` : ''}
+        </div>
+        <button class="button ghost small" type="button" data-action="${isActionsOpen ? 'hide-plan-actions' : 'show-plan-actions'}">
+          ${isActionsOpen ? 'Ocultar' : 'Acciones'}
+        </button>
+      </section>
+
       <section class="panel action-panel plan-toolbar ${isActionsOpen ? '' : 'is-collapsed'}">
         <div class="section-heading">
           <div>
             <p class="eyebrow">Siguiente semana</p>
-            <h2>Planificacion</h2>
+            <h3>Huecos del plan</h3>
           </div>
-          <button class="button ghost small" type="button" data-action="${isActionsOpen ? 'hide-plan-actions' : 'show-plan-actions'}">
-            ${isActionsOpen ? 'Ocultar' : 'Acciones'}
-          </button>
         </div>
 
         ${this.renderPlanDayStrip(dashboard)}
@@ -30,9 +40,9 @@ export const planViewMethods = {
                   Raciones por comida
                   <input name="servings" type="number" inputmode="decimal" min="0.5" step="0.5" value="1" required />
                 </label>
-                <button class="button" type="submit" data-plan-mode="reset">Planificar semana</button>
-                <button class="button ghost" type="submit" data-plan-mode="complete">Completar huecos</button>
-                <button class="button ghost" type="button" data-action="clear-plan">Vaciar plan</button>
+                <button class="button" type="submit" data-plan-mode="reset">${this.renderIcon('weeklyPlan')} Planificar semana</button>
+                <button class="button ghost" type="submit" data-plan-mode="complete">${this.renderIcon('autoFill')} Completar huecos</button>
+                <button class="button ghost" type="button" data-action="clear-plan">${this.renderIcon('delete')} Vaciar plan</button>
               </form>
             `
             : ''
@@ -86,28 +96,44 @@ export const planViewMethods = {
 
     for (const meal of dashboard.plannedMeals) {
       if (!groups.has(meal.date)) {
-        groups.set(meal.date, []);
+        groups.set(meal.date, { meals: [], missingSlots: [] });
       }
 
-      groups.get(meal.date).push(meal);
+      groups.get(meal.date).meals.push(meal);
     }
 
     for (const slot of dashboard.missingPlanSlots) {
       if (!groups.has(slot.date)) {
-        groups.set(slot.date, []);
+        groups.set(slot.date, { meals: [], missingSlots: [] });
       }
+
+      groups.get(slot.date).missingSlots.push(slot);
     }
 
     return [...groups.entries()]
       .sort(([leftDate], [rightDate]) => leftDate.localeCompare(rightDate))
-      .map(([date, meals]) => `
+      .map(([date, group]) => `
         <section class="day-group" id="plan-day-${escapeAttribute(date)}" data-plan-day="${escapeAttribute(date)}">
-          <h3>${formatDate(date)}</h3>
-          ${meals.map((meal) => this.renderPlannedMeal(meal, dashboard.recipes, dashboard.unavailableMeals)).join('')}
-          ${dashboard.missingPlanSlots
-            .filter((slot) => slot.date === date)
-            .map((slot) => this.renderMissingMealSlot(slot, dashboard.recipes))
-            .join('')}
+          <div class="day-group-header">
+            <h3>${formatDate(date)}</h3>
+            ${date === toISODate(new Date()) ? '<span>Hoy</span>' : ''}
+          </div>
+          <div class="plan-slot-list">
+            ${MEAL_TYPES.map((mealType) => {
+              const meal = group.meals.find((candidate) => candidate.mealType === mealType);
+              const slot = group.missingSlots.find((candidate) => candidate.mealType === mealType);
+
+              if (meal) {
+                return this.renderPlannedMeal(meal, dashboard.recipes, dashboard.unavailableMeals);
+              }
+
+              if (slot) {
+                return this.renderMissingMealSlot(slot, dashboard.recipes);
+              }
+
+              return '';
+            }).join('')}
+          </div>
         </section>
       `)
       .join('');
@@ -134,23 +160,23 @@ export const planViewMethods = {
 
     return `
       <article class="meal-card ${unavailableMeal ? 'is-unavailable' : ''}">
-        <div>
-          <span>${MEAL_TYPE_LABELS[meal.mealType]}</span>
+        ${this.renderMealTypeBadge(meal.mealType)}
+        <div class="meal-card-copy">
           <strong>${escapeHtml(recipe?.name ?? 'Receta eliminada')}</strong>
-          <small>${meal.servings} raciones</small>
+          <small>${formatQuantity(meal.servings)} raciones</small>
           ${
             unavailableMeal
               ? `<small class="meal-shortage">Faltan: ${escapeHtml(missingIngredientNames)}</small>`
               : ''
           }
         </div>
-        ${unavailableMeal ? '<span class="meal-status-badge">Faltan alimentos</span>' : ''}
+        ${unavailableMeal ? '<span class="meal-status-badge">Faltan alimentos</span>' : `<span class="meal-row-icon">${this.renderIcon(meal.mealType)}</span>`}
         <div class="inline-actions">
-          <button class="button ghost small" type="button" data-action="edit-planned-meal" data-id="${meal.id}">
-            Editar
+          <button class="button ghost small icon-label-button" type="button" data-action="edit-planned-meal" data-id="${meal.id}">
+            ${this.renderIcon('edit')} <span>Editar</span>
           </button>
           <button class="icon-button" type="button" aria-label="Eliminar comida" data-action="delete-planned-meal" data-id="${meal.id}">
-            x
+            ${this.renderIcon('delete')}
           </button>
         </div>
       </article>
@@ -160,18 +186,18 @@ export const planViewMethods = {
   renderPlannedNote(meal) {
     return `
       <article class="meal-card note-meal-card">
-        <div>
-          <span>${MEAL_TYPE_LABELS[meal.mealType]}</span>
+        ${this.renderMealTypeBadge(meal.mealType)}
+        <div class="meal-card-copy">
           <strong>${escapeHtml(meal.title)}</strong>
           ${meal.note ? `<small>${escapeHtml(meal.note)}</small>` : ''}
         </div>
         <span class="meal-status-badge note-status-badge">No cocina</span>
         <div class="inline-actions">
-          <button class="button ghost small" type="button" data-action="edit-planned-meal" data-id="${meal.id}">
-            Editar
+          <button class="button ghost small icon-label-button" type="button" data-action="edit-planned-meal" data-id="${meal.id}">
+            ${this.renderIcon('edit')} <span>Editar</span>
           </button>
           <button class="icon-button" type="button" aria-label="Eliminar no cocinar" data-action="delete-planned-meal" data-id="${meal.id}">
-            x
+            ${this.renderIcon('delete')}
           </button>
         </div>
       </article>
@@ -200,7 +226,7 @@ export const planViewMethods = {
           <input name="servings" type="number" inputmode="decimal" min="0.5" step="0.5" value="${meal.servings}" required />
         </label>
         <div class="form-actions">
-          <button class="button small" type="submit">Guardar</button>
+          <button class="button small" type="submit">${this.renderIcon('save')} Guardar</button>
           <button class="button ghost small" type="button" data-action="cancel-edit-planned-meal">Cancelar</button>
         </div>
       </form>
@@ -227,7 +253,7 @@ export const planViewMethods = {
           <input name="note" type="text" autocomplete="off" value="${escapeAttribute(meal.note ?? '')}" />
         </label>
         <div class="form-actions">
-          <button class="button small" type="submit">Guardar</button>
+          <button class="button small" type="submit">${this.renderIcon('save')} Guardar</button>
           <button class="button ghost small" type="button" data-action="cancel-edit-planned-meal">Cancelar</button>
         </div>
       </form>
@@ -245,12 +271,13 @@ export const planViewMethods = {
     if (compatibleRecipes.length === 0) {
       return `
         <article class="missing-meal-card">
-          <div>
-            <span>${MEAL_TYPE_LABELS[slot.mealType]}</span>
+          ${this.renderMealTypeBadge(slot.mealType)}
+          <div class="meal-card-copy">
             <strong>Sin receta compatible</strong>
+            <small>Crea una receta para esta franja o marca que no cocinas.</small>
           </div>
           <button class="button ghost small" type="button" data-action="show-note-slot" data-slot-key="${escapeAttribute(slotKey)}">
-            No cocinar
+            ${this.renderIcon('skipped')} No cocinar
           </button>
         </article>
       `;
@@ -260,8 +287,9 @@ export const planViewMethods = {
       <form class="missing-meal-card" data-form="planned-meal">
         <input type="hidden" name="date" value="${escapeAttribute(slot.date)}" />
         <input type="hidden" name="mealType" value="${escapeAttribute(slot.mealType)}" />
+        ${this.renderMealTypeBadge(slot.mealType)}
         <label>
-          ${MEAL_TYPE_LABELS[slot.mealType]}
+          Receta
           <select name="recipeId" required>
             ${compatibleRecipes.map((recipe) => `
               <option value="${escapeAttribute(recipe.id)}">${escapeHtml(recipe.name)}</option>
@@ -272,9 +300,9 @@ export const planViewMethods = {
           Raciones
           <input name="servings" type="number" inputmode="decimal" min="0.5" step="0.5" value="1" required />
         </label>
-        <button class="button small" type="submit">Añadir</button>
+        <button class="button small" type="submit">${this.renderIcon('add')} Añadir</button>
         <button class="button ghost small" type="button" data-action="show-note-slot" data-slot-key="${escapeAttribute(slotKey)}">
-          No cocinar
+          ${this.renderIcon('skipped')} No cocinar
         </button>
       </form>
     `;
@@ -285,6 +313,7 @@ export const planViewMethods = {
       <form class="missing-meal-card note-meal-form" data-form="planned-note">
         <input type="hidden" name="date" value="${escapeAttribute(slot.date)}" />
         <input type="hidden" name="mealType" value="${escapeAttribute(slot.mealType)}" />
+        ${this.renderMealTypeBadge(slot.mealType)}
         <label>
           Motivo
           <select name="title" required>
@@ -297,7 +326,7 @@ export const planViewMethods = {
           Detalle
           <input name="note" type="text" autocomplete="off" placeholder="Ej. cena fuera" />
         </label>
-        <button class="button small" type="submit">Guardar</button>
+        <button class="button small" type="submit">${this.renderIcon('save')} Guardar</button>
         <button class="button ghost small" type="button" data-action="hide-note-slot" data-slot-key="${escapeAttribute(slotKey)}">
           Cancelar
         </button>
@@ -305,3 +334,17 @@ export const planViewMethods = {
     `;
   }
 };
+
+/**
+ * Formatea el rango visible de la semana planificada.
+ *
+ * @param {Array<{date: string}>} days Resumenes de dias.
+ * @returns {string} Rango visible.
+ */
+function formatPlanRange(days) {
+  if (days.length === 0) {
+    return '';
+  }
+
+  return `${formatDate(days[0].date)} - ${formatDate(days.at(-1).date)}`;
+}

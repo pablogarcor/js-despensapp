@@ -26,24 +26,36 @@ export const recipeViewMethods = {
     const isFormOpen = this.state.recipeFormOpen || dashboard.recipes.length === 0;
 
     return `
-      <section class="panel action-panel ${isFormOpen ? '' : 'is-collapsed'}">
-        <div class="section-heading">
-          <div>
-            <p class="eyebrow">Cocina</p>
-            <h2>Recetas</h2>
-          </div>
-          ${
-            dashboard.recipes.length === 0
-              ? '<span class="counter">0</span>'
-              : `<button class="button ghost small" type="button" data-action="${isFormOpen ? 'hide-recipe-form' : 'show-recipe-form'}">
-                  ${isFormOpen ? 'Ocultar' : 'Crear receta'}
-                </button>`
-          }
+      <section class="view-heading">
+        <div>
+          <h2>Recetas</h2>
+          <p>${dashboard.recipes.length} recetas disponibles</p>
         </div>
-
         ${
-          isFormOpen
-            ? `
+          dashboard.recipes.length === 0
+            ? ''
+            : `<button class="button ghost small" type="button" data-action="${isFormOpen ? 'hide-recipe-form' : 'show-recipe-form'}">
+                ${isFormOpen ? 'Ocultar' : `${this.renderIcon('add')} Crear`}
+              </button>`
+        }
+      </section>
+
+      ${this.renderSearchControl({
+        target: 'recipe',
+        label: 'Buscar receta',
+        placeholder: 'Buscar recetas...',
+        value: this.state.recipeSearch,
+        visibleCount: filteredRecipes.length,
+        totalCount: dashboard.recipes.length,
+      })}
+
+      ${
+        isFormOpen
+          ? `
+            <section class="panel action-panel recipe-form-panel">
+              <div class="section-heading compact">
+                <h3>Crear receta</h3>
+              </div>
               <form class="stacked-form" data-form="recipe">
                 <label>
                   Nombre
@@ -63,29 +75,21 @@ export const recipeViewMethods = {
                 <div class="ingredient-builder">
                   <div class="section-heading compact">
                     <h3>Ingredientes por racion</h3>
-                    <button class="button ghost small" type="button" data-action="add-ingredient-row" aria-label="Añadir ingrediente">+</button>
+                    <button class="button ghost small" type="button" data-action="add-ingredient-row" aria-label="Añadir ingrediente">${this.renderIcon('add')}</button>
                   </div>
                   ${this.state.ingredientRows.map((row) => this.renderIngredientRow(row, dashboard.pantryItems)).join('')}
                 </div>
 
                 <button class="button full" type="submit" ${dashboard.pantryItems.length === 0 ? 'disabled' : ''}>
-                  Crear receta
+                  ${this.renderIcon('add')} Crear receta
                 </button>
               </form>
-            `
-            : ''
-        }
-      </section>
+            </section>
+          `
+          : ''
+      }
 
       <section class="list-section" aria-label="Recetas guardadas">
-        ${this.renderSearchControl({
-          target: 'recipe',
-          label: 'Buscar receta',
-          placeholder: 'Ej. Lentejas o tomate',
-          value: this.state.recipeSearch,
-          visibleCount: filteredRecipes.length,
-          totalCount: dashboard.recipes.length,
-        })}
         ${dashboard.recipes.length === 0 ? this.renderEmptyState('Todavia no hay recetas.') : ''}
         ${
           dashboard.recipes.length > 0 && filteredRecipes.length === 0
@@ -119,7 +123,7 @@ export const recipeViewMethods = {
           <input name="ingredientQuantity" type="number" inputmode="decimal" step="0.01" min="0.01" value="${row.quantity}" required />
         </label>
         <button class="icon-button ingredient-remove" type="button" aria-label="Quitar ingrediente" data-action="${removeAction}" data-id="${row.id}">
-          x
+          ${this.renderIcon('delete')}
         </button>
       </div>
     `;
@@ -139,22 +143,27 @@ export const recipeViewMethods = {
       .join(', ');
 
     return `
-      <article class="list-card vertical">
-        <div class="card-header">
-          <div>
-            <h3>${escapeHtml(recipe.name)}</h3>
-            <p>${recipe.mealTypes.map((mealType) => MEAL_TYPE_LABELS[mealType]).join(' · ')}</p>
+      <article class="list-card recipe-card">
+        <span class="recipe-icon-tile" aria-hidden="true">${this.renderIcon('recipes')}</span>
+        <div class="recipe-card-copy">
+          <div class="card-header">
+            <div>
+              <h3>${escapeHtml(recipe.name)}</h3>
+              <div class="meal-badge-row">
+                ${recipe.mealTypes.map((mealType) => this.renderMealTypeBadge(mealType)).join('')}
+              </div>
+            </div>
+            <div class="inline-actions">
+              <button class="button ghost small icon-label-button" type="button" data-action="edit-recipe" data-id="${recipe.id}">
+                ${this.renderIcon('edit')} <span>Editar</span>
+              </button>
+              <button class="icon-button" type="button" aria-label="Eliminar ${escapeAttribute(recipe.name)}" data-action="delete-recipe" data-id="${recipe.id}">
+                ${this.renderIcon('delete')}
+              </button>
+            </div>
           </div>
-          <div class="inline-actions">
-            <button class="button ghost small" type="button" data-action="edit-recipe" data-id="${recipe.id}">
-              Editar
-            </button>
-            <button class="icon-button" type="button" aria-label="Eliminar ${escapeAttribute(recipe.name)}" data-action="delete-recipe" data-id="${recipe.id}">
-              x
-            </button>
-          </div>
+          <p class="muted">${ingredients}</p>
         </div>
-        <p class="muted">${ingredients}</p>
       </article>
     `;
   },
@@ -195,7 +204,7 @@ export const recipeViewMethods = {
           <div class="ingredient-builder">
             <div class="section-heading compact">
               <h3>Ingredientes por racion</h3>
-              <button class="button ghost small" type="button" data-action="add-edit-ingredient-row" aria-label="Añadir ingrediente">+</button>
+              <button class="button ghost small" type="button" data-action="add-edit-ingredient-row" aria-label="Añadir ingrediente">${this.renderIcon('add')}</button>
             </div>
             ${rows.map((row) =>
               this.renderIngredientRow(row, pantryItems, {
@@ -206,7 +215,7 @@ export const recipeViewMethods = {
           </div>
 
           <div class="form-actions">
-            <button class="button" type="submit">Guardar</button>
+            <button class="button" type="submit">${this.renderIcon('save')} Guardar</button>
             <button class="button ghost" type="button" data-action="cancel-edit-recipe">Cancelar</button>
           </div>
         </form>

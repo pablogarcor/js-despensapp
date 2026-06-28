@@ -1,38 +1,51 @@
 .panel,
 .notice-panel,
-.status-panel {
+.status-panel,
+.settings-panel {
   margin-bottom: 14px;
   border: 1px solid var(--color-border);
   border-radius: var(--radius);
   background: var(--color-surface);
-  box-shadow: var(--shadow-soft);
 }
 
 .panel,
 .notice-panel,
-.status-panel {
+.status-panel,
+.settings-panel {
   padding: 16px;
 }
 
 .notice-panel {
-  border-color: rgba(155, 91, 18, 0.28);
-  background: var(--color-warning-soft);
+  display: grid;
+  gap: 14px;
+  border-color: #dbe4f7;
+  background: #eef3ff;
+}
+
+.notice-panel h2 {
+  margin: 0;
+  color: var(--color-text);
+  font-size: 1.45rem;
+  line-height: 1.12;
+}
+
+.notice-panel p {
+  margin: 4px 0 0;
+  color: var(--color-muted);
 }
 
 .status-panel {
-  border-color: rgba(163, 59, 43, 0.24);
-  background: var(--color-danger-soft);
+  border-color: rgba(186, 26, 26, 0.18);
+  background: #fff8f7;
 }
 
 .status-panel.ok {
-  border-color: rgba(21, 106, 90, 0.22);
+  border-color: rgba(0, 41, 28, 0.16);
   background: var(--color-primary-soft);
 }
 
 .action-panel {
-  position: sticky;
-  top: calc(10px + env(safe-area-inset-top));
-  z-index: 12;
+  scroll-margin-top: 80px;
 }
 
 .section-heading {
@@ -48,10 +61,6 @@
   margin-bottom: 10px;
 }
 
-.action-panel.is-collapsed:not(.plan-toolbar) .section-heading {
-  margin-bottom: 0;
-}
-
 .plan-toolbar .section-heading {
   margin-bottom: 12px;
 }
@@ -64,17 +73,33 @@
 
 .section-heading h3,
 .day-group h3 {
-  color: var(--color-text);
-  font-size: 1rem;
+  color: var(--color-primary);
+  font-size: 1.08rem;
+  font-weight: 800;
+}
+
+.app-kicker,
+.eyebrow {
+  margin: 0 0 4px;
+  color: var(--color-subtle);
+  font-size: 0.74rem;
+  font-weight: 850;
+  letter-spacing: 0;
+  text-transform: uppercase;
 }
 
 .counter {
-  align-items: center;
-  flex: 0 0 auto;
+  display: inline-grid;
+  place-items: center;
   min-width: 44px;
   min-height: 38px;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius);
+  background: var(--color-surface-raised);
+  color: var(--color-text);
   padding: 6px 10px;
   font-size: 1rem;
+  font-weight: 850;
 }
 
 .stacked-form,
