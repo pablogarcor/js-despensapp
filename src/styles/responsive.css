@@ -25,10 +25,6 @@
     width: 100%;
   }
 
-  .data-stats {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-  }
-
   .choice-group {
     grid-template-columns: 1fr;
   }
@@ -39,6 +35,43 @@
 
   .stock-form {
     grid-template-columns: 1fr;
+  }
+
+  .meal-card {
+    grid-template-columns: 82px minmax(0, 1fr) 20px 76px;
+    gap: 8px;
+    padding: 8px 12px;
+  }
+
+  .meal-card .meal-type-badge,
+  .missing-meal-card .meal-type-badge,
+  .empty-meal-slot .meal-type-badge {
+    width: 82px;
+  }
+
+  .missing-meal-card {
+    grid-template-columns: 82px minmax(0, 1fr);
+    padding: 8px 12px;
+  }
+
+  .empty-meal-slot {
+    grid-template-columns: 82px minmax(0, 1fr);
+    padding: 8px 12px;
+  }
+
+  .meal-card .meal-icon-action,
+  .meal-card .icon-button {
+    width: 30px;
+    height: 30px;
+  }
+
+  .meal-card .inline-actions {
+    padding-left: 7px;
+  }
+
+  .missing-meal-card label,
+  .missing-meal-card .button {
+    grid-column: 1 / -1;
   }
 
   .recipe-card {
@@ -69,13 +102,6 @@
     justify-self: start;
   }
 
-  .settings-import-row {
-    grid-template-columns: 36px minmax(0, 1fr);
-  }
-
-  .settings-import-row .button {
-    grid-column: 1 / -1;
-  }
 }
 
 @media (min-width: 720px) {
@@ -100,8 +126,7 @@
 
   .panel,
   .notice-panel,
-  .status-panel,
-  .settings-panel {
+  .status-panel {
     padding: 18px;
   }
 

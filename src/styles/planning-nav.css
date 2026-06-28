@@ -2,13 +2,52 @@
   align-items: center;
 }
 
+.plan-actions-toggle {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  min-height: 56px;
+  margin: 0 0 22px;
+  border: 1px solid var(--color-border-strong);
+  border-radius: var(--radius);
+  background: var(--color-surface);
+  color: var(--color-primary);
+  font-size: 1.02rem;
+  font-weight: 850;
+}
+
+.plan-actions-toggle:hover {
+  background: var(--color-surface-raised);
+}
+
+.plan-toolbar {
+  display: grid;
+  gap: 16px;
+  margin-bottom: 28px;
+  border-color: var(--color-border);
+  background: #fbfbff;
+}
+
+.plan-toolbar .section-heading {
+  margin-bottom: 0;
+}
+
+.plan-toolbar .section-heading h3 {
+  font-size: 1.55rem;
+  line-height: 1.1;
+}
+
 .plan-actions {
   grid-template-columns: 1fr;
+  margin-top: 2px;
 }
 
 .plan-day-strip {
-  display: flex;
-  gap: 8px;
+  display: grid;
+  grid-auto-columns: minmax(62px, 1fr);
+  grid-auto-flow: column;
+  gap: 10px;
   overflow-x: auto;
   padding-bottom: 2px;
   scrollbar-width: none;
@@ -21,30 +60,30 @@
 .plan-day-chip {
   display: grid;
   place-items: center;
-  flex: 0 0 54px;
-  min-height: 58px;
-  border: 1px solid var(--color-border);
+  min-height: 78px;
+  border: 1px solid var(--color-border-strong);
   border-radius: var(--radius);
   background: var(--color-surface);
-  color: var(--color-muted);
-  padding: 7px 6px;
+  color: var(--color-text);
+  padding: 10px 8px;
   line-height: 1;
 }
 
 .plan-day-chip span {
-  font-size: 0.72rem;
+  color: var(--color-muted);
+  font-size: 0.84rem;
   font-weight: 820;
   text-transform: uppercase;
 }
 
 .plan-day-chip strong {
   color: var(--color-text);
-  font-size: 1.22rem;
+  font-size: 1.7rem;
+  font-weight: 850;
   line-height: 1.05;
 }
 
 .plan-day-chip.has-open-slots {
-  border-style: dashed;
   background: #ffffff;
 }
 
@@ -55,11 +94,40 @@
 }
 
 .plan-day-chip.is-complete {
-  border-color: rgba(0, 41, 28, 0.18);
-  background: var(--color-primary-soft);
+  border-color: var(--color-border-strong);
+  background: #ffffff;
 }
 
 .plan-day-chip.is-selected {
   border-color: var(--color-primary);
-  box-shadow: 0 0 0 3px rgba(0, 41, 28, 0.14);
+  background: var(--color-lunch);
+  box-shadow: none;
+}
+
+.plan-day-chip.is-selected span,
+.plan-day-chip.is-selected strong {
+  color: var(--color-primary);
+}
+
+.plan-list-heading {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin: 34px 0 18px;
+}
+
+.plan-list-heading h2 {
+  margin: 0;
+  color: var(--color-primary);
+  font-size: 1.55rem;
+  font-weight: 850;
+  line-height: 1.12;
+}
+
+.plan-range {
+  color: var(--color-muted);
+  font-size: 0.98rem;
+  text-align: right;
+  white-space: nowrap;
 }

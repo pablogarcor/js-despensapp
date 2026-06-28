@@ -1014,6 +1014,43 @@ export class PantryService {
   }
 
   /**
+   * Convierte una comida planificada con receta en una entrada de No cocinar.
+   *
+   * Conserva identificador, fecha y franja para mantener estable la planificacion.
+   *
+   * @param {string} plannedMealId Identificador de la comida.
+   * @param {Object} params Datos de entrada.
+   * @param {string} params.title Motivo predefinido.
+   * @param {string} [params.note] Detalle libre opcional.
+   * @returns {Promise<import('../domain/types.js').PlannedMeal>} Entrada convertida.
+   */
+  async convertPlannedMealToNote(plannedMealId, { title, note = '' }) {
+    const plannedMeal = await this.database.get('plannedMeals', plannedMealId);
+
+    if (!plannedMeal) {
+      throw new DomainError('La comida planificada no existe.', 'PLANNED_MEAL_NOT_FOUND');
+    }
+
+    if (!isRecipePlannedMeal(plannedMeal)) {
+      throw new DomainError('Esta planificacion ya es de no cocinar.', 'PLANNED_MEAL_KIND_INVALID');
+    }
+
+    const { title: cleanTitle, note: cleanNote } = normalizePlanNoteInput({ title, note });
+    const updatedMeal = {
+      id: plannedMeal.id,
+      kind: 'note',
+      date: plannedMeal.date,
+      mealType: plannedMeal.mealType,
+      title: cleanTitle,
+      note: cleanNote,
+      createdAt: plannedMeal.createdAt,
+      updatedAt: this.now().toISOString(),
+    };
+
+    return this.database.put('plannedMeals', updatedMeal);
+  }
+
+  /**
    * Actualiza una entrada de No cocinar conservando fecha y franja.
    *
    * @param {string} plannedMealId Identificador de la entrada.

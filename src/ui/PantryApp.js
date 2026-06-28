@@ -42,7 +42,10 @@ export class PantryApp {
       pantryFormOpen: false,
       recipeFormOpen: false,
       planActionsOpen: false,
+      settingsImportOpen: false,
+      settingsInstallOpen: false,
       selectedPlanDate: null,
+      activeMealSlotKey: null,
       activeNoteSlotKey: null,
       editingPantryItemId: null,
       ingredientRows: [createIngredientRow()],
@@ -192,6 +195,16 @@ export class PantryApp {
         shouldRefresh = false;
       }
 
+      if (action === 'toggle-settings-import') {
+        this.state.settingsImportOpen = !this.state.settingsImportOpen;
+        shouldRefresh = false;
+      }
+
+      if (action === 'toggle-settings-install') {
+        this.state.settingsInstallOpen = !this.state.settingsInstallOpen;
+        shouldRefresh = false;
+      }
+
       if (action === 'export-backup') {
         const backup = await this.service.exportBackup();
         this.downloadBackup(backup);
@@ -294,6 +307,9 @@ export class PantryApp {
 
       if (action === 'edit-planned-meal') {
         this.state.editingPlannedMealId = id;
+        this.state.planActionsOpen = false;
+        this.state.activeMealSlotKey = null;
+        this.state.activeNoteSlotKey = null;
         shouldRefresh = false;
       }
 
@@ -302,9 +318,16 @@ export class PantryApp {
         shouldRefresh = false;
       }
 
+      if (action === 'adjust-number-input') {
+        this.adjustNumberInput(actionElement);
+        shouldRefresh = false;
+      }
+
       if (action === 'clear-plan') {
         const deletedCount = await this.service.clearCurrentAndFutureMeals();
         this.state.planActionsOpen = false;
+        this.state.activeMealSlotKey = null;
+        this.state.activeNoteSlotKey = null;
         this.showToast(`${deletedCount} comidas eliminadas del plan.`);
       }
 
@@ -325,11 +348,25 @@ export class PantryApp {
 
       if (action === 'show-note-slot') {
         this.state.activeNoteSlotKey = actionElement.dataset.slotKey;
+        this.state.activeMealSlotKey = null;
         shouldRefresh = false;
       }
 
       if (action === 'hide-note-slot') {
         this.state.activeNoteSlotKey = null;
+        shouldRefresh = false;
+      }
+
+      if (action === 'show-planned-meal-slot') {
+        this.state.activeMealSlotKey = actionElement.dataset.slotKey;
+        this.state.activeNoteSlotKey = null;
+        this.state.editingPlannedMealId = null;
+        this.state.planActionsOpen = false;
+        shouldRefresh = false;
+      }
+
+      if (action === 'hide-planned-meal-slot') {
+        this.state.activeMealSlotKey = null;
         shouldRefresh = false;
       }
 
@@ -343,6 +380,7 @@ export class PantryApp {
           this.state.editRecipeDraft = null;
           this.state.editIngredientRows = [];
           this.state.editingPlannedMealId = null;
+          this.state.activeMealSlotKey = null;
           this.state.activeNoteSlotKey = null;
           this.state.pantrySearch = '';
           this.state.recipeSearch = '';
@@ -400,6 +438,39 @@ export class PantryApp {
         this.scrollToPlanDay(actionElement.dataset.date);
       }
     });
+  }
+
+  /**
+   * Ajusta el valor numerico de un input asociado a un boton de stepper.
+   *
+   * @param {HTMLElement} actionElement Boton que dispara el ajuste.
+   */
+  adjustNumberInput(actionElement) {
+    const form = actionElement.closest('form');
+    const targetName = actionElement.dataset.target;
+    const step = Number.parseFloat(actionElement.dataset.step ?? '0');
+
+    if (!form || !targetName || !Number.isFinite(step) || step === 0) {
+      return;
+    }
+
+    const input = form.elements.namedItem(targetName);
+
+    if (!input || typeof input.value !== 'string') {
+      return;
+    }
+
+    const min = Number.parseFloat(input.min);
+    const max = Number.parseFloat(input.max);
+    const current = Number.parseFloat(input.value);
+    const fallback = Number.isFinite(min) ? min : 0;
+    const lowerLimit = Number.isFinite(min) ? min : -Infinity;
+    const upperLimit = Number.isFinite(max) ? max : Infinity;
+    const next = Math.min(upperLimit, Math.max(lowerLimit, (Number.isFinite(current) ? current : fallback) + step));
+    const roundedNext = Math.round(next * 100) / 100;
+
+    input.value = String(roundedNext);
+    input.dispatchEvent(new Event('input', { bubbles: true }));
   }
 
   /**
@@ -500,21 +571,39 @@ export class PantryApp {
 
       if (form.matches('[data-form="planned-meal"]')) {
         const data = new FormData(form);
-        await this.service.createPlannedMeal({
-          date: data.get('date'),
-          mealType: data.get('mealType'),
-          recipeId: data.get('recipeId'),
-          servings: data.get('servings'),
-        });
-        this.showToast('Comida anadida al plan.');
+        if (data.get('noCook') === 'true') {
+          await this.service.createPlannedNote({
+            date: data.get('date'),
+            mealType: data.get('mealType'),
+            title: data.get('noCookTitle'),
+            note: data.get('noCookNote'),
+          });
+        } else {
+          await this.service.createPlannedMeal({
+            date: data.get('date'),
+            mealType: data.get('mealType'),
+            recipeId: data.get('recipeId'),
+            servings: data.get('servings'),
+          });
+        }
+        this.state.activeMealSlotKey = null;
+        this.state.activeNoteSlotKey = null;
+        this.showToast(data.get('noCook') === 'true' ? 'Hueco marcado como no cocinar.' : 'Comida anadida al plan.');
       }
 
       if (form.matches('[data-form="planned-meal-edit"]')) {
         const data = new FormData(form);
-        await this.service.updatePlannedMeal(data.get('plannedMealId'), {
-          recipeId: data.get('recipeId'),
-          servings: data.get('servings'),
-        });
+        if (data.get('noCook') === 'true') {
+          await this.service.convertPlannedMealToNote(data.get('plannedMealId'), {
+            title: data.get('noCookTitle'),
+            note: data.get('noCookNote'),
+          });
+        } else {
+          await this.service.updatePlannedMeal(data.get('plannedMealId'), {
+            recipeId: data.get('recipeId'),
+            servings: data.get('servings'),
+          });
+        }
         this.state.editingPlannedMealId = null;
         this.showToast('Comida actualizada.');
       }
@@ -527,6 +616,7 @@ export class PantryApp {
           title: data.get('title'),
           note: data.get('note'),
         });
+        this.state.activeMealSlotKey = null;
         this.state.activeNoteSlotKey = null;
         this.showToast('Hueco marcado como no cocinar.');
       }
@@ -555,6 +645,7 @@ export class PantryApp {
         const summary = await this.service.importBackup(await file.text());
         form.reset();
         this.state.activeView = 'settings';
+        this.state.settingsImportOpen = false;
         this.showToast(
           `Importados ${summary.pantryItems} alimentos, ${summary.recipes} recetas, ${summary.plannedMeals} comidas y ${summary.shoppingItems} compras.`,
         );
@@ -861,7 +952,7 @@ export class PantryApp {
 
     return `
       <section class="install-prompt-backdrop" role="presentation">
-        ${this.renderInstallPromptCard({ variant: 'modal' })}
+        ${this.renderInstallPromptCard()}
       </section>
     `;
   }
@@ -873,45 +964,86 @@ export class PantryApp {
    */
   renderInstallSettingsPanel() {
     if (this.state.installPrompt?.isInstalled) {
-      return '';
+      return `
+        <div class="settings-list">
+          <div class="settings-row">
+            <span class="settings-row-icon">${this.renderIcon('done')}</span>
+            <span class="settings-row-copy">
+              <strong>App instalada</strong>
+              <small>DespensApp ya se ejecuta como aplicacion instalada</small>
+            </span>
+          </div>
+        </div>
+      `;
     }
 
-    return this.renderInstallPromptCard({ variant: 'settings' });
+    const copy = getPwaInstallPromptCopy(this.state.installPrompt);
+
+    return `
+      <div class="settings-list">
+        <div class="settings-disclosure ${this.state.settingsInstallOpen ? 'is-open' : ''}">
+          <button
+            class="settings-row settings-row-disclosure"
+            type="button"
+            data-action="toggle-settings-install"
+            aria-expanded="${this.state.settingsInstallOpen}"
+            aria-controls="settings-install-panel"
+          >
+            <span class="settings-row-icon">${this.renderIcon('import')}</span>
+            <span class="settings-row-copy">
+              <strong>Instalar App</strong>
+              <small>Anadir a la pantalla de inicio</small>
+            </span>
+            <span class="settings-row-chevron">${this.renderIcon(this.state.settingsInstallOpen ? 'chevronDown' : 'chevronRight')}</span>
+          </button>
+
+          ${
+            this.state.settingsInstallOpen
+              ? `
+                <div id="settings-install-panel" class="settings-disclosure-panel settings-install-panel">
+                  <ol class="settings-install-steps">
+                    ${copy.steps.map((step) => `<li>${step}</li>`).join('')}
+                  </ol>
+                  ${
+                    this.state.installPrompt.canUseNativePrompt
+                      ? `<button class="button small" type="button" data-action="install-app">${copy.nativeButtonLabel}</button>`
+                      : ''
+                  }
+                </div>
+              `
+              : ''
+          }
+        </div>
+      </div>
+    `;
   }
 
   /**
-   * Renderiza la tarjeta compartida de instalacion PWA.
+   * Renderiza la tarjeta modal de instalacion PWA.
    *
-   * @param {{variant: 'modal' | 'settings'}} options Opciones de render.
    * @returns {string} HTML de la tarjeta.
    */
-  renderInstallPromptCard({ variant }) {
+  renderInstallPromptCard() {
     const installPrompt = this.state.installPrompt;
     const copy = getPwaInstallPromptCopy(installPrompt);
-    const isModal = variant === 'modal';
-    const titleId = isModal ? 'install-prompt-title' : 'install-settings-title';
-    const containerTag = isModal ? 'div' : 'section';
-    const containerAttributes = isModal
-      ? `class="install-prompt" role="dialog" aria-modal="true" aria-labelledby="${titleId}"`
-      : `class="panel install-prompt install-prompt-static" aria-labelledby="${titleId}"`;
     const actions = [
       installPrompt.canUseNativePrompt
         ? `<button class="button" type="button" data-action="install-app">${copy.nativeButtonLabel}</button>`
         : '',
-      isModal ? '<button class="button ghost" type="button" data-action="dismiss-install-prompt">Ahora no</button>' : '',
+      '<button class="button ghost" type="button" data-action="dismiss-install-prompt">Ahora no</button>',
     ].filter(Boolean);
 
     return `
-      <${containerTag} ${containerAttributes}>
+      <div class="install-prompt" role="dialog" aria-modal="true" aria-labelledby="install-prompt-title">
         <div>
           <p class="eyebrow">Acceso directo</p>
-          <h2 id="${titleId}">${copy.title}</h2>
+          <h2 id="install-prompt-title">${copy.title}</h2>
         </div>
         <ol class="install-steps">
           ${copy.steps.map((step) => `<li>${step}</li>`).join('')}
         </ol>
         ${actions.length > 0 ? `<div class="install-actions">${actions.join('')}</div>` : ''}
-      </${containerTag}>
+      </div>
     `;
   }
 

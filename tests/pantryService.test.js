@@ -659,6 +659,33 @@ test('permite editar receta y raciones de una comida planificada', async () => {
   assert.equal(updatedMeal.servings, 2.5);
 });
 
+test('permite convertir una comida planificada en no cocinar conservando el hueco', async () => {
+  const { service, recipe } = await createServiceWithRecipe();
+  const meal = await service.createPlannedMeal({
+    date: '2026-06-21',
+    mealType: 'breakfast',
+    recipeId: recipe.id,
+    servings: 1,
+  });
+
+  const updatedMeal = await service.convertPlannedMealToNote(meal.id, {
+    title: 'Comer fuera',
+    note: 'Sobras',
+  });
+  const dashboard = await service.getDashboard();
+
+  assert.equal(updatedMeal.id, meal.id);
+  assert.equal(updatedMeal.kind, 'note');
+  assert.equal(updatedMeal.date, '2026-06-21');
+  assert.equal(updatedMeal.mealType, 'breakfast');
+  assert.equal(updatedMeal.title, 'Comer fuera');
+  assert.equal(updatedMeal.note, 'Sobras');
+  assert.equal('recipeId' in updatedMeal, false);
+  assert.equal('servings' in updatedMeal, false);
+  assert.equal(dashboard.plannedMeals.length, 1);
+  assert.equal(dashboard.shoppingList.length, 0);
+});
+
 test('impide editar una comida con receta incompatible', async () => {
   const { service, rice, recipe } = await createServiceWithRecipe(['breakfast']);
   const meal = await service.createPlannedMeal({

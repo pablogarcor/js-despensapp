@@ -21,11 +21,10 @@ export const shoppingViewMethods = {
             <strong>Lista de la compra</strong>
             <small>${summary.statusText} · ${summary.affectedText}</small>
           </span>
-          <span class="shopping-badge ${summary.hasShoppingItems ? 'is-warning' : 'is-ok'}">
+          <button class="shopping-badge ${summary.hasShoppingItems ? 'is-warning' : 'is-ok'}" type="button" data-view="shopping">
             ${summary.hasShoppingItems ? 'Comprar' : 'Suficiente'}
-          </span>
+          </button>
         </div>
-        <button class="button ghost small" type="button" data-view="shopping">Abrir compra</button>
       </section>
     `;
   },

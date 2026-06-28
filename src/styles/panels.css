@@ -1,7 +1,6 @@
 .panel,
 .notice-panel,
-.status-panel,
-.settings-panel {
+.status-panel {
   margin-bottom: 14px;
   border: 1px solid var(--color-border);
   border-radius: var(--radius);
@@ -10,8 +9,7 @@
 
 .panel,
 .notice-panel,
-.status-panel,
-.settings-panel {
+.status-panel {
   padding: 16px;
 }
 

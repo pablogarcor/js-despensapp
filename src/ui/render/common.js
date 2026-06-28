@@ -9,6 +9,10 @@ export const commonRenderMethods = {
     return renderIcon(name);
   },
 
+  renderActionSheet(options) {
+    return renderActionSheet(options);
+  },
+
   renderTab(view, label) {
     const isActive = this.state.activeView === view;
     return `
@@ -146,6 +150,171 @@ const TAB_ICONS = Object.freeze({
   shopping: 'shoppingList',
 });
 
+/**
+ * Renderiza una hoja modal inferior reusable para grupos de acciones.
+ *
+ * @param {{
+ *   title: string,
+ *   titleId?: string,
+ *   dismissAction: string,
+ *   className?: string,
+ *   visibleTitle?: boolean,
+ *   form?: {
+ *     className?: string,
+ *     dataForm?: string,
+ *     hiddenInputs?: Array<{ name: string, value: string }>
+ *   },
+ *   body?: string,
+ *   footer?: string,
+ *   actions?: Array<{
+ *     label: string,
+ *     icon: string,
+ *     type?: string,
+ *     action?: string,
+ *     variant?: string,
+ *     data?: Record<string, string>,
+ *     separated?: boolean
+ *   }>
+ * }} options Configuracion de la hoja.
+ * @returns {string} HTML de la hoja.
+ */
+function renderActionSheet({
+  title,
+  titleId = 'action-sheet-title',
+  dismissAction,
+  className = '',
+  visibleTitle = false,
+  form,
+  body = '',
+  footer = '',
+  actions = [],
+}) {
+  const list = actions.length > 0
+    ? `
+      <div class="action-sheet-list">
+        ${actions.map(renderActionSheetAction).join('')}
+      </div>
+    `
+    : '';
+  const content = `
+    ${renderActionSheetHiddenInputs(form?.hiddenInputs ?? [])}
+    ${body}
+    ${list}
+    ${footer}
+  `;
+  const formAttributes = form ? renderActionSheetFormAttributes(form) : '';
+  const sheetClass = ['action-sheet', visibleTitle ? 'has-visible-title' : '', className]
+    .filter(Boolean)
+    .join(' ');
+  const titleMarkup = visibleTitle
+    ? `
+      <header class="action-sheet-header">
+        <h2 id="${escapeAttribute(titleId)}">${escapeHtml(title)}</h2>
+        <button class="action-sheet-close" type="button" data-action="${escapeAttribute(dismissAction)}" aria-label="Cerrar">
+          ${renderIcon('close')}
+        </button>
+      </header>
+    `
+    : `<h2 class="visually-hidden" id="${escapeAttribute(titleId)}">${escapeHtml(title)}</h2>`;
+
+  return `
+    <div class="action-sheet-backdrop" role="presentation" data-action="${escapeAttribute(dismissAction)}"></div>
+    <section class="${escapeAttribute(sheetClass)}" role="dialog" aria-modal="true" aria-labelledby="${escapeAttribute(titleId)}">
+      <div class="action-sheet-handle" aria-hidden="true"></div>
+      ${titleMarkup}
+      ${
+        form
+          ? `<form${formAttributes ? ` ${formAttributes}` : ''}>${content}</form>`
+          : content
+      }
+    </section>
+  `;
+}
+
+/**
+ * Renderiza una fila de accion para una hoja modal inferior.
+ *
+ * @param {{
+ *   label: string,
+ *   icon: string,
+ *   type?: string,
+ *   action?: string,
+ *   variant?: string,
+ *   data?: Record<string, string>,
+ *   separated?: boolean
+ * }} action Accion a renderizar.
+ * @returns {string} HTML de la fila.
+ */
+function renderActionSheetAction(action) {
+  const type = action.type ?? 'button';
+  const variant = action.variant ? ` is-${action.variant}` : '';
+  const dataAction = action.action ? ` data-action="${escapeAttribute(action.action)}"` : '';
+  const dataAttributes = renderActionSheetDataAttributes(action.data ?? {});
+  const separator = action.separated ? '<div class="action-sheet-divider" aria-hidden="true"></div>' : '';
+
+  return `
+    ${separator}
+    <button class="action-sheet-action${variant}" type="${escapeAttribute(type)}"${dataAction}${dataAttributes}>
+      <span class="action-sheet-icon">${renderIcon(action.icon)}</span>
+      <span>${escapeHtml(action.label)}</span>
+    </button>
+  `;
+}
+
+/**
+ * Renderiza atributos seguros del formulario de una hoja de acciones.
+ *
+ * @param {{ className?: string, dataForm?: string }} form Configuracion del formulario.
+ * @returns {string} Atributos HTML.
+ */
+function renderActionSheetFormAttributes(form) {
+  const attributes = [];
+
+  if (form.className) {
+    attributes.push(`class="${escapeAttribute(form.className)}"`);
+  }
+
+  if (form.dataForm) {
+    attributes.push(`data-form="${escapeAttribute(form.dataForm)}"`);
+  }
+
+  return attributes.join(' ');
+}
+
+/**
+ * Renderiza campos ocultos seguros para formularios de hojas de acciones.
+ *
+ * @param {Array<{ name: string, value: string }>} hiddenInputs Campos ocultos.
+ * @returns {string} Inputs ocultos.
+ */
+function renderActionSheetHiddenInputs(hiddenInputs) {
+  return hiddenInputs.map((input) => `
+    <input type="hidden" name="${escapeAttribute(input.name)}" value="${escapeAttribute(input.value)}" />
+  `).join('');
+}
+
+/**
+ * Renderiza atributos data-* de una accion.
+ *
+ * @param {Record<string, string>} data Datos de la accion.
+ * @returns {string} Atributos data-*.
+ */
+function renderActionSheetDataAttributes(data) {
+  return Object.entries(data)
+    .map(([name, value]) => ` data-${toKebabCase(name)}="${escapeAttribute(value)}"`)
+    .join('');
+}
+
+/**
+ * Convierte una clave camelCase sencilla a kebab-case.
+ *
+ * @param {string} value Clave a convertir.
+ * @returns {string} Clave en kebab-case.
+ */
+function toKebabCase(value) {
+  return value.replace(/[A-Z]/g, (letter) => `-${letter.toLowerCase()}`);
+}
+
 const ICON_PATHS = Object.freeze({
   add: '<line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/>',
   autoFill: '<path d="M21 12a9 9 0 1 1-9-9c2.52 0 4.93 1 6.74 2.74L21 8"/><polyline points="21 3 21 8 16 8"/>',
@@ -162,7 +331,9 @@ const ICON_PATHS = Object.freeze({
   export: '<path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/>',
   import: '<path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/>',
   lunch: '<path d="M18 8h1a4 4 0 0 1 0 8h-1"/><path d="M2 8h16v9a4 4 0 0 1-4 4H6a4 4 0 0 1-4-4V8z"/><line x1="6" y1="1" x2="6" y2="4"/><line x1="10" y1="1" x2="10" y2="4"/><line x1="14" y1="1" x2="14" y2="4"/>',
+  minus: '<line x1="5" y1="12" x2="19" y2="12"/>',
   pantry: '<path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/>',
+  noUtensils: '<path d="M3 2v7c0 1.1.9 2 2 2h4a2 2 0 0 0 2-2V2"/><path d="M7 2v20"/><path d="M21 15V2v0a5 5 0 0 0-5 5v6c0 1.1.9 2 2 2h3Zm0 0v7"/><line x1="2" y1="2" x2="22" y2="22"/>',
   recipes: '<path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/>',
   save: '<path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/><polyline points="17 21 17 13 7 13 7 21"/><polyline points="7 3 7 8 15 8"/>',
   search: '<circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/>',
