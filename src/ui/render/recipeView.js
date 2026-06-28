@@ -144,7 +144,7 @@ export const recipeViewMethods = {
 
     return `
       <article class="list-card recipe-card">
-        <span class="recipe-icon-tile" aria-hidden="true">${this.renderIcon('recipes')}</span>
+        <span class="recipe-icon-tile" aria-hidden="true">${this.renderIcon('utensils')}</span>
         <div class="recipe-card-copy">
           <div class="card-header">
             <div>

@@ -27,6 +27,7 @@ export const settingsViewMethods = {
           <button class="settings-row" type="button" data-action="export-backup">
             <span class="settings-row-icon">${this.renderIcon('export')}</span>
             <span>Exportar JSON</span>
+            <span class="settings-row-chevron">${this.renderIcon('chevronRight')}</span>
           </button>
 
           <form class="settings-row settings-import-row" data-form="import-backup">
@@ -41,6 +42,7 @@ export const settingsViewMethods = {
           <button class="settings-row danger-action" type="button" data-action="clear-all-data" ${totalStoredMeals + dashboard.recipes.length + dashboard.pantryItems.length + totalShoppingItems === 0 ? 'disabled' : ''}>
             <span class="settings-row-icon">${this.renderIcon('delete')}</span>
             <span>Borrar todo</span>
+            <span class="settings-row-chevron">${this.renderIcon('chevronRight')}</span>
           </button>
         </div>
       </section>

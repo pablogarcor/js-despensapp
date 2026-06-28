@@ -25,8 +25,19 @@
   margin: 0;
   border-color: var(--color-border);
   background: var(--color-surface);
-  padding-left: 12px;
+  padding-left: 44px;
   font-size: 1rem;
+}
+
+.search-icon {
+  position: absolute;
+  z-index: 1;
+  top: 50%;
+  left: 14px;
+  display: inline-grid;
+  place-items: center;
+  color: var(--color-subtle);
+  transform: translateY(-50%);
 }
 
 .search-label-row {

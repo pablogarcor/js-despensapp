@@ -31,7 +31,7 @@
 
 .settings-row {
   display: grid;
-  grid-template-columns: 36px minmax(0, 1fr);
+  grid-template-columns: 36px minmax(0, 1fr) auto;
   align-items: center;
   gap: 12px;
   width: 100%;
@@ -48,12 +48,13 @@
   border-bottom: 0;
 }
 
-.settings-row > span:not(.settings-row-icon) {
+.settings-row > span:not(.settings-row-icon):not(.settings-row-chevron) {
   font-size: 1.05rem;
   font-weight: 720;
 }
 
-.settings-row-icon {
+.settings-row-icon,
+.settings-row-chevron {
   display: inline-grid;
   place-items: center;
   color: var(--color-muted);
@@ -62,6 +63,10 @@
 .settings-row-icon .ui-icon {
   width: 26px;
   height: 26px;
+}
+
+.settings-row-chevron {
+  color: var(--color-border-strong);
 }
 
 .settings-import-row label {
@@ -88,5 +93,9 @@
 }
 
 .settings-row.danger-action .settings-row-icon {
+  color: var(--color-danger);
+}
+
+.settings-row.danger-action .settings-row-chevron {
   color: var(--color-danger);
 }
