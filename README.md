@@ -94,8 +94,8 @@ Las reglas viven en `src/services/pantryService.js`:
 - La lista de la compra tambien senala que comidas del plan no se podrian preparar, indicando receta, fecha, franja y alimentos que faltan.
 - Los alimentos generados por el plan se pueden marcar como comprados sin guardar una copia de su cantidad calculada.
 - Los extras manuales de compra se guardan con nombre, cantidad, unidad y estado de marcado.
-- Al marcar **Compra hecha**, los faltantes generados suman stock a su alimento existente.
-- Al marcar **Compra hecha**, los extras suman stock a un alimento existente con la misma unidad o crean un alimento nuevo.
+- Al pulsar **Finalizar compra**, los faltantes generados marcados suman stock a su alimento existente.
+- Al pulsar **Finalizar compra**, los extras marcados suman stock a un alimento existente con la misma unidad o crean un alimento nuevo.
 - Un extra no puede aplicarse si ya existe un alimento con el mismo nombre y otra unidad.
 
 ## Estructura
@@ -226,8 +226,8 @@ Si el deploy falla con `HttpError: Not Found` y el mensaje `Ensure GitHub Pages 
 12. Usa **Editar** en una comida planificada para cambiar receta o raciones, o en **No cocinar** para cambiar motivo y detalle.
 13. En **Plan**, el resumen de compra indica si hay compra pendiente o si el plan esta cubierto, con acceso directo a **Compra**.
 14. Las comidas del plan que no se podrian cocinar quedan marcadas en su tarjeta para verlo de un vistazo.
-15. En **Compra**, puedes marcar alimentos como comprados, anadir extras manuales y ver las **comidas afectadas**, con receta, fecha, franja y faltas concretas.
-16. Pulsa **Compra hecha** en **Compra** para sumar a la despensa las entradas marcadas. Los faltantes del plan actualizan alimentos existentes; los extras actualizan alimentos con la misma unidad o crean uno nuevo.
+15. En **Compra**, puedes marcar alimentos como comprados, ver chips con la primera comida afectada y anadir extras manuales desde una modal.
+16. Pulsa **Finalizar compra** en **Compra** para sumar a la despensa las entradas marcadas. Los faltantes del plan actualizan alimentos existentes; los extras actualizan alimentos con la misma unidad o crean uno nuevo.
 17. Cuando una comida ya paso, la app la muestra como pendiente: si marcas **Hecha**, descuenta ingredientes; si marcas **No hecha**, solo elimina la planificacion. Las entradas de **No cocinar** pasadas se resuelven sin tocar despensa.
 18. En **Configuracion**, usa **Exportar copia** para descargar un backup JSON o **Importar y reemplazar** para restaurarlo.
 19. Usa **Borrar todo** en **Configuracion** para reiniciar despensa, recetas, planificacion y compra.

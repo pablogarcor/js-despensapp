@@ -42,6 +42,7 @@ export class PantryApp {
       pantryFormOpen: false,
       recipeFormOpen: false,
       planActionsOpen: false,
+      shoppingExtraFormOpen: false,
       settingsImportOpen: false,
       settingsInstallOpen: false,
       selectedPlanDate: null,
@@ -379,8 +380,19 @@ export class PantryApp {
         this.showToast('Extra eliminado.');
       }
 
+      if (action === 'show-shopping-extra-form') {
+        this.state.shoppingExtraFormOpen = true;
+        shouldRefresh = false;
+      }
+
+      if (action === 'hide-shopping-extra-form') {
+        this.state.shoppingExtraFormOpen = false;
+        shouldRefresh = false;
+      }
+
       if (action === 'apply-shopping-purchase') {
         const summary = await this.service.applyShoppingPurchase();
+        this.state.shoppingExtraFormOpen = false;
         const createdText =
           summary.createdPantryItems > 0 ? ` ${summary.createdPantryItems} alimentos nuevos.` : '';
         this.showToast(`${summary.purchasedItems} compras sumadas a la despensa.${createdText}`);
@@ -459,6 +471,7 @@ export class PantryApp {
           this.state.editingPantryItemId = null;
           this.state.deletingPantryItemId = null;
           this.state.expandedPantryItemId = null;
+          this.state.shoppingExtraFormOpen = false;
           this.state.createRecipeDraft = null;
           this.state.editingRecipeId = null;
           this.state.editRecipeDraft = null;
@@ -776,6 +789,7 @@ export class PantryApp {
           unit: data.get('unit'),
         });
         form.reset();
+        this.state.shoppingExtraFormOpen = false;
         this.showToast('Extra anadido a la compra.');
       }
 

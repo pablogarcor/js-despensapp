@@ -137,13 +137,38 @@
     height: 32px;
   }
 
+  .shopping-group-header {
+    padding: 16px;
+  }
+
+  .shopping-list-row {
+    padding: 18px 12px;
+  }
+
   .shopping-item-check {
-    grid-template-columns: 22px minmax(0, 1fr);
+    grid-template-columns: 36px minmax(0, 1fr) auto;
+    gap: 12px;
+  }
+
+  .shopping-checkmark {
+    width: 30px;
+    height: 30px;
+  }
+
+  .shopping-item-name {
+    font-size: 1rem;
   }
 
   .shopping-item-quantity {
-    grid-column: 2;
-    justify-self: start;
+    grid-column: auto;
+    justify-self: end;
+    font-size: 1rem;
+  }
+
+  .shopping-action-button {
+    min-height: 66px;
+    gap: 12px;
+    font-size: 1.08rem;
   }
 
 }
