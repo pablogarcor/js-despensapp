@@ -321,6 +321,120 @@
   height: 18px;
 }
 
+.recipe-edit-sheet {
+  grid-template-rows: auto auto minmax(0, 1fr);
+  max-height: calc(100dvh - 24px);
+  overflow: hidden;
+  overscroll-behavior: contain;
+}
+
+.recipe-edit-sheet-form {
+  display: grid;
+  grid-template-rows: minmax(0, 1fr) auto;
+  min-height: 0;
+  overflow: hidden;
+}
+
+.recipe-edit-sheet-body {
+  gap: 18px;
+  min-height: 0;
+  max-height: min(520px, calc(100dvh - 280px));
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  padding-bottom: 18px;
+}
+
+.recipe-edit-sheet .meal-edit-sheet-actions {
+  border-top: 1px solid var(--color-border);
+  background: var(--color-surface);
+  padding-top: 16px;
+}
+
+.recipe-edit-meal-types {
+  display: grid;
+  gap: 8px;
+  min-width: 0;
+  margin: 0;
+  border: 0;
+  padding: 0;
+}
+
+.recipe-edit-meal-types legend {
+  margin-bottom: 8px;
+  color: var(--color-muted);
+  font-size: 1rem;
+  font-weight: 640;
+  line-height: 1.2;
+}
+
+.recipe-edit-meal-type-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  justify-content: center;
+  min-width: 0;
+  padding-bottom: 2px;
+}
+
+.recipe-edit-meal-types .checkbox-card {
+  flex: 0 0 148px;
+  min-height: 56px;
+  border-color: var(--color-border);
+  border-radius: var(--radius-tight);
+  padding: 12px 14px;
+  color: var(--color-text);
+  font-size: 1.08rem;
+  font-weight: 780;
+  white-space: nowrap;
+}
+
+.recipe-edit-meal-types .checkbox-card input {
+  display: grid;
+  place-items: center;
+  width: 26px;
+  height: 26px;
+  min-height: 26px;
+  border: 2px solid #8d9691;
+  border-radius: 2px;
+  appearance: none;
+  background: var(--color-surface);
+  padding: 0;
+}
+
+.recipe-edit-meal-types .checkbox-card input:checked {
+  border-color: var(--color-primary);
+  background: var(--color-primary);
+}
+
+.recipe-edit-meal-types .checkbox-card input:checked::after {
+  width: 12px;
+  height: 7px;
+  border-bottom: 3px solid #ffffff;
+  border-left: 3px solid #ffffff;
+  content: "";
+  transform: rotate(-45deg) translate(1px, -1px);
+}
+
+.recipe-edit-ingredients {
+  gap: 10px;
+}
+
+.recipe-edit-ingredients .section-heading {
+  margin-bottom: 0;
+}
+
+.recipe-edit-ingredients .section-heading h3 {
+  color: var(--color-muted);
+  font-size: 1rem;
+  font-weight: 640;
+}
+
+.recipe-edit-sheet .ingredient-row label,
+.recipe-edit-sheet .ingredient-row input,
+.recipe-edit-sheet .ingredient-row select {
+  min-width: 0;
+}
+
 .icon-button {
   display: inline-grid;
   place-items: center;

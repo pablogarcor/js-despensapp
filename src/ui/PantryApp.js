@@ -163,6 +163,7 @@ export class PantryApp {
     }
 
     const { action, id } = actionElement.dataset;
+    let recipeEditScrollTop = null;
 
     await this.runSafely(async () => {
       let shouldRefresh = true;
@@ -413,12 +414,14 @@ export class PantryApp {
       }
 
       if (action === 'add-edit-ingredient-row') {
+        recipeEditScrollTop = this.getRecipeEditScrollTop();
         this.syncEditIngredientRows(actionElement.closest('form'));
         this.state.editIngredientRows.push(createIngredientRow());
         shouldRefresh = false;
       }
 
       if (action === 'remove-edit-ingredient-row') {
+        recipeEditScrollTop = this.getRecipeEditScrollTop();
         this.syncEditIngredientRows(actionElement.closest('form'));
         this.state.editIngredientRows = this.state.editIngredientRows.filter((row) => row.id !== id);
 
@@ -432,6 +435,10 @@ export class PantryApp {
         await this.refresh();
       } else {
         this.render();
+      }
+
+      if (recipeEditScrollTop !== null) {
+        this.restoreRecipeEditScroll(recipeEditScrollTop);
       }
 
       if (action === 'scroll-plan-day') {
@@ -871,6 +878,30 @@ export class PantryApp {
       pantryItemId: rowElement.querySelector('[name="ingredientItem"]').value,
       quantity: rowElement.querySelector('[name="ingredientQuantity"]').value,
     }));
+  }
+
+  /**
+   * Obtiene el scroll interno de la modal de edicion de receta.
+   *
+   * @returns {number | null} Posicion vertical del contenido scrolleable.
+   */
+  getRecipeEditScrollTop() {
+    const scrollElement = this.root.querySelector('.recipe-edit-sheet-body');
+
+    return scrollElement ? scrollElement.scrollTop : null;
+  }
+
+  /**
+   * Restaura el scroll interno de la modal de edicion de receta tras renderizar.
+   *
+   * @param {number} scrollTop Posicion vertical previa.
+   */
+  restoreRecipeEditScroll(scrollTop) {
+    const scrollElement = this.root.querySelector('.recipe-edit-sheet-body');
+
+    if (scrollElement) {
+      scrollElement.scrollTop = scrollTop;
+    }
   }
 
   /**

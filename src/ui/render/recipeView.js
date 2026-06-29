@@ -89,6 +89,8 @@ export const recipeViewMethods = {
           : ''
       }
 
+      ${this.renderRecipeEditSheet(dashboard)}
+
       <section class="list-section" aria-label="Recetas guardadas">
         ${dashboard.recipes.length === 0 ? this.renderEmptyState('Todavia no hay recetas.') : ''}
         ${
@@ -130,10 +132,6 @@ export const recipeViewMethods = {
   },
 
   renderRecipe(recipe, pantryItems) {
-    if (this.state.editingRecipeId === recipe.id) {
-      return this.renderRecipeEditForm(recipe, pantryItems);
-    }
-
     return `
       <article class="list-card recipe-card">
         <span class="recipe-icon-tile" aria-hidden="true">${this.renderIcon('utensils')}</span>
@@ -155,6 +153,16 @@ export const recipeViewMethods = {
     `;
   },
 
+  renderRecipeEditSheet(dashboard) {
+    const recipe = dashboard.recipes.find((candidate) => candidate.id === this.state.editingRecipeId);
+
+    if (!recipe) {
+      return '';
+    }
+
+    return this.renderRecipeEditForm(recipe, dashboard.pantryItems);
+  },
+
   renderRecipeEditForm(recipe, pantryItems) {
     const draft = this.state.editRecipeDraft ?? {
       name: recipe.name,
@@ -169,26 +177,45 @@ export const recipeViewMethods = {
           }),
         );
 
-    return `
-      <article class="list-card vertical recipe-edit-card">
-        <form class="stacked-form" data-form="recipe-edit">
-          <input type="hidden" name="recipeId" value="${escapeAttribute(recipe.id)}" />
-          <label>
-            Nombre
+    return this.renderActionSheet({
+      title: 'Editar receta',
+      titleId: 'edit-recipe-title',
+      dismissAction: 'cancel-edit-recipe',
+      className: 'meal-edit-sheet recipe-edit-sheet',
+      visibleTitle: true,
+      form: {
+        className: 'meal-edit-sheet-form recipe-edit-sheet-form',
+        dataForm: 'recipe-edit',
+        hiddenInputs: [{ name: 'recipeId', value: recipe.id }],
+      },
+      body: `
+        <div class="meal-edit-sheet-body recipe-edit-sheet-body">
+          <div class="meal-edit-recipe-context">
+            <span class="meal-edit-recipe-icon" aria-hidden="true">${this.renderIcon('utensils')}</span>
+            <div class="meal-edit-recipe-copy">
+              <span>Receta seleccionada</span>
+              <strong>${escapeHtml(recipe.name)}</strong>
+            </div>
+          </div>
+
+          <label class="meal-edit-field">
+            <span>Nombre</span>
             <input name="name" type="text" autocomplete="off" value="${escapeAttribute(draft.name)}" required />
           </label>
 
-          <fieldset class="choice-group">
+          <fieldset class="recipe-edit-meal-types">
             <legend>Momentos del dia</legend>
-            ${MEAL_TYPES.map((mealType) => `
-              <label class="checkbox-card">
-                <input type="checkbox" name="mealTypes" value="${mealType}" ${draft.mealTypes.includes(mealType) ? 'checked' : ''} />
-                <span>${MEAL_TYPE_LABELS[mealType]}</span>
-              </label>
-            `).join('')}
+            <div class="recipe-edit-meal-type-row">
+              ${MEAL_TYPES.map((mealType) => `
+                <label class="checkbox-card">
+                  <input type="checkbox" name="mealTypes" value="${mealType}" ${draft.mealTypes.includes(mealType) ? 'checked' : ''} />
+                  <span>${MEAL_TYPE_LABELS[mealType]}</span>
+                </label>
+              `).join('')}
+            </div>
           </fieldset>
 
-          <div class="ingredient-builder">
+          <div class="ingredient-builder recipe-edit-ingredients">
             <div class="section-heading compact">
               <h3>Ingredientes por racion</h3>
               <button class="button ghost small" type="button" data-action="add-edit-ingredient-row" aria-label="Añadir ingrediente">${this.renderIcon('add')}</button>
@@ -200,13 +227,14 @@ export const recipeViewMethods = {
               }),
             ).join('')}
           </div>
-
-          <div class="form-actions">
-            <button class="button" type="submit">${this.renderIcon('save')} Guardar</button>
-            <button class="button ghost" type="button" data-action="cancel-edit-recipe">Cancelar</button>
-          </div>
-        </form>
-      </article>
-    `;
+        </div>
+      `,
+      footer: `
+        <div class="meal-edit-sheet-actions">
+          <button class="button full" type="submit">${this.renderIcon('save')} Guardar cambios</button>
+          <button class="meal-edit-cancel" type="button" data-action="cancel-edit-recipe">Cancelar</button>
+        </div>
+      `,
+    });
   }
 };
