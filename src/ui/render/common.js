@@ -316,6 +316,7 @@ function toKebabCase(value) {
 }
 
 const ICON_PATHS = Object.freeze({
+  action: '<path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"/>',
   add: '<line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/>',
   autoFill: '<path d="M21 12a9 9 0 1 1-9-9c2.52 0 4.93 1 6.74 2.74L21 8"/><polyline points="21 3 21 8 16 8"/>',
   breakfast: '<path d="M12 3a9 9 0 0 1 9 9 9 9 0 0 1-9 9 9 9 0 0 1-9-9 9 9 0 0 1 9-9Z"/><path d="M12 8v4l3 3"/>',

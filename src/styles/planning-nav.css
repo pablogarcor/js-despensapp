@@ -2,25 +2,6 @@
   align-items: center;
 }
 
-.plan-actions-toggle {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  width: 100%;
-  min-height: 56px;
-  margin: 0 0 22px;
-  border: 1px solid var(--color-border-strong);
-  border-radius: var(--radius);
-  background: var(--color-surface);
-  color: var(--color-primary);
-  font-size: 1.02rem;
-  font-weight: 850;
-}
-
-.plan-actions-toggle:hover {
-  background: var(--color-surface-raised);
-}
-
 .plan-toolbar {
   display: grid;
   gap: 16px;

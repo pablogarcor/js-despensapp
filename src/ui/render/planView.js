@@ -12,10 +12,6 @@ export const planViewMethods = {
     const planRange = formatPlanRange(days);
 
     return `
-      <button class="plan-actions-toggle" type="button" data-action="show-plan-actions">
-        Acciones
-      </button>
-
       <section class="panel action-panel plan-toolbar">
         <div class="section-heading">
           <div>
@@ -28,6 +24,13 @@ export const planViewMethods = {
       </section>
 
       ${isActionsOpen ? this.renderPlanActionsSheet() : ''}
+      ${
+        isActionsOpen
+          ? ''
+          : `<button class="recipe-fab plan-fab" type="button" data-action="show-plan-actions" aria-label="Acciones del plan">
+              ${this.renderIcon('action')}
+            </button>`
+      }
       ${this.renderPlannedMealSheet(dashboard)}
 
       ${this.renderShoppingPlanSummary(dashboard)}
