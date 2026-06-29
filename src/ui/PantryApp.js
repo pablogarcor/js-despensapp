@@ -18,6 +18,7 @@ const ACTION_SHEET_MIN_DISMISS_DISTANCE = 56;
 const ACTION_SHEET_MAX_DISMISS_DISTANCE = 112;
 const ACTION_SHEET_DISMISS_RATIO = 0.22;
 const ACTION_SHEET_DISMISS_ANIMATION_MS = 140;
+const APP_ICON_URL = `${import.meta.env.BASE_URL}icons/despensapp-icon.svg`;
 
 /**
  * Controlador de UI de la SPA.
@@ -120,15 +121,7 @@ export class PantryApp {
     this.root.innerHTML = `
       <div class="app-shell">
         <header class="app-header">
-          <button
-            class="header-icon-button ${this.state.activeView === 'pantry' ? 'is-active' : ''}"
-            type="button"
-            data-view="pantry"
-            aria-label="Abrir despensa"
-            aria-pressed="${this.state.activeView === 'pantry'}"
-          >
-            ${this.renderIcon('pantry')}
-          </button>
+          <img class="app-header-logo" src="${APP_ICON_URL}" alt="" aria-hidden="true" />
           <h1>DespensApp</h1>
           <button
             class="header-icon-button ${this.state.activeView === 'settings' ? 'is-active' : ''}"

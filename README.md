@@ -164,6 +164,8 @@ npm run pwa:icons # regenera los iconos PNG de la PWA
 npm test         # tests de negocio con node:test
 ```
 
+`npm run pwa:icons` toma `public/icons/despensapp-icon.svg` como fuente y rasteriza los PNG usados por Android, iOS y el icono maskable sin anadir dependencias.
+
 ## PWA y uso offline
 
 La PWA se compone de:

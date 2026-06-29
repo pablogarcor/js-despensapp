@@ -45,8 +45,16 @@
   letter-spacing: 0;
 }
 
+.app-header-logo {
+  display: block;
+  width: 48px;
+  height: 48px;
+  justify-self: start;
+}
+
 .app-header h1 {
   overflow: hidden;
+  min-width: 0;
   color: var(--color-primary);
   font-size: 1.75rem;
   font-weight: 800;
