@@ -95,11 +95,40 @@
 
 .pantry-card-main {
   display: flex;
-  align-items: center;
+  align-items: flex-start;
   justify-content: space-between;
-  gap: 12px;
-  min-height: 64px;
-  padding: 12px;
+  gap: 14px;
+  min-height: 86px;
+  padding: 20px 24px 16px;
+}
+
+.pantry-card-copy {
+  min-width: 0;
+}
+
+.pantry-card-copy p {
+  margin: 4px 0 0;
+  color: var(--color-muted);
+  font-size: 1rem;
+  line-height: 1.25;
+}
+
+.pantry-card-actions {
+  align-items: center;
+  flex-wrap: nowrap;
+  gap: 8px;
+}
+
+.pantry-card .meal-icon-action,
+.pantry-card .icon-button {
+  width: 40px;
+  height: 40px;
+}
+
+.pantry-card .meal-icon-action .ui-icon,
+.pantry-card .icon-button .ui-icon {
+  width: 20px;
+  height: 20px;
 }
 
 .item-title-row {
@@ -127,12 +156,6 @@
 .stock-badge.is-empty {
   background: var(--color-danger-soft);
   color: #93000a;
-}
-
-.stock-badge.is-low {
-  border: 1px solid var(--color-border-strong);
-  background: var(--color-surface-raised);
-  color: var(--color-muted);
 }
 
 .meal-type-breakfast {
@@ -182,28 +205,63 @@
 
 .stock-form {
   display: grid;
-  grid-template-columns: minmax(86px, 0.55fr) minmax(0, 1fr);
-  align-items: end;
-  gap: 8px;
+  gap: 12px;
   border-top: 1px solid var(--color-border);
-  background: #fbfcff;
-  padding: 10px 12px 12px;
+  background: var(--color-surface);
+  margin: 0 24px;
+  padding: 18px 0 20px;
+}
+
+.stock-form-heading {
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+  color: var(--color-text);
+  font-size: 1rem;
+  font-weight: 800;
+  line-height: 1.2;
+}
+
+.stock-form-heading small {
+  color: var(--color-muted);
+  font-size: 0.82rem;
+  font-weight: 640;
 }
 
 .stock-adjust-label span {
   display: block;
 }
 
-.stock-actions {
+.stock-adjust-controls {
   display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 8px;
+  grid-template-columns: minmax(86px, 0.8fr) minmax(112px, 1fr) minmax(112px, 1fr);
+  align-items: center;
+  gap: 12px;
 }
 
-.stock-actions .button:first-child {
+.stock-adjust-label input {
+  min-height: 58px;
+  margin: 0;
+  font-size: 1.08rem;
+  text-align: center;
+}
+
+.stock-adjust-controls .button {
+  min-height: 58px;
+  border-radius: var(--radius-tight);
+  font-size: 1rem;
+}
+
+.stock-action-subtract {
   border-color: var(--color-border-strong);
   background: #ffffff;
   color: var(--color-primary);
+}
+
+.stock-action-add {
+  border-color: var(--color-primary);
+  background: var(--color-primary);
+  color: #ffffff;
 }
 
 .list-card p,

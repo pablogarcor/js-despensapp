@@ -73,6 +73,8 @@ export const pantryViewMethods = {
           : ''
       }
 
+      ${this.renderPantryItemDeleteSheet(dashboard)}
+
       <section class="list-section" aria-label="Alimentos guardados">
         ${
           dashboard.pantryItems.length === 0 ? this.renderEmptyState('Todavia no hay alimentos.') : ''
@@ -87,6 +89,42 @@ export const pantryViewMethods = {
     `;
   },
 
+  renderPantryItemDeleteSheet(dashboard) {
+    const item = dashboard.pantryItems.find((candidate) => candidate.id === this.state.deletingPantryItemId);
+
+    if (!item) {
+      return '';
+    }
+
+    return this.renderActionSheet({
+      title: 'Borrar alimento',
+      titleId: 'delete-pantry-item-title',
+      dismissAction: 'cancel-delete-pantry-item',
+      className: 'meal-edit-sheet recipe-delete-sheet pantry-delete-sheet',
+      visibleTitle: true,
+      body: `
+        <div class="meal-edit-sheet-body recipe-delete-sheet-body">
+          <div class="meal-edit-recipe-context recipe-delete-context">
+            <span class="meal-edit-recipe-icon recipe-delete-icon" aria-hidden="true">${this.renderIcon('delete')}</span>
+            <div class="meal-edit-recipe-copy">
+              <span>Alimento seleccionado</span>
+              <strong>${escapeHtml(item.name)}</strong>
+              <small>¿Quieres borrar este alimento?</small>
+            </div>
+          </div>
+        </div>
+      `,
+      footer: `
+        <div class="meal-edit-sheet-actions recipe-delete-sheet-actions">
+          <button class="button full recipe-delete-confirm" type="button" data-action="confirm-delete-pantry-item" data-id="${escapeAttribute(item.id)}">
+            ${this.renderIcon('delete')} Borrar alimento
+          </button>
+          <button class="meal-edit-cancel" type="button" data-action="cancel-delete-pantry-item">Cancelar</button>
+        </div>
+      `,
+    });
+  },
+
   renderPantryItem(item, recipes) {
     if (this.state.editingPantryItemId === item.id) {
       return this.renderPantryItemEditForm(item, recipes);
@@ -95,16 +133,16 @@ export const pantryViewMethods = {
     return `
       <article class="list-card pantry-card">
         <div class="pantry-card-main">
-          <div>
+          <div class="pantry-card-copy">
             <div class="item-title-row">
               <h3>${escapeHtml(item.name)}</h3>
               ${renderStockBadge(item)}
             </div>
             <p>${formatQuantity(item.quantity)} ${escapeHtml(item.unit)}</p>
           </div>
-          <div class="inline-actions">
-            <button class="button ghost small icon-label-button" type="button" data-action="edit-pantry-item" data-id="${item.id}">
-              ${this.renderIcon('edit')} <span>Editar</span>
+          <div class="inline-actions pantry-card-actions">
+            <button class="meal-icon-action" type="button" aria-label="Editar ${escapeAttribute(item.name)}" data-action="edit-pantry-item" data-id="${item.id}">
+              ${this.renderIcon('edit')}
             </button>
             <button class="icon-button" type="button" aria-label="Eliminar ${escapeAttribute(item.name)}" data-action="delete-pantry-item" data-id="${item.id}">
               ${this.renderIcon('delete')}
@@ -113,13 +151,17 @@ export const pantryViewMethods = {
         </div>
         <form class="stock-form" data-form="pantry-stock">
           <input type="hidden" name="pantryItemId" value="${escapeAttribute(item.id)}" />
-          <label class="stock-adjust-label">
+          <div class="stock-form-heading">
             <span>Ajuste</span>
-            <input name="quantity" type="number" inputmode="decimal" step="0.01" min="0.01" placeholder="0" required />
-          </label>
-          <div class="stock-actions">
-            <button class="button small" type="submit" data-stock-action="subtract">${this.renderIcon('stockMinus')} Restar</button>
-            <button class="button small" type="submit" data-stock-action="add">${this.renderIcon('stockPlus')} Sumar</button>
+            <small>en ${escapeHtml(item.unit)}</small>
+          </div>
+          <div class="stock-adjust-controls">
+            <label class="stock-adjust-label">
+              <span class="visually-hidden">Cantidad a ajustar en ${escapeHtml(item.unit)}</span>
+              <input name="quantity" type="number" inputmode="decimal" step="0.01" min="0.01" placeholder="0" required />
+            </label>
+            <button class="button small stock-action-subtract" type="submit" data-stock-action="subtract">${this.renderIcon('stockMinus')} Restar</button>
+            <button class="button small stock-action-add" type="submit" data-stock-action="add">${this.renderIcon('stockPlus')} Sumar</button>
           </div>
         </form>
       </article>
@@ -207,10 +249,6 @@ export const pantryViewMethods = {
 function renderStockBadge(item) {
   if (item.quantity <= 0) {
     return '<span class="stock-badge is-empty">Agotado</span>';
-  }
-
-  if (item.quantity <= 1) {
-    return '<span class="stock-badge is-low">Bajo stock</span>';
   }
 
   return '';

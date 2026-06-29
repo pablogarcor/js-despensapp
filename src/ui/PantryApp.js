@@ -48,6 +48,7 @@ export class PantryApp {
       activeMealSlotKey: null,
       activeNoteSlotKey: null,
       editingPantryItemId: null,
+      deletingPantryItemId: null,
       createRecipeDraft: null,
       ingredientRows: [createIngredientRow()],
       editingRecipeId: null,
@@ -218,12 +219,29 @@ export class PantryApp {
       }
 
       if (action === 'delete-pantry-item') {
+        this.state.deletingPantryItemId = id;
+        shouldRefresh = false;
+      }
+
+      if (action === 'cancel-delete-pantry-item') {
+        this.state.deletingPantryItemId = null;
+        shouldRefresh = false;
+      }
+
+      if (action === 'confirm-delete-pantry-item') {
         await this.service.deletePantryItem(id);
+        this.state.deletingPantryItemId = null;
+
+        if (this.state.editingPantryItemId === id) {
+          this.state.editingPantryItemId = null;
+        }
+
         this.showToast('Alimento eliminado.');
       }
 
       if (action === 'show-pantry-form') {
         this.state.pantryFormOpen = true;
+        this.state.deletingPantryItemId = null;
         shouldRefresh = false;
       }
 
@@ -239,6 +257,7 @@ export class PantryApp {
 
       if (action === 'edit-pantry-item') {
         this.state.editingPantryItemId = id;
+        this.state.deletingPantryItemId = null;
         shouldRefresh = false;
       }
 
@@ -424,6 +443,7 @@ export class PantryApp {
         } else {
           const summary = await this.service.clearAllData();
           this.state.editingPantryItemId = null;
+          this.state.deletingPantryItemId = null;
           this.state.createRecipeDraft = null;
           this.state.editingRecipeId = null;
           this.state.editRecipeDraft = null;
