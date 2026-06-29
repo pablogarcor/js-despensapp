@@ -34,7 +34,16 @@
   }
 
   .pantry-card-main {
-    padding: 18px 16px 14px;
+    gap: 10px;
+  }
+
+  .pantry-card-toggle {
+    padding: 18px 0 14px 16px;
+  }
+
+  .pantry-card-actions {
+    gap: 6px;
+    padding: 18px 16px 14px 0;
   }
 
   .stock-form {
@@ -42,7 +51,7 @@
   }
 
   .stock-adjust-controls {
-    grid-template-columns: minmax(64px, 0.65fr) repeat(2, minmax(86px, 1fr));
+    grid-template-columns: repeat(3, minmax(0, 1fr));
     gap: 8px;
   }
 

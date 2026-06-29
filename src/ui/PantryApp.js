@@ -47,6 +47,7 @@ export class PantryApp {
       selectedPlanDate: null,
       activeMealSlotKey: null,
       activeNoteSlotKey: null,
+      expandedPantryItemId: null,
       editingPantryItemId: null,
       deletingPantryItemId: null,
       createRecipeDraft: null,
@@ -236,12 +237,18 @@ export class PantryApp {
           this.state.editingPantryItemId = null;
         }
 
+        if (this.state.expandedPantryItemId === id) {
+          this.state.expandedPantryItemId = null;
+        }
+
         this.showToast('Alimento eliminado.');
       }
 
       if (action === 'show-pantry-form') {
         this.state.pantryFormOpen = true;
+        this.state.editingPantryItemId = null;
         this.state.deletingPantryItemId = null;
+        this.state.expandedPantryItemId = null;
         shouldRefresh = false;
       }
 
@@ -258,11 +265,18 @@ export class PantryApp {
       if (action === 'edit-pantry-item') {
         this.state.editingPantryItemId = id;
         this.state.deletingPantryItemId = null;
+        this.state.pantryFormOpen = false;
+        this.state.expandedPantryItemId = null;
         shouldRefresh = false;
       }
 
       if (action === 'cancel-edit-pantry-item') {
         this.state.editingPantryItemId = null;
+        shouldRefresh = false;
+      }
+
+      if (action === 'toggle-pantry-stock') {
+        this.state.expandedPantryItemId = this.state.expandedPantryItemId === id ? null : id;
         shouldRefresh = false;
       }
 
@@ -444,6 +458,7 @@ export class PantryApp {
           const summary = await this.service.clearAllData();
           this.state.editingPantryItemId = null;
           this.state.deletingPantryItemId = null;
+          this.state.expandedPantryItemId = null;
           this.state.createRecipeDraft = null;
           this.state.editingRecipeId = null;
           this.state.editRecipeDraft = null;

@@ -95,28 +95,74 @@
 
 .pantry-card-main {
   display: flex;
-  align-items: flex-start;
+  align-items: stretch;
   justify-content: space-between;
   gap: 14px;
   min-height: 86px;
-  padding: 20px 24px 16px;
+}
+
+.pantry-card-main:hover {
+  background: #fbfcff;
+}
+
+.pantry-card-toggle {
+  display: flex;
+  flex: 1;
+  align-items: flex-start;
+  justify-content: space-between;
+  min-width: 0;
+  gap: 14px;
+  border: 0;
+  background: transparent;
+  padding: 20px 0 16px 24px;
+  color: inherit;
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+
+.pantry-card-toggle:focus-visible {
+  outline: 3px solid rgba(0, 41, 28, 0.16);
+  outline-offset: -3px;
 }
 
 .pantry-card-copy {
+  display: block;
   min-width: 0;
 }
 
-.pantry-card-copy p {
+.pantry-card-quantity {
+  display: block;
   margin: 4px 0 0;
   color: var(--color-muted);
   font-size: 1rem;
   line-height: 1.25;
 }
 
+.pantry-card-chevron {
+  display: inline-grid;
+  place-items: center;
+  align-self: center;
+  width: 28px;
+  height: 28px;
+  color: var(--color-muted);
+  transition: transform 0.18s ease;
+}
+
+.pantry-card-chevron .ui-icon {
+  width: 20px;
+  height: 20px;
+}
+
+.pantry-card.is-expanded .pantry-card-chevron {
+  transform: rotate(180deg);
+}
+
 .pantry-card-actions {
   align-items: center;
   flex-wrap: nowrap;
   gap: 8px;
+  padding: 20px 24px 16px 0;
 }
 
 .pantry-card .meal-icon-action,
@@ -183,9 +229,19 @@
 
 .recipe-usage-editor {
   display: grid;
-  gap: 8px;
+  gap: 10px;
   border-top: 1px solid var(--color-border);
-  padding-top: 10px;
+  padding-top: 16px;
+}
+
+.recipe-usage-editor .section-heading {
+  margin-bottom: 0;
+}
+
+.recipe-usage-editor .section-heading h3 {
+  color: var(--color-muted);
+  font-size: 1rem;
+  font-weight: 640;
 }
 
 .recipe-usage-row {
@@ -194,8 +250,8 @@
   gap: 6px;
   border: 1px solid var(--color-border);
   border-radius: var(--radius-tight);
-  background: var(--color-surface);
-  padding: 10px;
+  background: #fbfbff;
+  padding: 12px;
 }
 
 .recipe-usage-row span {
@@ -234,7 +290,7 @@
 
 .stock-adjust-controls {
   display: grid;
-  grid-template-columns: minmax(86px, 0.8fr) minmax(112px, 1fr) minmax(112px, 1fr);
+  grid-template-columns: repeat(3, minmax(0, 1fr));
   align-items: center;
   gap: 12px;
 }
@@ -332,7 +388,7 @@
   overflow-wrap: anywhere;
 }
 
-.pantry-card h3 {
+.pantry-card-title {
   color: var(--color-text);
   font-size: 1.14rem;
   font-weight: 800;
