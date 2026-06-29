@@ -125,15 +125,41 @@
     max(16px, env(safe-area-inset-right))
     calc(22px + env(safe-area-inset-bottom))
     max(16px, env(safe-area-inset-left));
-  transform: translateX(-50%);
+  transform: translateX(-50%) translateY(var(--action-sheet-drag-offset, 0));
+  transition: transform 180ms ease;
 }
 
 .action-sheet-handle {
+  position: relative;
+  display: grid;
+  place-items: center;
   justify-self: center;
+  width: 56px;
+  height: 20px;
+  border-radius: 999px;
+  background: transparent;
+  cursor: grab;
+  touch-action: none;
+}
+
+.action-sheet-handle::before {
   width: 32px;
   height: 4px;
   border-radius: 999px;
   background: var(--color-border-strong);
+  content: "";
+}
+
+.action-sheet.is-dragging {
+  transition: none;
+}
+
+.action-sheet.is-dragging .action-sheet-handle {
+  cursor: grabbing;
+}
+
+.action-sheet.is-dismissing {
+  transition: transform 140ms ease-in;
 }
 
 .action-sheet.has-visible-title {
@@ -145,7 +171,7 @@
 }
 
 .action-sheet.has-visible-title .action-sheet-handle {
-  margin-bottom: 18px;
+  margin-bottom: 10px;
 }
 
 .action-sheet-header {

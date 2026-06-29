@@ -219,7 +219,13 @@ function renderActionSheet({
 
   return `
     <div class="action-sheet-backdrop" role="presentation" data-action="${escapeAttribute(dismissAction)}"></div>
-    <section class="${escapeAttribute(sheetClass)}" role="dialog" aria-modal="true" aria-labelledby="${escapeAttribute(titleId)}">
+    <section
+      class="${escapeAttribute(sheetClass)}"
+      role="dialog"
+      aria-modal="true"
+      aria-labelledby="${escapeAttribute(titleId)}"
+      data-dismiss-action="${escapeAttribute(dismissAction)}"
+    >
       <div class="action-sheet-handle" aria-hidden="true"></div>
       ${titleMarkup}
       ${
