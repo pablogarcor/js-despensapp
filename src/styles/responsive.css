@@ -75,22 +75,29 @@
   }
 
   .recipe-card {
+    grid-template-columns: 48px minmax(0, 1fr) auto;
     gap: 10px;
+    padding: 12px;
   }
 
   .recipe-icon-tile {
-    flex-basis: 48px;
     width: 48px;
     height: 48px;
   }
 
-  .recipe-card .card-header {
-    align-items: stretch;
-    flex-direction: column;
+  .recipe-card .recipe-icon-tile .ui-icon {
+    width: 26px;
+    height: 26px;
   }
 
   .recipe-card .inline-actions {
-    justify-content: flex-start;
+    padding-left: 7px;
+  }
+
+  .recipe-card .meal-icon-action,
+  .recipe-card .icon-button {
+    width: 30px;
+    height: 30px;
   }
 
   .shopping-item-check {

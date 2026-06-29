@@ -1,6 +1,6 @@
 import { MEAL_TYPE_LABELS, MEAL_TYPES } from '../../domain/types.js';
 import { createIngredientRow } from '../uiState.js';
-import { escapeAttribute, escapeHtml, formatQuantity, matchesSearchText, normalizeSearchText } from '../renderUtils.js';
+import { escapeAttribute, escapeHtml, matchesSearchText, normalizeSearchText } from '../renderUtils.js';
 
 /**
  * Metodos de render y filtrado de la vista de recetas.
@@ -134,35 +134,22 @@ export const recipeViewMethods = {
       return this.renderRecipeEditForm(recipe, pantryItems);
     }
 
-    const pantryById = new Map(pantryItems.map((item) => [item.id, item]));
-    const ingredients = recipe.ingredients
-      .map((ingredient) => {
-        const item = pantryById.get(ingredient.pantryItemId);
-        return item ? `${formatQuantity(ingredient.quantity)} ${escapeHtml(item.unit)} ${escapeHtml(item.name)}` : 'Ingrediente no encontrado';
-      })
-      .join(', ');
-
     return `
       <article class="list-card recipe-card">
         <span class="recipe-icon-tile" aria-hidden="true">${this.renderIcon('utensils')}</span>
         <div class="recipe-card-copy">
-          <div class="card-header">
-            <div>
-              <h3>${escapeHtml(recipe.name)}</h3>
-              <div class="meal-badge-row">
-                ${recipe.mealTypes.map((mealType) => this.renderMealTypeBadge(mealType)).join('')}
-              </div>
-            </div>
-            <div class="inline-actions">
-              <button class="button ghost small icon-label-button" type="button" data-action="edit-recipe" data-id="${recipe.id}">
-                ${this.renderIcon('edit')} <span>Editar</span>
-              </button>
-              <button class="icon-button" type="button" aria-label="Eliminar ${escapeAttribute(recipe.name)}" data-action="delete-recipe" data-id="${recipe.id}">
-                ${this.renderIcon('delete')}
-              </button>
-            </div>
+          <h3>${escapeHtml(recipe.name)}</h3>
+          <div class="meal-badge-row">
+            ${recipe.mealTypes.map((mealType) => this.renderMealTypeBadge(mealType)).join('')}
           </div>
-          <p class="muted">${ingredients}</p>
+        </div>
+        <div class="inline-actions recipe-card-actions">
+          <button class="meal-icon-action" type="button" aria-label="Editar ${escapeAttribute(recipe.name)}" data-action="edit-recipe" data-id="${recipe.id}">
+            ${this.renderIcon('edit')}
+          </button>
+          <button class="icon-button" type="button" aria-label="Eliminar ${escapeAttribute(recipe.name)}" data-action="delete-recipe" data-id="${recipe.id}">
+            ${this.renderIcon('delete')}
+          </button>
         </div>
       </article>
     `;

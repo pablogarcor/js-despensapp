@@ -225,14 +225,18 @@
 }
 
 .recipe-card {
-  align-items: flex-start;
-  padding: 12px;
+  display: grid;
+  grid-template-columns: 56px minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 14px;
+  min-height: 86px;
+  padding: 14px 16px;
 }
 
 .recipe-icon-tile {
   display: inline-grid;
   place-items: center;
-  flex: 0 0 56px;
+  align-self: center;
   width: 56px;
   height: 56px;
   border-radius: var(--radius);
@@ -250,7 +254,14 @@
   flex: 1 1 auto;
 }
 
-.recipe-card-copy h3,
+.recipe-card-copy h3 {
+  color: var(--color-text);
+  font-size: 1.08rem;
+  font-weight: 680;
+  line-height: 1.22;
+  overflow-wrap: anywhere;
+}
+
 .pantry-card h3 {
   color: var(--color-text);
   font-size: 1.14rem;
@@ -262,7 +273,52 @@
   display: flex;
   flex-wrap: wrap;
   gap: 6px;
-  margin-top: 8px;
+  margin-top: 7px;
+}
+
+.recipe-card .meal-type-badge {
+  min-height: 24px;
+  padding: 4px 10px;
+  color: inherit;
+  font-size: 0.82rem;
+  font-weight: 760;
+}
+
+.recipe-card .meal-type-breakfast {
+  background: #c9e7f3;
+  color: #001f27;
+}
+
+.recipe-card .meal-type-lunch {
+  background: #a6d0bc;
+  color: #284e3f;
+}
+
+.recipe-card .meal-type-dinner {
+  background: #d9e3f7;
+  color: #414844;
+}
+
+.recipe-card .inline-actions {
+  align-items: center;
+  flex-wrap: nowrap;
+  gap: 6px;
+  justify-content: flex-end;
+  min-height: 38px;
+  border-left: 1px solid var(--color-border);
+  padding-left: 10px;
+}
+
+.recipe-card .meal-icon-action,
+.recipe-card .icon-button {
+  width: 32px;
+  height: 32px;
+}
+
+.recipe-card .meal-icon-action .ui-icon,
+.recipe-card .icon-button .ui-icon {
+  width: 18px;
+  height: 18px;
 }
 
 .icon-button {
