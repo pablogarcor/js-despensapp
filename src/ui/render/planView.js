@@ -415,7 +415,7 @@ export const planViewMethods = {
         ${this.renderMealTypeBadge(meal.mealType)}
         <div class="meal-card-copy">
           <strong>${escapeHtml(recipe?.name ?? 'Receta eliminada')}</strong>
-          ${unavailableMeal ? '<small class="meal-shortage">No hay alimentos</small>' : ''}
+          ${unavailableMeal ? '<small class="meal-shortage">Faltan alimentos</small>' : ''}
         </div>
         <span class="meal-row-icon" aria-label="Se cocina">${this.renderIcon('utensils')}</span>
         <div class="inline-actions">
