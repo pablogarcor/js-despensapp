@@ -1,6 +1,38 @@
-const APP_CACHE = 'despensapp-app-v1';
+const APP_CACHE = 'despensapp-app-v2';
 const RUNTIME_CACHE = 'despensapp-runtime-v1';
 const BUILD_MANIFEST_URL = createAppPath('asset-manifest.json');
+const UI_ICON_PATHS = [
+  'ui-icons/action.svg',
+  'ui-icons/add.svg',
+  'ui-icons/auto_fill.svg',
+  'ui-icons/breakfast.svg',
+  'ui-icons/calendar.svg',
+  'ui-icons/check.svg',
+  'ui-icons/chevron_down.svg',
+  'ui-icons/chevron_right.svg',
+  'ui-icons/close.svg',
+  'ui-icons/delete.svg',
+  'ui-icons/dinner.svg',
+  'ui-icons/done.svg',
+  'ui-icons/edit.svg',
+  'ui-icons/export.svg',
+  'ui-icons/import.svg',
+  'ui-icons/lunch.svg',
+  'ui-icons/minus.svg',
+  'ui-icons/no-utensils.svg',
+  'ui-icons/pantry.svg',
+  'ui-icons/recipes.svg',
+  'ui-icons/save.svg',
+  'ui-icons/search.svg',
+  'ui-icons/settings.svg',
+  'ui-icons/shopping_list.svg',
+  'ui-icons/skipped.svg',
+  'ui-icons/stock_minus.svg',
+  'ui-icons/stock_plus.svg',
+  'ui-icons/utensils.svg',
+  'ui-icons/warning.svg',
+  'ui-icons/weekly_plan.svg',
+];
 const PRECACHE_URLS = [
   '',
   'index.html',
@@ -11,6 +43,7 @@ const PRECACHE_URLS = [
   'icons/icon-192.png',
   'icons/icon-512.png',
   'icons/maskable-icon-512.png',
+  ...UI_ICON_PATHS,
 ].map(createAppPath);
 
 self.addEventListener('install', (event) => {
@@ -255,6 +288,7 @@ function shouldUseCacheFirst(request) {
   return (
     pathname.startsWith(createAppPath('assets/')) ||
     pathname.startsWith(createAppPath('icons/')) ||
+    pathname.startsWith(createAppPath('ui-icons/')) ||
     pathname === createAppPath('asset-manifest.json') ||
     pathname === createAppPath('manifest.webmanifest') ||
     pathname === createAppPath('offline.html')

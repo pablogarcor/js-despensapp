@@ -107,10 +107,11 @@ Las reglas viven en `src/services/pantryService.js`:
 │       └── deploy-pages.yml # CI/CD hacia GitHub Pages
 ├── index.html
 ├── public
-│   ├── manifest.webmanifest # Metadatos de instalacion PWA
-│   ├── offline.html         # Fallback si no hay shell cacheado
-│   ├── sw.js                # Service worker de cache offline
-│   └── icons                # Iconos Android/iOS y maskable
+  │   ├── manifest.webmanifest # Metadatos de instalacion PWA
+  │   ├── offline.html         # Fallback si no hay shell cacheado
+  │   ├── sw.js                # Service worker de cache offline
+  │   ├── icons                # Iconos Android/iOS y maskable
+  │   └── ui-icons             # Iconos SVG de la interfaz
 ├── scripts
 │   └── generate-pwa-icons.js # Generador de iconos PNG sin dependencias
 ├── src
@@ -174,6 +175,7 @@ La PWA se compone de:
 - `public/sw.js`: service worker con cache offline.
 - `src/pwa/registerServiceWorker.js`: registro solo en build de produccion y en origen seguro.
 - `public/icons/*`: iconos PNG para Android/iOS, icono maskable y SVG base.
+- `public/ui-icons/*`: iconos SVG de interfaz cacheados para uso offline.
 
 El service worker usa dos estrategias:
 
