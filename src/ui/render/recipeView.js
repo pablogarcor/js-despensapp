@@ -90,6 +90,7 @@ export const recipeViewMethods = {
       }
 
       ${this.renderRecipeEditSheet(dashboard)}
+      ${this.renderRecipeDeleteSheet(dashboard)}
 
       <section class="list-section" aria-label="Recetas guardadas">
         ${dashboard.recipes.length === 0 ? this.renderEmptyState('Todavia no hay recetas.') : ''}
@@ -161,6 +162,42 @@ export const recipeViewMethods = {
     }
 
     return this.renderRecipeEditForm(recipe, dashboard.pantryItems);
+  },
+
+  renderRecipeDeleteSheet(dashboard) {
+    const recipe = dashboard.recipes.find((candidate) => candidate.id === this.state.deletingRecipeId);
+
+    if (!recipe) {
+      return '';
+    }
+
+    return this.renderActionSheet({
+      title: 'Borrar receta',
+      titleId: 'delete-recipe-title',
+      dismissAction: 'cancel-delete-recipe',
+      className: 'meal-edit-sheet recipe-delete-sheet',
+      visibleTitle: true,
+      body: `
+        <div class="meal-edit-sheet-body recipe-delete-sheet-body">
+          <div class="meal-edit-recipe-context recipe-delete-context">
+            <span class="meal-edit-recipe-icon recipe-delete-icon" aria-hidden="true">${this.renderIcon('delete')}</span>
+            <div class="meal-edit-recipe-copy">
+              <span>Receta seleccionada</span>
+              <strong>${escapeHtml(recipe.name)}</strong>
+              <small>¿Quieres borrar esta receta?</small>
+            </div>
+          </div>
+        </div>
+      `,
+      footer: `
+        <div class="meal-edit-sheet-actions recipe-delete-sheet-actions">
+          <button class="button full recipe-delete-confirm" type="button" data-action="confirm-delete-recipe" data-id="${escapeAttribute(recipe.id)}">
+            ${this.renderIcon('delete')} Borrar receta
+          </button>
+          <button class="meal-edit-cancel" type="button" data-action="cancel-delete-recipe">Cancelar</button>
+        </div>
+      `,
+    });
   },
 
   renderRecipeEditForm(recipe, pantryItems) {

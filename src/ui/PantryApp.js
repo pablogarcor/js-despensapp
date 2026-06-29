@@ -52,6 +52,7 @@ export class PantryApp {
       editingRecipeId: null,
       editRecipeDraft: null,
       editIngredientRows: [],
+      deletingRecipeId: null,
       editingPlannedMealId: null,
       toast: null,
       isBusy: false,
@@ -244,7 +245,25 @@ export class PantryApp {
       }
 
       if (action === 'delete-recipe') {
+        this.state.deletingRecipeId = id;
+        shouldRefresh = false;
+      }
+
+      if (action === 'cancel-delete-recipe') {
+        this.state.deletingRecipeId = null;
+        shouldRefresh = false;
+      }
+
+      if (action === 'confirm-delete-recipe') {
         await this.service.deleteRecipe(id);
+        this.state.deletingRecipeId = null;
+
+        if (this.state.editingRecipeId === id) {
+          this.state.editingRecipeId = null;
+          this.state.editRecipeDraft = null;
+          this.state.editIngredientRows = [];
+        }
+
         this.showToast('Receta eliminada.');
       }
 
@@ -380,6 +399,7 @@ export class PantryApp {
           this.state.editingRecipeId = null;
           this.state.editRecipeDraft = null;
           this.state.editIngredientRows = [];
+          this.state.deletingRecipeId = null;
           this.state.editingPlannedMealId = null;
           this.state.activeMealSlotKey = null;
           this.state.activeNoteSlotKey = null;

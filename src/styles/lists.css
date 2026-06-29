@@ -435,6 +435,31 @@
   min-width: 0;
 }
 
+.recipe-delete-sheet-body {
+  padding-bottom: 8px;
+}
+
+.recipe-delete-icon {
+  background: var(--color-danger-soft);
+  color: var(--color-danger);
+}
+
+.recipe-delete-context small {
+  color: var(--color-danger);
+  font-weight: 640;
+}
+
+.recipe-delete-confirm {
+  border-color: var(--color-danger);
+  background: var(--color-danger);
+  color: #ffffff;
+}
+
+.recipe-delete-confirm:hover {
+  border-color: #93000a;
+  background: #93000a;
+}
+
 .icon-button {
   display: inline-grid;
   place-items: center;
