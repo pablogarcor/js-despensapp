@@ -1,6 +1,6 @@
 import { MEAL_TYPE_LABELS, MEAL_TYPES } from '../../domain/types.js';
 import { createIngredientRow } from '../uiState.js';
-import { escapeAttribute, escapeHtml, matchesSearchText, normalizeSearchText } from '../renderUtils.js';
+import { escapeAttribute, escapeHtml, formatQuantity, matchesSearchText, normalizeSearchText } from '../renderUtils.js';
 
 /**
  * Metodos de render y filtrado de la vista de recetas.
@@ -23,7 +23,7 @@ export const recipeViewMethods = {
 
   renderRecipesView(dashboard) {
     const filteredRecipes = this.filterRecipes(dashboard.recipes, dashboard.pantryItems);
-    const isFormOpen = this.state.recipeFormOpen || dashboard.recipes.length === 0;
+    const isFormOpen = this.state.recipeFormOpen;
 
     return `
       <section class="view-heading">
@@ -31,13 +31,6 @@ export const recipeViewMethods = {
           <h2>Recetas</h2>
           <p>${dashboard.recipes.length} recetas disponibles</p>
         </div>
-        ${
-          dashboard.recipes.length === 0
-            ? ''
-            : `<button class="button ghost small" type="button" data-action="${isFormOpen ? 'hide-recipe-form' : 'show-recipe-form'}">
-                ${isFormOpen ? 'Ocultar' : `${this.renderIcon('add')} Crear`}
-              </button>`
-        }
       </section>
 
       ${this.renderSearchControl({
@@ -49,48 +42,17 @@ export const recipeViewMethods = {
         totalCount: dashboard.recipes.length,
       })}
 
-      ${
-        isFormOpen
-          ? `
-            <section class="panel action-panel recipe-form-panel">
-              <div class="section-heading compact">
-                <h3>Crear receta</h3>
-              </div>
-              <form class="stacked-form" data-form="recipe">
-                <label>
-                  Nombre
-                  <input name="name" type="text" autocomplete="off" placeholder="Ej. Lentejas rápidas" required />
-                </label>
-
-                <fieldset class="choice-group">
-                  <legend>Momentos del dia</legend>
-                  ${MEAL_TYPES.map((mealType) => `
-                    <label class="checkbox-card">
-                      <input type="checkbox" name="mealTypes" value="${mealType}" checked />
-                      <span>${MEAL_TYPE_LABELS[mealType]}</span>
-                    </label>
-                  `).join('')}
-                </fieldset>
-
-                <div class="ingredient-builder">
-                  <div class="section-heading compact">
-                    <h3>Ingredientes por racion</h3>
-                    <button class="button ghost small" type="button" data-action="add-ingredient-row" aria-label="Añadir ingrediente">${this.renderIcon('add')}</button>
-                  </div>
-                  ${this.state.ingredientRows.map((row) => this.renderIngredientRow(row, dashboard.pantryItems)).join('')}
-                </div>
-
-                <button class="button full" type="submit" ${dashboard.pantryItems.length === 0 ? 'disabled' : ''}>
-                  ${this.renderIcon('add')} Crear receta
-                </button>
-              </form>
-            </section>
-          `
-          : ''
-      }
-
+      ${this.renderRecipeCreateSheet(dashboard)}
+      ${this.renderRecipeIngredientsSheet(dashboard)}
       ${this.renderRecipeEditSheet(dashboard)}
       ${this.renderRecipeDeleteSheet(dashboard)}
+      ${
+        isFormOpen
+          ? ''
+          : `<button class="recipe-fab" type="button" data-action="show-recipe-form" aria-label="Crear receta">
+              ${this.renderIcon('add')}
+            </button>`
+      }
 
       <section class="list-section" aria-label="Recetas guardadas">
         ${dashboard.recipes.length === 0 ? this.renderEmptyState('Todavia no hay recetas.') : ''}
@@ -134,7 +96,14 @@ export const recipeViewMethods = {
 
   renderRecipe(recipe, pantryItems) {
     return `
-      <article class="list-card recipe-card">
+      <article
+        class="list-card recipe-card"
+        role="button"
+        tabindex="0"
+        data-action="view-recipe-ingredients"
+        data-id="${escapeAttribute(recipe.id)}"
+        aria-label="Ver ingredientes de ${escapeAttribute(recipe.name)}"
+      >
         <span class="recipe-icon-tile" aria-hidden="true">${this.renderIcon('utensils')}</span>
         <div class="recipe-card-copy">
           <h3>${escapeHtml(recipe.name)}</h3>
@@ -150,6 +119,131 @@ export const recipeViewMethods = {
             ${this.renderIcon('delete')}
           </button>
         </div>
+      </article>
+    `;
+  },
+
+  renderRecipeCreateSheet(dashboard) {
+    if (!this.state.recipeFormOpen) {
+      return '';
+    }
+
+    const draft = this.state.createRecipeDraft ?? {
+      name: '',
+      mealTypes: MEAL_TYPES,
+    };
+
+    return this.renderActionSheet({
+      title: 'Crear receta',
+      titleId: 'create-recipe-title',
+      dismissAction: 'hide-recipe-form',
+      className: 'meal-edit-sheet recipe-edit-sheet recipe-create-sheet',
+      visibleTitle: true,
+      form: {
+        className: 'meal-edit-sheet-form recipe-edit-sheet-form',
+        dataForm: 'recipe',
+      },
+      body: `
+        <div class="meal-edit-sheet-body recipe-edit-sheet-body">
+          <div class="meal-edit-recipe-context">
+            <span class="meal-edit-recipe-icon" aria-hidden="true">${this.renderIcon('utensils')}</span>
+            <div class="meal-edit-recipe-copy">
+              <span>Nueva receta</span>
+              <strong>Sin guardar</strong>
+            </div>
+          </div>
+
+          <label class="meal-edit-field">
+            <span>Nombre</span>
+            <input name="name" type="text" autocomplete="off" placeholder="Ej. Lentejas rápidas" value="${escapeAttribute(draft.name)}" required />
+          </label>
+
+          <fieldset class="recipe-edit-meal-types">
+            <legend>Momentos del dia</legend>
+            <div class="recipe-edit-meal-type-row">
+              ${MEAL_TYPES.map((mealType) => `
+                <label class="checkbox-card">
+                  <input type="checkbox" name="mealTypes" value="${mealType}" ${draft.mealTypes.includes(mealType) ? 'checked' : ''} />
+                  <span>${MEAL_TYPE_LABELS[mealType]}</span>
+                </label>
+              `).join('')}
+            </div>
+          </fieldset>
+
+          <div class="ingredient-builder recipe-edit-ingredients">
+            <div class="section-heading compact">
+              <h3>Ingredientes por racion</h3>
+              <button class="button ghost small" type="button" data-action="add-ingredient-row" aria-label="Añadir ingrediente">${this.renderIcon('add')}</button>
+            </div>
+            ${this.state.ingredientRows.map((row) => this.renderIngredientRow(row, dashboard.pantryItems)).join('')}
+          </div>
+        </div>
+      `,
+      footer: `
+        <div class="meal-edit-sheet-actions">
+          <button class="button full" type="submit" ${dashboard.pantryItems.length === 0 ? 'disabled' : ''}>
+            ${this.renderIcon('add')} Crear receta
+          </button>
+          <button class="meal-edit-cancel" type="button" data-action="hide-recipe-form">Cancelar</button>
+        </div>
+      `,
+    });
+  },
+
+  renderRecipeIngredientsSheet(dashboard) {
+    const recipe = dashboard.recipes.find((candidate) => candidate.id === this.state.viewingRecipeId);
+
+    if (!recipe) {
+      return '';
+    }
+
+    const pantryById = new Map(dashboard.pantryItems.map((item) => [item.id, item]));
+
+    return this.renderActionSheet({
+      title: recipe.name,
+      titleId: 'recipe-ingredients-title',
+      dismissAction: 'hide-recipe-ingredients',
+      className: 'meal-edit-sheet recipe-ingredients-sheet',
+      visibleTitle: true,
+      body: `
+        <div class="meal-edit-sheet-body recipe-ingredients-sheet-body">
+          <h3 class="recipe-ingredients-heading">Ingredientes</h3>
+          <div class="recipe-ingredient-status-list">
+            ${recipe.ingredients.map((ingredient) => this.renderRecipeIngredientStatus(ingredient, pantryById)).join('')}
+          </div>
+        </div>
+      `,
+    });
+  },
+
+  renderRecipeIngredientStatus(ingredient, pantryById) {
+    const item = pantryById.get(ingredient.pantryItemId);
+    const requiredQuantity = Number(ingredient.quantity);
+    const availableQuantity = Number(item?.quantity ?? 0);
+    const missingQuantity = Math.max(requiredQuantity - availableQuantity, 0);
+    const hasEnough = Boolean(item) && missingQuantity <= 0;
+    const unit = item?.unit ?? '';
+    const itemName = item?.name ?? 'Ingrediente no encontrado';
+    const statusClass = hasEnough ? 'is-available' : 'is-missing';
+    const statusIcon = hasEnough ? 'check' : 'warning';
+    const amount = hasEnough ? requiredQuantity : missingQuantity;
+    const detail = [
+      `Stock: ${formatIngredientAmount(availableQuantity, unit)}`,
+      `Necesario: ${formatIngredientAmount(requiredQuantity, unit)}`,
+      ...(hasEnough ? [] : [`Faltan ${formatIngredientAmount(missingQuantity, unit)}`]),
+    ].join(' / ');
+
+    return `
+      <article class="recipe-ingredient-status-card ${statusClass}">
+        <span class="recipe-ingredient-status-icon" aria-hidden="true">${this.renderIcon(statusIcon)}</span>
+        <div class="recipe-ingredient-status-copy">
+          <div class="recipe-ingredient-status-title">
+            <strong>${escapeHtml(itemName)}</strong>
+            ${hasEnough ? '' : '<span>Falta</span>'}
+          </div>
+          <p>${escapeHtml(detail)}</p>
+        </div>
+        <strong class="recipe-ingredient-status-amount">${escapeHtml(formatIngredientAmount(amount, unit))}</strong>
       </article>
     `;
   },
@@ -275,3 +369,16 @@ export const recipeViewMethods = {
     });
   }
 };
+
+/**
+ * Formatea una cantidad de ingrediente con su unidad.
+ *
+ * @param {number} quantity Cantidad a mostrar.
+ * @param {string} unit Unidad del alimento.
+ * @returns {string} Cantidad formateada.
+ */
+function formatIngredientAmount(quantity, unit) {
+  const formattedQuantity = formatQuantity(quantity);
+
+  return unit ? `${formattedQuantity} ${unit}` : formattedQuantity;
+}

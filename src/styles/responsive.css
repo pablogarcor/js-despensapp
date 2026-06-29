@@ -100,6 +100,19 @@
     height: 30px;
   }
 
+  .recipe-fab {
+    right: max(20px, env(safe-area-inset-right));
+    bottom: calc(88px + env(safe-area-inset-bottom));
+    width: 68px;
+    height: 68px;
+    border-radius: 22px;
+  }
+
+  .recipe-fab .ui-icon {
+    width: 32px;
+    height: 32px;
+  }
+
   .shopping-item-check {
     grid-template-columns: 22px minmax(0, 1fr);
   }

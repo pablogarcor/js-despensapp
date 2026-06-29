@@ -48,10 +48,12 @@ export class PantryApp {
       activeMealSlotKey: null,
       activeNoteSlotKey: null,
       editingPantryItemId: null,
+      createRecipeDraft: null,
       ingredientRows: [createIngredientRow()],
       editingRecipeId: null,
       editRecipeDraft: null,
       editIngredientRows: [],
+      viewingRecipeId: null,
       deletingRecipeId: null,
       editingPlannedMealId: null,
       toast: null,
@@ -66,6 +68,7 @@ export class PantryApp {
    */
   async start() {
     this.root.addEventListener('click', (event) => this.handleClick(event));
+    this.root.addEventListener('keydown', (event) => this.handleKeyDown(event));
     this.root.addEventListener('submit', (event) => this.handleSubmit(event));
     this.root.addEventListener('change', (event) => this.handleChange(event));
     this.root.addEventListener('input', (event) => this.handleInput(event));
@@ -164,7 +167,7 @@ export class PantryApp {
     }
 
     const { action, id } = actionElement.dataset;
-    let recipeEditScrollTop = null;
+    let recipeSheetScrollTop = null;
 
     await this.runSafely(async () => {
       let shouldRefresh = true;
@@ -246,6 +249,7 @@ export class PantryApp {
 
       if (action === 'delete-recipe') {
         this.state.deletingRecipeId = id;
+        this.state.viewingRecipeId = null;
         shouldRefresh = false;
       }
 
@@ -257,6 +261,8 @@ export class PantryApp {
       if (action === 'confirm-delete-recipe') {
         await this.service.deleteRecipe(id);
         this.state.deletingRecipeId = null;
+        this.state.recipeFormOpen = false;
+        this.state.createRecipeDraft = null;
 
         if (this.state.editingRecipeId === id) {
           this.state.editingRecipeId = null;
@@ -269,11 +275,16 @@ export class PantryApp {
 
       if (action === 'show-recipe-form') {
         this.state.recipeFormOpen = true;
+        this.state.editingRecipeId = null;
+        this.state.deletingRecipeId = null;
+        this.state.viewingRecipeId = null;
         shouldRefresh = false;
       }
 
       if (action === 'hide-recipe-form') {
         this.state.recipeFormOpen = false;
+        this.state.createRecipeDraft = null;
+        this.state.ingredientRows = [createIngredientRow()];
         shouldRefresh = false;
       }
 
@@ -286,6 +297,10 @@ export class PantryApp {
         const recipe = this.state.dashboard.recipes.find((candidate) => candidate.id === id);
 
         if (recipe) {
+          this.state.recipeFormOpen = false;
+          this.state.createRecipeDraft = null;
+          this.state.deletingRecipeId = null;
+          this.state.viewingRecipeId = null;
           this.state.editingRecipeId = recipe.id;
           this.state.editRecipeDraft = {
             name: recipe.name,
@@ -298,6 +313,19 @@ export class PantryApp {
             }),
           );
         }
+        shouldRefresh = false;
+      }
+
+      if (action === 'view-recipe-ingredients') {
+        this.state.viewingRecipeId = id;
+        this.state.recipeFormOpen = false;
+        this.state.editingRecipeId = null;
+        this.state.deletingRecipeId = null;
+        shouldRefresh = false;
+      }
+
+      if (action === 'hide-recipe-ingredients') {
+        this.state.viewingRecipeId = null;
         shouldRefresh = false;
       }
 
@@ -396,9 +424,11 @@ export class PantryApp {
         } else {
           const summary = await this.service.clearAllData();
           this.state.editingPantryItemId = null;
+          this.state.createRecipeDraft = null;
           this.state.editingRecipeId = null;
           this.state.editRecipeDraft = null;
           this.state.editIngredientRows = [];
+          this.state.viewingRecipeId = null;
           this.state.deletingRecipeId = null;
           this.state.editingPlannedMealId = null;
           this.state.activeMealSlotKey = null;
@@ -420,11 +450,15 @@ export class PantryApp {
       }
 
       if (action === 'add-ingredient-row') {
+        recipeSheetScrollTop = this.getRecipeSheetScrollTop();
+        this.syncCreateRecipeForm(actionElement.closest('form'));
         this.state.ingredientRows.push(createIngredientRow());
         shouldRefresh = false;
       }
 
       if (action === 'remove-ingredient-row') {
+        recipeSheetScrollTop = this.getRecipeSheetScrollTop();
+        this.syncCreateRecipeForm(actionElement.closest('form'));
         this.state.ingredientRows = this.state.ingredientRows.filter((row) => row.id !== id);
 
         if (this.state.ingredientRows.length === 0) {
@@ -434,14 +468,14 @@ export class PantryApp {
       }
 
       if (action === 'add-edit-ingredient-row') {
-        recipeEditScrollTop = this.getRecipeEditScrollTop();
+        recipeSheetScrollTop = this.getRecipeSheetScrollTop();
         this.syncEditIngredientRows(actionElement.closest('form'));
         this.state.editIngredientRows.push(createIngredientRow());
         shouldRefresh = false;
       }
 
       if (action === 'remove-edit-ingredient-row') {
-        recipeEditScrollTop = this.getRecipeEditScrollTop();
+        recipeSheetScrollTop = this.getRecipeSheetScrollTop();
         this.syncEditIngredientRows(actionElement.closest('form'));
         this.state.editIngredientRows = this.state.editIngredientRows.filter((row) => row.id !== id);
 
@@ -457,14 +491,34 @@ export class PantryApp {
         this.render();
       }
 
-      if (recipeEditScrollTop !== null) {
-        this.restoreRecipeEditScroll(recipeEditScrollTop);
+      if (recipeSheetScrollTop !== null) {
+        this.restoreRecipeSheetScroll(recipeSheetScrollTop);
       }
 
       if (action === 'scroll-plan-day') {
         this.scrollToPlanDay(actionElement.dataset.date);
       }
     });
+  }
+
+  /**
+   * Activa elementos interactivos no boton con teclado.
+   *
+   * @param {KeyboardEvent} event Evento de teclado.
+   */
+  handleKeyDown(event) {
+    if (event.key !== 'Enter' && event.key !== ' ') {
+      return;
+    }
+
+    const actionElement = event.target.closest('[role="button"][data-action]');
+
+    if (!actionElement || event.target.closest('button, input, select, textarea')) {
+      return;
+    }
+
+    event.preventDefault();
+    actionElement.click();
   }
 
   /**
@@ -562,6 +616,7 @@ export class PantryApp {
           ingredients: this.readIngredientsFromForm(data),
         });
         this.state.ingredientRows = [createIngredientRow()];
+        this.state.createRecipeDraft = null;
         this.state.recipeFormOpen = false;
         this.showToast('Receta creada.');
       }
@@ -879,6 +934,28 @@ export class PantryApp {
   }
 
   /**
+   * Sincroniza el borrador de creacion de receta desde el formulario visible.
+   *
+   * @param {HTMLFormElement | null} form Formulario de creacion.
+   */
+  syncCreateRecipeForm(form) {
+    if (!form) {
+      return;
+    }
+
+    const formData = new FormData(form);
+    this.state.createRecipeDraft = {
+      name: formData.get('name'),
+      mealTypes: formData.getAll('mealTypes'),
+    };
+    this.state.ingredientRows = [...form.querySelectorAll('[data-ingredient-row]')].map((rowElement) => ({
+      id: rowElement.dataset.ingredientRow,
+      pantryItemId: rowElement.querySelector('[name="ingredientItem"]').value,
+      quantity: rowElement.querySelector('[name="ingredientQuantity"]').value,
+    }));
+  }
+
+  /**
    * Sincroniza filas de ingredientes de edicion desde el formulario visible.
    *
    * @param {HTMLFormElement | null} form Formulario de edicion.
@@ -901,22 +978,22 @@ export class PantryApp {
   }
 
   /**
-   * Obtiene el scroll interno de la modal de edicion de receta.
+   * Obtiene el scroll interno de la modal de receta.
    *
    * @returns {number | null} Posicion vertical del contenido scrolleable.
    */
-  getRecipeEditScrollTop() {
+  getRecipeSheetScrollTop() {
     const scrollElement = this.root.querySelector('.recipe-edit-sheet-body');
 
     return scrollElement ? scrollElement.scrollTop : null;
   }
 
   /**
-   * Restaura el scroll interno de la modal de edicion de receta tras renderizar.
+   * Restaura el scroll interno de la modal de receta tras renderizar.
    *
    * @param {number} scrollTop Posicion vertical previa.
    */
-  restoreRecipeEditScroll(scrollTop) {
+  restoreRecipeSheetScroll(scrollTop) {
     const scrollElement = this.root.querySelector('.recipe-edit-sheet-body');
 
     if (scrollElement) {
