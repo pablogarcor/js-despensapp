@@ -15,6 +15,11 @@ export const actionSheetDismissMethods = {
       return true;
     }
 
+    if (action === 'hide-pending-meals') {
+      this.omitPendingMealsForToday();
+      return true;
+    }
+
     if (action === 'cancel-edit-planned-meal') {
       this.state.editingPlannedMealId = null;
       return true;

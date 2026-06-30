@@ -281,6 +281,13 @@
   background: rgba(255, 218, 214, 0.48);
 }
 
+.action-sheet-action:disabled,
+.action-sheet-action:disabled:hover {
+  border-color: transparent;
+  background: transparent;
+  color: var(--color-subtle);
+}
+
 .action-sheet-divider {
   height: 1px;
   margin: 2px 0;

@@ -36,6 +36,15 @@ export const planClickActionMethods = {
       return { shouldRefresh: false };
     }
 
+    if (action === 'show-pending-meals') {
+      if (!this.state.dashboard?.pendingMeals.length) {
+        return { shouldRefresh: false };
+      }
+
+      this.openPendingMealsModal();
+      return { shouldRefresh: false };
+    }
+
     if (action === 'scroll-plan-day') {
       this.state.selectedPlanDate = actionElement.dataset.date;
       return { shouldRefresh: false };

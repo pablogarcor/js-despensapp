@@ -1,4 +1,5 @@
 import { DomainError } from '../domain/errors.js';
+import { toISODate } from '../domain/planning.js';
 import { actionSheetDragMethods } from './events/actionSheetDrag.js';
 import { clickActionMethods } from './events/clickActions.js';
 import { formSubmitMethods } from './events/formSubmit.js';
@@ -18,6 +19,7 @@ import {
 } from '../pwa/installPrompt.js';
 
 const APP_ICON_URL = `${import.meta.env.BASE_URL}icons/despensapp-icon.svg`;
+const PENDING_MEALS_OMITTED_DATE_STORAGE_KEY = 'despensapp.pendingMealsOmittedDate';
 
 /**
  * Controlador de UI de la SPA.
@@ -48,6 +50,8 @@ export class PantryApp {
       pantryFormOpen: false,
       recipeFormOpen: false,
       planActionsOpen: false,
+      pendingMealsModalOpen: false,
+      pendingMealsOmittedDate: readPendingMealsOmittedDate(),
       shoppingExtraFormOpen: false,
       settingsImportOpen: false,
       settingsInstallOpen: false,
@@ -117,6 +121,8 @@ export class PantryApp {
       return;
     }
 
+    this.syncPendingMealsModalState(dashboard);
+
     this.root.innerHTML = `
       <div class="app-shell">
         <header class="app-header">
@@ -133,7 +139,6 @@ export class PantryApp {
           </button>
         </header>
 
-        ${this.renderPendingMeals(dashboard)}
         ${this.renderToast()}
         ${this.renderInstallPrompt()}
 
@@ -240,6 +245,74 @@ export class PantryApp {
     }
 
     return this.renderPantryView(dashboard);
+  }
+
+  /**
+   * Abre automaticamente la confirmacion de comidas al entrar en Plan.
+   *
+   * @param {import('../domain/types.js').DashboardSnapshot} dashboard Snapshot.
+   */
+  syncPendingMealsModalState(dashboard) {
+    if (dashboard.pendingMeals.length === 0 || this.state.activeView !== 'plan') {
+      this.state.pendingMealsModalOpen = false;
+      return;
+    }
+
+    if (this.state.pendingMealsModalOpen) {
+      return;
+    }
+
+    if (this.state.pendingMealsOmittedDate !== toISODate(new Date())) {
+      this.openPendingMealsModal();
+    }
+  }
+
+  /**
+   * Muestra la modal de confirmacion cerrando otras hojas del plan.
+   */
+  openPendingMealsModal() {
+    this.state.pendingMealsModalOpen = true;
+    this.state.planActionsOpen = false;
+    this.state.activeMealSlotKey = null;
+    this.state.activeNoteSlotKey = null;
+    this.state.editingPlannedMealId = null;
+  }
+
+  /**
+   * Omite la confirmacion de comidas hasta el siguiente dia natural.
+   */
+  omitPendingMealsForToday() {
+    const today = toISODate(new Date());
+
+    this.state.pendingMealsOmittedDate = today;
+    this.state.pendingMealsModalOpen = false;
+    writePendingMealsOmittedDate(today);
+  }
+}
+
+/**
+ * Lee la fecha en la que el usuario omitio la confirmacion de comidas.
+ *
+ * @returns {string} Fecha ISO corta guardada, si existe.
+ */
+function readPendingMealsOmittedDate() {
+  try {
+    return globalThis.localStorage?.getItem(PENDING_MEALS_OMITTED_DATE_STORAGE_KEY) ?? '';
+  } catch {
+    return '';
+  }
+}
+
+/**
+ * Persiste la fecha en la que se omite la confirmacion de comidas.
+ *
+ * @param {string} isoDate Fecha YYYY-MM-DD.
+ */
+function writePendingMealsOmittedDate(isoDate) {
+  try {
+    globalThis.localStorage?.setItem(PENDING_MEALS_OMITTED_DATE_STORAGE_KEY, isoDate);
+  } catch {
+    // La omision diaria es una mejora de UX; la app puede continuar sin almacenamiento.
   }
 }
 

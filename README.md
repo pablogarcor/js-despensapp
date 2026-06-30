@@ -238,7 +238,7 @@ Si el deploy falla con `HttpError: Not Found` y el mensaje `Ensure GitHub Pages 
 14. Las comidas del plan que no se podrian cocinar quedan marcadas en su tarjeta para verlo de un vistazo.
 15. En **Compra**, puedes marcar alimentos como comprados, ver chips con la primera comida afectada y anadir extras manuales desde una modal.
 16. Pulsa **Finalizar compra** en **Compra** para sumar a la despensa las entradas marcadas. Los faltantes del plan actualizan alimentos existentes; los extras actualizan alimentos con la misma unidad o crean uno nuevo.
-17. Cuando una comida ya paso, la app la muestra como pendiente: si marcas **Hecha**, descuenta ingredientes; si marcas **No hecha**, solo elimina la planificacion. Las entradas de **No cocinar** pasadas se resuelven sin tocar despensa.
+17. Cuando entras en **Plan** con comidas pasadas pendientes, la app abre una modal de confirmacion: si marcas **Si, cocinado**, descuenta ingredientes; si marcas **No cocinado**, solo elimina la planificacion. Puedes omitir la modal durante el dia actual y volvera a mostrarse al dia siguiente si siguen quedando pendientes. Las entradas de **No cocinar** pasadas se resuelven sin tocar despensa.
 18. En **Configuracion**, usa **Exportar copia** para descargar un backup JSON o **Importar y reemplazar** para restaurarlo.
 19. Usa **Borrar todo** en **Configuracion** para reiniciar despensa, recetas, planificacion y compra.
 

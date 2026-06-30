@@ -24,7 +24,9 @@ export const planViewMethods = {
         ${this.renderPlanDayStrip(dashboard)}
       </section>
 
-      ${isActionsOpen ? this.renderPlanActionsSheet() : ''}
+      ${this.renderPendingMeals(dashboard)}
+
+      ${isActionsOpen ? this.renderPlanActionsSheet(dashboard) : ''}
       ${
         isActionsOpen
           ? ''
@@ -55,7 +57,9 @@ export const planViewMethods = {
     `;
   },
 
-  renderPlanActionsSheet() {
+  renderPlanActionsSheet(dashboard) {
+    const hasPendingMeals = dashboard.pendingMeals.length > 0;
+
     return this.renderActionSheet({
       title: 'Acciones del plan',
       titleId: 'plan-actions-title',
@@ -78,6 +82,12 @@ export const planViewMethods = {
           icon: 'autoFill',
           type: 'submit',
           data: { planMode: 'complete' },
+        },
+        {
+          label: 'Confirmar comidas',
+          icon: 'done',
+          action: 'show-pending-meals',
+          disabled: !hasPendingMeals,
         },
         {
           label: 'Vaciar plan',

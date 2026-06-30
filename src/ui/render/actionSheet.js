@@ -164,7 +164,8 @@ export const actionSheetRenderMethods = {
  *     action?: string,
  *     variant?: string,
  *     data?: Record<string, string>,
- *     separated?: boolean
+ *     separated?: boolean,
+ *     disabled?: boolean
  *   }>
  * }} options Configuracion de la hoja.
  * @returns {string} HTML de la hoja.
@@ -238,7 +239,8 @@ function renderActionSheet({
  *   action?: string,
  *   variant?: string,
  *   data?: Record<string, string>,
- *   separated?: boolean
+ *   separated?: boolean,
+ *   disabled?: boolean
  * }} action Accion a renderizar.
  * @returns {string} HTML de la fila.
  */
@@ -248,10 +250,11 @@ function renderActionSheetAction(action) {
   const dataAction = action.action ? ` data-action="${escapeAttribute(action.action)}"` : '';
   const dataAttributes = renderActionSheetDataAttributes(action.data ?? {});
   const separator = action.separated ? '<div class="action-sheet-divider" aria-hidden="true"></div>' : '';
+  const disabled = action.disabled ? ' disabled' : '';
 
   return `
     ${separator}
-    <button class="action-sheet-action${variant}" type="${escapeAttribute(type)}"${dataAction}${dataAttributes}>
+    <button class="action-sheet-action${variant}" type="${escapeAttribute(type)}"${dataAction}${dataAttributes}${disabled}>
       <span class="action-sheet-icon">${renderIcon(action.icon)}</span>
       <span>${escapeHtml(action.label)}</span>
     </button>

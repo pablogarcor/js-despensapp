@@ -18,6 +18,7 @@ const ICON_FILES = Object.freeze({
   edit: 'edit.svg',
   export: 'export.svg',
   import: 'import.svg',
+  info: 'info.svg',
   lunch: 'lunch.svg',
   minus: 'minus.svg',
   noUtensils: 'no-utensils.svg',

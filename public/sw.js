@@ -17,6 +17,7 @@ const UI_ICON_PATHS = [
   'ui-icons/edit.svg',
   'ui-icons/export.svg',
   'ui-icons/import.svg',
+  'ui-icons/info.svg',
   'ui-icons/lunch.svg',
   'ui-icons/minus.svg',
   'ui-icons/no-utensils.svg',
