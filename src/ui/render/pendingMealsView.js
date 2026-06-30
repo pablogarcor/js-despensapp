@@ -61,15 +61,24 @@ export const pendingMealsRenderMethods = {
             isNote
               ? `
                 <button class="button pending-note-button" type="button" data-action="resolve-meal" data-id="${escapeAttribute(meal.id)}" data-cooked="false">
-                  ${renderIcon('noUtensils')} Resolver
+                  <span class="pending-button-content">
+                    ${renderIcon('noUtensils')}
+                    <span class="pending-button-label">Resolver</span>
+                  </span>
                 </button>
               `
               : `
                 <button class="button pending-cooked-button" type="button" data-action="resolve-meal" data-id="${escapeAttribute(meal.id)}" data-cooked="true">
-                  ${renderIcon('done')} Sí, cocinado
+                  <span class="pending-button-content">
+                    ${renderIcon('done')}
+                    <span class="pending-button-label">Sí, cocinado</span>
+                  </span>
                 </button>
                 <button class="button ghost pending-skipped-button" type="button" data-action="resolve-meal" data-id="${escapeAttribute(meal.id)}" data-cooked="false">
-                  ${renderIcon('close')} No cocinado
+                  <span class="pending-button-content">
+                    ${renderIcon('close')}
+                    <span class="pending-button-label">No cocinado</span>
+                  </span>
                 </button>
               `
           }
