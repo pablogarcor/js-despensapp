@@ -83,11 +83,19 @@ export const sharedControlRenderMethods = {
 
     const toast = this.state.toast;
     const role = toast.type === 'error' ? 'alert' : 'status';
+    const icon = getToastIcon(toast);
+    const variant = getToastVariant(toast);
+    const placement = isToastInModalContext(this.state) ? 'is-top' : 'is-bottom';
 
     return `
-      <div class="toast ${toast.type === 'error' ? 'is-error' : ''}" role="${role}" aria-live="${toast.type === 'error' ? 'assertive' : 'polite'}">
-        <span>${escapeHtml(toast.message)}</span>
-        <button class="toast-close" type="button" data-action="dismiss-toast" aria-label="Cerrar aviso">${renderIcon('close')}</button>
+      <div class="toast ${escapeAttribute(`${variant} ${placement}`)}" role="${role}" aria-live="${toast.type === 'error' ? 'assertive' : 'polite'}">
+        <span class="toast-content">
+          <span class="toast-icon" aria-hidden="true">${renderIcon(icon)}</span>
+          <span class="toast-message">${escapeHtml(toast.message)}</span>
+        </span>
+        <button class="toast-action" type="button" data-action="dismiss-toast" aria-label="Cerrar aviso">
+          Cerrar
+        </button>
       </div>
     `;
   },
@@ -96,3 +104,69 @@ export const sharedControlRenderMethods = {
     return `<p class="empty-state">${escapeHtml(text)}</p>`;
   },
 };
+
+/**
+ * Elige el icono del snackbar segun el tipo y el mensaje.
+ *
+ * @param {{message: string, type: 'success' | 'error'}} toast Aviso actual.
+ * @returns {string} Nombre de icono.
+ */
+function getToastIcon(toast) {
+  if (toast.type === 'error') {
+    return 'warning';
+  }
+
+  if (isDeleteToast(toast.message)) {
+    return 'delete';
+  }
+
+  return 'check';
+}
+
+/**
+ * Devuelve la variante visual del snackbar.
+ *
+ * @param {{message: string, type: 'success' | 'error'}} toast Aviso actual.
+ * @returns {string} Clase variante.
+ */
+function getToastVariant(toast) {
+  if (toast.type === 'error') {
+    return 'is-error';
+  }
+
+  return isDeleteToast(toast.message) ? 'is-delete' : 'is-success';
+}
+
+/**
+ * Detecta avisos de eliminacion para usar la segunda insignia de Stich.
+ *
+ * @param {string} message Mensaje visible.
+ * @returns {boolean} True si el aviso representa una eliminacion.
+ */
+function isDeleteToast(message) {
+  return /\b(eliminad|borrad|vaciar|vaciad)\w*/i.test(message);
+}
+
+/**
+ * Detecta si un aviso debe aparecer por encima de una hoja modal abierta.
+ *
+ * @param {import('../PantryApp.js').PantryApp['state']} state Estado de UI.
+ * @returns {boolean} True si hay una modal o hoja inferior activa.
+ */
+function isToastInModalContext(state) {
+  return Boolean(
+    state.planActionsOpen ||
+      state.pendingMealsModalOpen ||
+      state.pantryFormOpen ||
+      state.recipeFormOpen ||
+      state.shoppingExtraFormOpen ||
+      state.installPromptVisible ||
+      state.activeMealSlotKey ||
+      state.editingPantryItemId ||
+      state.deletingPantryItemId ||
+      state.editingRecipeId ||
+      state.viewingRecipeId ||
+      state.deletingRecipeId ||
+      state.editingPlannedMealId,
+  );
+}
