@@ -1,26 +1,11 @@
-import { MEAL_TYPE_LABELS, MEAL_TYPES } from '../../domain/types.js';
-import { createIngredientRow } from '../uiState.js';
-import { escapeAttribute, escapeHtml, formatQuantity, matchesSearchText, normalizeSearchText } from '../renderUtils.js';
+import { recipeFormRenderMethods } from './recipeFormView.js';
+import { recipeIngredientStatusRenderMethods } from './recipeIngredientStatusView.js';
+import { recipeListRenderMethods } from './recipeListView.js';
 
 /**
- * Metodos de render y filtrado de la vista de recetas.
+ * Metodos de render de la pantalla principal de recetas.
  */
 export const recipeViewMethods = {
-  filterRecipes(recipes, pantryItems) {
-    const query = normalizeSearchText(this.state.recipeSearch);
-
-    if (!query) {
-      return recipes;
-    }
-
-    const pantryById = new Map(pantryItems.map((item) => [item.id, item]));
-
-    return recipes.filter((recipe) =>
-      matchesSearchText(recipe.name, query) ||
-      recipe.ingredients.some((ingredient) => matchesSearchText(pantryById.get(ingredient.pantryItemId)?.name, query)),
-    );
-  },
-
   renderRecipesView(dashboard) {
     const filteredRecipes = this.filterRecipes(dashboard.recipes, dashboard.pantryItems);
     const isFormOpen = this.state.recipeFormOpen;
@@ -49,9 +34,10 @@ export const recipeViewMethods = {
       ${
         isFormOpen
           ? ''
-          : `<button class="recipe-fab" type="button" data-action="show-recipe-form" aria-label="Crear receta">
-              ${this.renderIcon('add')}
-            </button>`
+          : this.renderFloatingActionButton({
+              action: 'show-recipe-form',
+              label: 'Crear receta',
+            })
       }
 
       <section class="list-section" aria-label="Recetas guardadas">
@@ -61,201 +47,9 @@ export const recipeViewMethods = {
             ? this.renderEmptyState('No hay recetas que coincidan.')
             : ''
         }
-        ${filteredRecipes.map((recipe) => this.renderRecipe(recipe, dashboard.pantryItems)).join('')}
+        ${filteredRecipes.map((recipe) => this.renderRecipe(recipe)).join('')}
       </section>
     `;
-  },
-
-  renderIngredientRow(row, pantryItems, options = {}) {
-    const rowAttribute = options.rowAttribute ?? 'data-ingredient-row';
-    const removeAction = options.removeAction ?? 'remove-ingredient-row';
-
-    return `
-      <div class="ingredient-row" ${rowAttribute}="${row.id}">
-        <label>
-          Alimento
-          <select name="ingredientItem" required>
-            <option value="">Selecciona</option>
-            ${pantryItems.map((item) => `
-              <option value="${item.id}" ${row.pantryItemId === item.id ? 'selected' : ''}>
-                ${escapeHtml(item.name)} (${escapeHtml(item.unit)})
-              </option>
-            `).join('')}
-          </select>
-        </label>
-        <label>
-          Cantidad
-          <input name="ingredientQuantity" type="number" inputmode="decimal" step="0.01" min="0.01" value="${row.quantity}" required />
-        </label>
-        <button class="icon-button ingredient-remove" type="button" aria-label="Quitar ingrediente" data-action="${removeAction}" data-id="${row.id}">
-          ${this.renderIcon('delete')}
-        </button>
-      </div>
-    `;
-  },
-
-  renderRecipe(recipe, pantryItems) {
-    return `
-      <article
-        class="list-card recipe-card"
-        role="button"
-        tabindex="0"
-        data-action="view-recipe-ingredients"
-        data-id="${escapeAttribute(recipe.id)}"
-        aria-label="Ver ingredientes de ${escapeAttribute(recipe.name)}"
-      >
-        <span class="recipe-icon-tile" aria-hidden="true">${this.renderIcon('utensils')}</span>
-        <div class="recipe-card-copy">
-          <h3>${escapeHtml(recipe.name)}</h3>
-          <div class="meal-badge-row">
-            ${recipe.mealTypes.map((mealType) => this.renderMealTypeBadge(mealType)).join('')}
-          </div>
-        </div>
-        <div class="inline-actions recipe-card-actions">
-          <button class="meal-icon-action" type="button" aria-label="Editar ${escapeAttribute(recipe.name)}" data-action="edit-recipe" data-id="${recipe.id}">
-            ${this.renderIcon('edit')}
-          </button>
-          <button class="icon-button" type="button" aria-label="Eliminar ${escapeAttribute(recipe.name)}" data-action="delete-recipe" data-id="${recipe.id}">
-            ${this.renderIcon('delete')}
-          </button>
-        </div>
-      </article>
-    `;
-  },
-
-  renderRecipeCreateSheet(dashboard) {
-    if (!this.state.recipeFormOpen) {
-      return '';
-    }
-
-    const draft = this.state.createRecipeDraft ?? {
-      name: '',
-      mealTypes: MEAL_TYPES,
-    };
-
-    return this.renderActionSheet({
-      title: 'Crear receta',
-      titleId: 'create-recipe-title',
-      dismissAction: 'hide-recipe-form',
-      className: 'meal-edit-sheet recipe-edit-sheet recipe-create-sheet',
-      visibleTitle: true,
-      form: {
-        className: 'meal-edit-sheet-form recipe-edit-sheet-form',
-        dataForm: 'recipe',
-      },
-      body: `
-        <div class="meal-edit-sheet-body recipe-edit-sheet-body">
-          <div class="meal-edit-recipe-context">
-            <span class="meal-edit-recipe-icon" aria-hidden="true">${this.renderIcon('utensils')}</span>
-            <div class="meal-edit-recipe-copy">
-              <span>Nueva receta</span>
-              <strong>Sin guardar</strong>
-            </div>
-          </div>
-
-          <label class="meal-edit-field">
-            <span>Nombre</span>
-            <input name="name" type="text" autocomplete="off" placeholder="Ej. Lentejas rápidas" value="${escapeAttribute(draft.name)}" required />
-          </label>
-
-          <fieldset class="recipe-edit-meal-types">
-            <legend>Momentos del dia</legend>
-            <div class="recipe-edit-meal-type-row">
-              ${MEAL_TYPES.map((mealType) => `
-                <label class="checkbox-card">
-                  <input type="checkbox" name="mealTypes" value="${mealType}" ${draft.mealTypes.includes(mealType) ? 'checked' : ''} />
-                  <span>${MEAL_TYPE_LABELS[mealType]}</span>
-                </label>
-              `).join('')}
-            </div>
-          </fieldset>
-
-          <div class="ingredient-builder recipe-edit-ingredients">
-            <div class="section-heading compact">
-              <h3>Ingredientes por racion</h3>
-              <button class="button ghost small" type="button" data-action="add-ingredient-row" aria-label="Añadir ingrediente">${this.renderIcon('add')}</button>
-            </div>
-            ${this.state.ingredientRows.map((row) => this.renderIngredientRow(row, dashboard.pantryItems)).join('')}
-          </div>
-        </div>
-      `,
-      footer: `
-        <div class="meal-edit-sheet-actions">
-          <button class="button full" type="submit" ${dashboard.pantryItems.length === 0 ? 'disabled' : ''}>
-            ${this.renderIcon('add')} Crear receta
-          </button>
-          <button class="meal-edit-cancel" type="button" data-action="hide-recipe-form">Cancelar</button>
-        </div>
-      `,
-    });
-  },
-
-  renderRecipeIngredientsSheet(dashboard) {
-    const recipe = dashboard.recipes.find((candidate) => candidate.id === this.state.viewingRecipeId);
-
-    if (!recipe) {
-      return '';
-    }
-
-    const pantryById = new Map(dashboard.pantryItems.map((item) => [item.id, item]));
-
-    return this.renderActionSheet({
-      title: recipe.name,
-      titleId: 'recipe-ingredients-title',
-      dismissAction: 'hide-recipe-ingredients',
-      className: 'meal-edit-sheet recipe-ingredients-sheet',
-      visibleTitle: true,
-      body: `
-        <div class="meal-edit-sheet-body recipe-ingredients-sheet-body">
-          <h3 class="recipe-ingredients-heading">Ingredientes</h3>
-          <div class="recipe-ingredient-status-list">
-            ${recipe.ingredients.map((ingredient) => this.renderRecipeIngredientStatus(ingredient, pantryById)).join('')}
-          </div>
-        </div>
-      `,
-    });
-  },
-
-  renderRecipeIngredientStatus(ingredient, pantryById) {
-    const item = pantryById.get(ingredient.pantryItemId);
-    const requiredQuantity = Number(ingredient.quantity);
-    const availableQuantity = Number(item?.quantity ?? 0);
-    const missingQuantity = Math.max(requiredQuantity - availableQuantity, 0);
-    const hasEnough = Boolean(item) && missingQuantity <= 0;
-    const unit = item?.unit ?? '';
-    const itemName = item?.name ?? 'Ingrediente no encontrado';
-    const statusClass = hasEnough ? 'is-available' : 'is-missing';
-    const statusIcon = hasEnough ? 'check' : 'warning';
-    const amount = hasEnough ? requiredQuantity : missingQuantity;
-    const detail = [
-      `Stock: ${formatIngredientAmount(availableQuantity, unit)}`,
-      `Necesario: ${formatIngredientAmount(requiredQuantity, unit)}`,
-      ...(hasEnough ? [] : [`Faltan ${formatIngredientAmount(missingQuantity, unit)}`]),
-    ].join(' / ');
-
-    return `
-      <article class="recipe-ingredient-status-card ${statusClass}">
-        <span class="recipe-ingredient-status-icon" aria-hidden="true">${this.renderIcon(statusIcon)}</span>
-        <div class="recipe-ingredient-status-copy">
-          <div class="recipe-ingredient-status-title">
-            <strong>${escapeHtml(itemName)}</strong>
-            ${hasEnough ? '' : '<span>Falta</span>'}
-          </div>
-          <p>${escapeHtml(detail)}</p>
-        </div>
-        <strong class="recipe-ingredient-status-amount">${escapeHtml(formatIngredientAmount(amount, unit))}</strong>
-      </article>
-    `;
-  },
-
-  renderRecipeEditSheet(dashboard) {
-    const recipe = dashboard.recipes.find((candidate) => candidate.id === this.state.editingRecipeId);
-
-    if (!recipe) {
-      return '';
-    }
-
-    return this.renderRecipeEditForm(recipe, dashboard.pantryItems);
   },
 
   renderRecipeDeleteSheet(dashboard) {
@@ -265,120 +59,20 @@ export const recipeViewMethods = {
       return '';
     }
 
-    return this.renderActionSheet({
+    return this.renderDeleteConfirmationSheet({
       title: 'Borrar receta',
       titleId: 'delete-recipe-title',
       dismissAction: 'cancel-delete-recipe',
-      className: 'meal-edit-sheet recipe-delete-sheet',
-      visibleTitle: true,
-      body: `
-        <div class="meal-edit-sheet-body recipe-delete-sheet-body">
-          <div class="meal-edit-recipe-context recipe-delete-context">
-            <span class="meal-edit-recipe-icon recipe-delete-icon" aria-hidden="true">${this.renderIcon('delete')}</span>
-            <div class="meal-edit-recipe-copy">
-              <span>Receta seleccionada</span>
-              <strong>${escapeHtml(recipe.name)}</strong>
-              <small>¿Quieres borrar esta receta?</small>
-            </div>
-          </div>
-        </div>
-      `,
-      footer: `
-        <div class="meal-edit-sheet-actions recipe-delete-sheet-actions">
-          <button class="button full recipe-delete-confirm" type="button" data-action="confirm-delete-recipe" data-id="${escapeAttribute(recipe.id)}">
-            ${this.renderIcon('delete')} Borrar receta
-          </button>
-          <button class="meal-edit-cancel" type="button" data-action="cancel-delete-recipe">Cancelar</button>
-        </div>
-      `,
+      itemLabel: 'Receta seleccionada',
+      itemName: recipe.name,
+      question: '¿Quieres borrar esta receta?',
+      confirmLabel: 'Borrar receta',
+      confirmAction: 'confirm-delete-recipe',
+      itemId: recipe.id,
     });
   },
 
-  renderRecipeEditForm(recipe, pantryItems) {
-    const draft = this.state.editRecipeDraft ?? {
-      name: recipe.name,
-      mealTypes: recipe.mealTypes,
-    };
-    const rows = this.state.editIngredientRows.length > 0
-      ? this.state.editIngredientRows
-      : recipe.ingredients.map((ingredient) =>
-          createIngredientRow({
-            pantryItemId: ingredient.pantryItemId,
-            quantity: String(ingredient.quantity),
-          }),
-        );
-
-    return this.renderActionSheet({
-      title: 'Editar receta',
-      titleId: 'edit-recipe-title',
-      dismissAction: 'cancel-edit-recipe',
-      className: 'meal-edit-sheet recipe-edit-sheet',
-      visibleTitle: true,
-      form: {
-        className: 'meal-edit-sheet-form recipe-edit-sheet-form',
-        dataForm: 'recipe-edit',
-        hiddenInputs: [{ name: 'recipeId', value: recipe.id }],
-      },
-      body: `
-        <div class="meal-edit-sheet-body recipe-edit-sheet-body">
-          <div class="meal-edit-recipe-context">
-            <span class="meal-edit-recipe-icon" aria-hidden="true">${this.renderIcon('utensils')}</span>
-            <div class="meal-edit-recipe-copy">
-              <span>Receta seleccionada</span>
-              <strong>${escapeHtml(recipe.name)}</strong>
-            </div>
-          </div>
-
-          <label class="meal-edit-field">
-            <span>Nombre</span>
-            <input name="name" type="text" autocomplete="off" value="${escapeAttribute(draft.name)}" required />
-          </label>
-
-          <fieldset class="recipe-edit-meal-types">
-            <legend>Momentos del dia</legend>
-            <div class="recipe-edit-meal-type-row">
-              ${MEAL_TYPES.map((mealType) => `
-                <label class="checkbox-card">
-                  <input type="checkbox" name="mealTypes" value="${mealType}" ${draft.mealTypes.includes(mealType) ? 'checked' : ''} />
-                  <span>${MEAL_TYPE_LABELS[mealType]}</span>
-                </label>
-              `).join('')}
-            </div>
-          </fieldset>
-
-          <div class="ingredient-builder recipe-edit-ingredients">
-            <div class="section-heading compact">
-              <h3>Ingredientes por racion</h3>
-              <button class="button ghost small" type="button" data-action="add-edit-ingredient-row" aria-label="Añadir ingrediente">${this.renderIcon('add')}</button>
-            </div>
-            ${rows.map((row) =>
-              this.renderIngredientRow(row, pantryItems, {
-                rowAttribute: 'data-edit-ingredient-row',
-                removeAction: 'remove-edit-ingredient-row',
-              }),
-            ).join('')}
-          </div>
-        </div>
-      `,
-      footer: `
-        <div class="meal-edit-sheet-actions">
-          <button class="button full" type="submit">${this.renderIcon('save')} Guardar cambios</button>
-          <button class="meal-edit-cancel" type="button" data-action="cancel-edit-recipe">Cancelar</button>
-        </div>
-      `,
-    });
-  }
+  ...recipeListRenderMethods,
+  ...recipeIngredientStatusRenderMethods,
+  ...recipeFormRenderMethods,
 };
-
-/**
- * Formatea una cantidad de ingrediente con su unidad.
- *
- * @param {number} quantity Cantidad a mostrar.
- * @param {string} unit Unidad del alimento.
- * @returns {string} Cantidad formateada.
- */
-function formatIngredientAmount(quantity, unit) {
-  const formattedQuantity = formatQuantity(quantity);
-
-  return unit ? `${formattedQuantity} ${unit}` : formattedQuantity;
-}

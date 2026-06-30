@@ -3,9 +3,14 @@
 @import "./styles/panels.css";
 @import "./styles/forms.css";
 @import "./styles/lists.css";
+@import "./styles/search.css";
+@import "./styles/pantry.css";
+@import "./styles/recipes.css";
 @import "./styles/planning-nav.css";
 @import "./styles/settings.css";
 @import "./styles/shopping.css";
-@import "./styles/meals.css";
+@import "./styles/planned-meals.css";
+@import "./styles/meal-editor.css";
+@import "./styles/pending-meals.css";
 @import "./styles/feedback.css";
 @import "./styles/responsive.css";

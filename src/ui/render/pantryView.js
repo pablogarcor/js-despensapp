@@ -1,4 +1,4 @@
-import { escapeAttribute, escapeHtml, formatQuantity, matchesSearchText, normalizeSearchText, renderUnitOptions } from '../renderUtils.js';
+import { escapeAttribute, escapeHtml, formatQuantity, matchesSearchText, normalizeSearchText } from '../renderUtils.js';
 
 /**
  * Metodos de render y filtrado de la vista de despensa.
@@ -41,9 +41,11 @@ export const pantryViewMethods = {
       ${
         isFormOpen
           ? ''
-          : `<button class="recipe-fab pantry-fab" type="button" data-action="show-pantry-form" aria-label="Añadir alimento">
-              ${this.renderIcon('add')}
-            </button>`
+          : this.renderFloatingActionButton({
+              action: 'show-pantry-form',
+              label: 'Añadir alimento',
+              className: 'pantry-fab',
+            })
       }
 
       <section class="list-section" aria-label="Alimentos guardados">
@@ -69,46 +71,29 @@ export const pantryViewMethods = {
       title: 'Añadir alimento',
       titleId: 'create-pantry-item-title',
       dismissAction: 'hide-pantry-form',
-      className: 'meal-edit-sheet recipe-edit-sheet pantry-create-sheet',
+      className: 'meal-edit-sheet entity-edit-sheet pantry-create-sheet',
       visibleTitle: true,
       form: {
-        className: 'meal-edit-sheet-form recipe-edit-sheet-form pantry-create-sheet-form',
+        className: 'meal-edit-sheet-form entity-edit-sheet-form pantry-create-sheet-form',
         dataForm: 'pantry-item',
       },
       body: `
-        <div class="meal-edit-sheet-body recipe-edit-sheet-body pantry-create-sheet-body">
-          <div class="meal-edit-recipe-context">
-            <span class="meal-edit-recipe-icon" aria-hidden="true">${this.renderIcon('pantry')}</span>
-            <div class="meal-edit-recipe-copy">
-              <span>Nuevo alimento</span>
-              <strong>Sin guardar</strong>
-            </div>
-          </div>
-
-          <label class="meal-edit-field">
-            <span>Nombre</span>
-            <input name="name" type="text" autocomplete="off" placeholder="Ej. Garbanzos" required />
-          </label>
-          <div class="form-grid">
-            <label class="meal-edit-field">
-              <span>Cantidad</span>
-              <input name="quantity" type="number" inputmode="decimal" step="0.01" min="0" placeholder="0" required />
-            </label>
-            <label class="meal-edit-field">
-              <span>Unidad</span>
-              <select name="unit" required>
-                ${renderUnitOptions()}
-              </select>
-            </label>
-          </div>
+        <div class="meal-edit-sheet-body entity-edit-sheet-body pantry-create-sheet-body">
+          ${this.renderSheetContext({
+            icon: 'pantry',
+            label: 'Nuevo alimento',
+            title: 'Sin guardar',
+          })}
+          ${this.renderEntityFields({
+            namePlaceholder: 'Ej. Garbanzos',
+          })}
         </div>
       `,
-      footer: `
-        <div class="meal-edit-sheet-actions">
-          <button class="button full" type="submit">${this.renderIcon('add')} Añadir alimento</button>
-          <button class="meal-edit-cancel" type="button" data-action="hide-pantry-form">Cancelar</button>
-        </div>
-      `,
+      footer: this.renderSheetActions({
+        submitLabel: 'Añadir alimento',
+        submitIcon: 'add',
+        cancelAction: 'hide-pantry-form',
+      }),
     });
   },
 
@@ -129,32 +114,17 @@ export const pantryViewMethods = {
       return '';
     }
 
-    return this.renderActionSheet({
+    return this.renderDeleteConfirmationSheet({
       title: 'Borrar alimento',
       titleId: 'delete-pantry-item-title',
       dismissAction: 'cancel-delete-pantry-item',
-      className: 'meal-edit-sheet recipe-delete-sheet pantry-delete-sheet',
-      visibleTitle: true,
-      body: `
-        <div class="meal-edit-sheet-body recipe-delete-sheet-body">
-          <div class="meal-edit-recipe-context recipe-delete-context">
-            <span class="meal-edit-recipe-icon recipe-delete-icon" aria-hidden="true">${this.renderIcon('delete')}</span>
-            <div class="meal-edit-recipe-copy">
-              <span>Alimento seleccionado</span>
-              <strong>${escapeHtml(item.name)}</strong>
-              <small>¿Quieres borrar este alimento?</small>
-            </div>
-          </div>
-        </div>
-      `,
-      footer: `
-        <div class="meal-edit-sheet-actions recipe-delete-sheet-actions">
-          <button class="button full recipe-delete-confirm" type="button" data-action="confirm-delete-pantry-item" data-id="${escapeAttribute(item.id)}">
-            ${this.renderIcon('delete')} Borrar alimento
-          </button>
-          <button class="meal-edit-cancel" type="button" data-action="cancel-delete-pantry-item">Cancelar</button>
-        </div>
-      `,
+      itemLabel: 'Alimento seleccionado',
+      itemName: item.name,
+      question: '¿Quieres borrar este alimento?',
+      confirmLabel: 'Borrar alimento',
+      confirmAction: 'confirm-delete-pantry-item',
+      itemId: item.id,
+      className: 'pantry-delete-sheet',
     });
   },
 
@@ -181,14 +151,14 @@ export const pantryViewMethods = {
             </span>
             <span class="pantry-card-chevron" aria-hidden="true">${this.renderIcon('chevronDown')}</span>
           </button>
-          <div class="inline-actions pantry-card-actions">
-            <button class="meal-icon-action" type="button" aria-label="Editar ${escapeAttribute(item.name)}" data-action="edit-pantry-item" data-id="${escapeAttribute(item.id)}">
-              ${this.renderIcon('edit')}
-            </button>
-            <button class="icon-button" type="button" aria-label="Eliminar ${escapeAttribute(item.name)}" data-action="delete-pantry-item" data-id="${escapeAttribute(item.id)}">
-              ${this.renderIcon('delete')}
-            </button>
-          </div>
+          ${this.renderEditDeleteActions({
+            id: item.id,
+            editAction: 'edit-pantry-item',
+            deleteAction: 'delete-pantry-item',
+            editLabel: `Editar ${item.name}`,
+            deleteLabel: `Eliminar ${item.name}`,
+            className: 'pantry-card-actions',
+          })}
         </div>
         ${
           isExpanded
@@ -224,49 +194,34 @@ export const pantryViewMethods = {
       title: 'Editar alimento',
       titleId: 'edit-pantry-item-title',
       dismissAction: 'cancel-edit-pantry-item',
-      className: 'meal-edit-sheet recipe-edit-sheet pantry-edit-sheet',
+      className: 'meal-edit-sheet entity-edit-sheet pantry-edit-sheet',
       visibleTitle: true,
       form: {
-        className: 'meal-edit-sheet-form recipe-edit-sheet-form pantry-edit-sheet-form',
+        className: 'meal-edit-sheet-form entity-edit-sheet-form pantry-edit-sheet-form',
         dataForm: 'pantry-item-edit',
         hiddenInputs: [{ name: 'pantryItemId', value: item.id }],
       },
       body: `
-        <div class="meal-edit-sheet-body recipe-edit-sheet-body pantry-edit-sheet-body">
-          <div class="meal-edit-recipe-context">
-            <span class="meal-edit-recipe-icon" aria-hidden="true">${this.renderIcon('pantry')}</span>
-            <div class="meal-edit-recipe-copy">
-              <span>Alimento seleccionado</span>
-              <strong>${escapeHtml(item.name)}</strong>
-              <small>${formatQuantity(item.quantity)} ${escapeHtml(item.unit)}</small>
-            </div>
-          </div>
-
-          <label class="meal-edit-field">
-            <span>Nombre</span>
-            <input name="name" type="text" autocomplete="off" value="${escapeAttribute(item.name)}" required />
-          </label>
-          <div class="form-grid">
-            <label class="meal-edit-field">
-              <span>Cantidad</span>
-              <input name="quantity" type="number" inputmode="decimal" step="0.01" min="0" value="${item.quantity}" required />
-            </label>
-            <label class="meal-edit-field">
-              <span>Unidad</span>
-              <select name="unit" required>
-                ${renderUnitOptions(item.unit)}
-              </select>
-            </label>
-          </div>
+        <div class="meal-edit-sheet-body entity-edit-sheet-body pantry-edit-sheet-body">
+          ${this.renderSheetContext({
+            icon: 'pantry',
+            label: 'Alimento seleccionado',
+            title: item.name,
+            detail: `${formatQuantity(item.quantity)} ${item.unit}`,
+          })}
+          ${this.renderEntityFields({
+            name: item.name,
+            quantity: item.quantity,
+            unit: item.unit,
+          })}
           ${this.renderPantryRecipeUsageFields(item, affectedRecipes)}
         </div>
       `,
-      footer: `
-        <div class="meal-edit-sheet-actions">
-          <button class="button full" type="submit">${this.renderIcon('save')} Guardar cambios</button>
-          <button class="meal-edit-cancel" type="button" data-action="cancel-edit-pantry-item">Cancelar</button>
-        </div>
-      `,
+      footer: this.renderSheetActions({
+        submitLabel: 'Guardar cambios',
+        submitIcon: 'save',
+        cancelAction: 'cancel-edit-pantry-item',
+      }),
     });
   },
 

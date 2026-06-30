@@ -7,7 +7,9 @@ MVP mobile first para gestionar una despensa local, crear recetas con alimentos 
 - **Vite + JavaScript nativo**: Vite se usa solo como servidor de desarrollo y bundler. No hay framework de UI porque el MVP no necesita router, estado global ni componentes complejos.
 - **IndexedDB**: es persistente, funciona en navegadores moviles modernos y permite modelar tablas locales sin servidor.
 - **PWA nativa sin plugin**: se usa un `manifest.webmanifest`, un service worker propio e iconos locales. No se anade `vite-plugin-pwa` porque el caso actual se resuelve con pocas APIs estandar.
-- **UI separada por responsabilidad**: `PantryApp` coordina estado, eventos y llamadas al servicio; los renders de cada pantalla viven en `src/ui/render/` y los helpers compartidos en `src/ui/renderUtils.js` y `src/ui/uiState.js`.
+- **Servicio por fachada y modulos**: `src/services/pantryService.js` mantiene la API publica de negocio; las operaciones concretas viven en `src/services/pantryService/` por area: despensa, recetas, planificacion, compra y validaciones compartidas.
+- **Backups por entidad**: `src/domain/backup.js` expone crear/validar backups; la validacion interna se reparte en `src/domain/backup/` por entidad para mantener reglas pequenas y localizables.
+- **UI separada por responsabilidad**: `PantryApp` coordina estado, eventos y llamadas al servicio; los eventos viven en `src/ui/events/`, los renders de cada pantalla en `src/ui/render/` y los helpers compartidos en `src/ui/renderUtils.js` y `src/ui/uiState.js`.
 - **CSS por capas**: `src/styles.css` solo importa modulos pequenos de `src/styles/` para mantener base, formularios, listas, planificacion y responsive separados sin introducir un framework de estilos.
 - **`asset-manifest.json` de Vite**: el build emite un manifest de assets para que el service worker pueda precachear los archivos con hash sin hardcodearlos.
 - **JSDoc**: documenta tipos, servicios y funciones sin introducir TypeScript en esta fase.
@@ -67,7 +69,7 @@ Las cantidades generadas por el plan no se duplican en esta tabla: se calculan d
 
 ## Reglas de integridad
 
-Las reglas viven en `src/services/pantryService.js`:
+Las reglas pasan siempre por `src/services/pantryService.js`, que actua como fachada de los modulos de `src/services/pantryService/`:
 
 - No se puede borrar un alimento si alguna receta lo usa.
 - No se puede vaciar la despensa si alguna receta usa alimentos guardados.
@@ -116,12 +118,14 @@ Las reglas viven en `src/services/pantryService.js`:
 │   └── generate-pwa-icons.js # Generador de iconos PNG sin dependencias
 ├── src
 │   ├── domain
-│   │   ├── backup.js          # Validacion y creacion de backups JSON
+│   │   ├── backup.js          # Fachada de backups JSON
+│   │   ├── backup             # Validadores de backup por entidad
 │   │   ├── errors.js          # Error de negocio reusable
 │   │   ├── planning.js        # Fechas, calculos y generacion de plan
 │   │   └── types.js           # Tipos JSDoc y constantes
 │   ├── services
-│   │   └── pantryService.js   # Reglas de negocio e integridad
+│   │   ├── pantryService.js   # Fachada de reglas de negocio
+│   │   └── pantryService      # Operaciones por area y helpers de servicio
 │   ├── storage
 │   │   ├── indexedDbClient.js # Adaptador IndexedDB
 │   │   ├── memoryDatabase.js  # Adaptador para tests
@@ -130,7 +134,8 @@ Las reglas viven en `src/services/pantryService.js`:
 │   │   └── registerServiceWorker.js # Registro seguro del service worker
 │   ├── ui
 │   │   ├── PantryApp.js       # Controlador de estado, eventos y servicio
-│   │   ├── render             # Renders agrupados por vista
+│   │   ├── events             # Despacho y acciones de eventos por area
+│   │   ├── render             # Renders agrupados por vista/componente
 │   │   ├── renderUtils.js     # Escape HTML, formato y helpers de render
 │   │   └── uiState.js         # Estado efimero de formularios y toasts
 │   ├── main.js                # Bootstrap de la app
@@ -138,7 +143,8 @@ Las reglas viven en `src/services/pantryService.js`:
 │   └── styles.css             # Entrada de estilos con imports ordenados
 ├── vite.config.js             # Build manifest para precache PWA
 └── tests
-    └── pantryService.test.js  # Tests de reglas criticas
+    ├── helpers                # Fixtures compartidas de tests
+    └── *.test.js              # Tests de reglas criticas por area
 ```
 
 ## Puesta en marcha

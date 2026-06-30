@@ -3,7 +3,6 @@ import {
   escapeAttribute,
   escapeHtml,
   formatQuantity,
-  renderUnitOptions,
 } from '../renderUtils.js';
 
 /**
@@ -92,50 +91,58 @@ export const shoppingViewMethods = {
   renderGeneratedShoppingItem(item, unavailableMeals) {
     const affectedMeals = getAffectedMealsForItem(item, unavailableMeals);
 
-    return `
-      <li class="shopping-list-row ${item.checked ? 'is-checked' : ''}">
-        <label class="shopping-item-check">
-          <input
-            class="shopping-card-checkbox"
-            type="checkbox"
-            data-shopping-check
-            value="${escapeAttribute(item.shoppingItemId)}"
-            ${item.checked ? 'checked' : ''}
-          />
-          <span class="shopping-checkmark" aria-hidden="true">${this.renderIcon('check')}</span>
-          <span class="shopping-item-copy">
-            <strong class="shopping-item-name">${escapeHtml(item.name)}</strong>
-            ${renderShoppingMealChips(affectedMeals)}
-          </span>
-          <strong class="shopping-item-quantity">${formatQuantity(item.missingQuantity)} ${escapeHtml(item.unit)}</strong>
-        </label>
-      </li>
-    `;
+    return this.renderShoppingListRow({
+      id: item.shoppingItemId,
+      checked: item.checked,
+      name: item.name,
+      quantity: item.missingQuantity,
+      unit: item.unit,
+      contextMarkup: renderShoppingMealChips(affectedMeals),
+    });
   },
 
   renderExtraShoppingItem(item) {
+    return this.renderShoppingListRow({
+      id: item.id,
+      checked: item.checked,
+      name: item.name,
+      quantity: item.quantity,
+      unit: item.unit,
+      contextMarkup: `
+        <span class="shopping-chip-row">
+          <small class="shopping-context-chip">Articulo extra</small>
+        </span>
+      `,
+      trailingMarkup: this.renderIconActionButton({
+        action: 'delete-shopping-extra',
+        id: item.id,
+        label: `Eliminar extra ${item.name}`,
+        icon: 'delete',
+        variant: 'danger',
+        className: 'shopping-extra-remove',
+      }),
+    });
+  },
+
+  renderShoppingListRow({ id, checked, name, quantity, unit, contextMarkup, trailingMarkup = '' }) {
     return `
-      <li class="shopping-list-row ${item.checked ? 'is-checked' : ''}">
+      <li class="shopping-list-row ${checked ? 'is-checked' : ''}">
         <label class="shopping-item-check">
           <input
             class="shopping-card-checkbox"
             type="checkbox"
             data-shopping-check
-            value="${escapeAttribute(item.id)}"
-            ${item.checked ? 'checked' : ''}
+            value="${escapeAttribute(id)}"
+            ${checked ? 'checked' : ''}
           />
           <span class="shopping-checkmark" aria-hidden="true">${this.renderIcon('check')}</span>
           <span class="shopping-item-copy">
-            <strong class="shopping-item-name">${escapeHtml(item.name)}</strong>
-            <span class="shopping-chip-row">
-              <small class="shopping-context-chip">Articulo extra</small>
-            </span>
+            <strong class="shopping-item-name">${escapeHtml(name)}</strong>
+            ${contextMarkup}
           </span>
-          <strong class="shopping-item-quantity">${formatQuantity(item.quantity)} ${escapeHtml(item.unit)}</strong>
+          <strong class="shopping-item-quantity">${formatQuantity(quantity)} ${escapeHtml(unit)}</strong>
         </label>
-        <button class="icon-button shopping-extra-remove" type="button" aria-label="Eliminar extra ${escapeAttribute(item.name)}" data-action="delete-shopping-extra" data-id="${escapeAttribute(item.id)}">
-          ${this.renderIcon('delete')}
-        </button>
+        ${trailingMarkup}
       </li>
     `;
   },
@@ -149,46 +156,30 @@ export const shoppingViewMethods = {
       title: 'Añadir articulo extra',
       titleId: 'create-shopping-extra-title',
       dismissAction: 'hide-shopping-extra-form',
-      className: 'meal-edit-sheet recipe-edit-sheet shopping-extra-sheet',
+      className: 'meal-edit-sheet entity-edit-sheet shopping-extra-sheet',
       visibleTitle: true,
       form: {
-        className: 'meal-edit-sheet-form recipe-edit-sheet-form shopping-extra-sheet-form',
+        className: 'meal-edit-sheet-form entity-edit-sheet-form shopping-extra-sheet-form',
         dataForm: 'shopping-extra',
       },
       body: `
-        <div class="meal-edit-sheet-body recipe-edit-sheet-body shopping-extra-sheet-body">
-          <div class="meal-edit-recipe-context">
-            <span class="meal-edit-recipe-icon" aria-hidden="true">${this.renderIcon('shoppingList')}</span>
-            <div class="meal-edit-recipe-copy">
-              <span>Articulo extra</span>
-              <strong>Sin guardar</strong>
-            </div>
-          </div>
-
-          <label class="meal-edit-field">
-            <span>Nombre</span>
-            <input name="name" type="text" autocomplete="off" placeholder="Ej. Cafe" required />
-          </label>
-          <div class="form-grid">
-            <label class="meal-edit-field">
-              <span>Cantidad</span>
-              <input name="quantity" type="number" inputmode="decimal" min="0.01" step="0.01" placeholder="0" required />
-            </label>
-            <label class="meal-edit-field">
-              <span>Unidad</span>
-              <select name="unit" required>
-                ${renderUnitOptions()}
-              </select>
-            </label>
-          </div>
+        <div class="meal-edit-sheet-body entity-edit-sheet-body shopping-extra-sheet-body">
+          ${this.renderSheetContext({
+            icon: 'shoppingList',
+            label: 'Articulo extra',
+            title: 'Sin guardar',
+          })}
+          ${this.renderEntityFields({
+            namePlaceholder: 'Ej. Cafe',
+            quantityMin: '0.01',
+          })}
         </div>
       `,
-      footer: `
-        <div class="meal-edit-sheet-actions">
-          <button class="button full" type="submit">${this.renderIcon('add')} Añadir articulo</button>
-          <button class="meal-edit-cancel" type="button" data-action="hide-shopping-extra-form">Cancelar</button>
-        </div>
-      `,
+      footer: this.renderSheetActions({
+        submitLabel: 'Añadir articulo',
+        submitIcon: 'add',
+        cancelAction: 'hide-shopping-extra-form',
+      }),
     });
   },
 

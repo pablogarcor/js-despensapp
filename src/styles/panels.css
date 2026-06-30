@@ -76,7 +76,6 @@
   font-weight: 800;
 }
 
-.app-kicker,
 .eyebrow {
   margin: 0 0 4px;
   color: var(--color-subtle);
@@ -86,27 +85,7 @@
   text-transform: uppercase;
 }
 
-.counter {
-  display: inline-grid;
-  place-items: center;
-  min-width: 44px;
-  min-height: 38px;
-  border: 1px solid var(--color-border);
-  border-radius: var(--radius);
-  background: var(--color-surface-raised);
-  color: var(--color-text);
-  padding: 6px 10px;
-  font-size: 1rem;
-  font-weight: 850;
-}
-
-.stacked-form,
 .plan-actions {
   display: grid;
   gap: 12px;
-}
-
-.settings-actions {
-  display: grid;
-  gap: 10px;
 }
