@@ -28,6 +28,18 @@ test('las notas planificadas no bloquean recetas', async () => {
   assert.equal(dashboard.plannedMeals[0].kind, 'note');
 });
 
+test('permite restaurar una receta eliminada', async () => {
+  const { service, recipe } = await createServiceWithRecipe();
+
+  const deletedRecipe = await service.deleteRecipe(recipe.id);
+  await service.restoreRecipe(deletedRecipe);
+  const dashboard = await service.getDashboard();
+
+  assert.equal(dashboard.recipes.length, 1);
+  assert.equal(dashboard.recipes[0].id, recipe.id);
+  assert.equal(dashboard.recipes[0].name, recipe.name);
+});
+
 test('permite vaciar recetas si no estan planificadas', async () => {
   const { service } = await createServiceWithRecipe();
 

@@ -121,7 +121,7 @@ export const recipeServiceMethods = {
    * Elimina una receta solo si no esta planificada.
    *
    * @param {string} recipeId Identificador de la receta.
-   * @returns {Promise<void>}
+   * @returns {Promise<import('../../domain/types.js').Recipe>} Receta eliminada.
    */
   async deleteRecipe(recipeId) {
     const [recipe, plannedMeals] = await Promise.all([
@@ -145,6 +145,35 @@ export const recipeServiceMethods = {
     }
 
     await this.database.delete('recipes', recipeId);
+    return recipe;
+  },
+
+  /**
+   * Restaura una receta eliminada desde una accion de deshacer.
+   *
+   * @param {import('../../domain/types.js').Recipe} recipe Receta a restaurar.
+   * @returns {Promise<import('../../domain/types.js').Recipe>} Receta restaurada.
+   */
+  async restoreRecipe(recipe) {
+    const [pantryItems, recipes] = await Promise.all([
+      this.database.getAll('pantryItems'),
+      this.database.getAll('recipes'),
+    ]);
+
+    if (recipes.some((candidate) => candidate.id === recipe.id)) {
+      throw new DomainError('No se puede deshacer porque la receta ya existe.', 'RECIPE_RESTORE_DUPLICATED_ID');
+    }
+
+    if (recipes.some((candidate) => normalizeName(candidate.name) === normalizeName(recipe.name))) {
+      throw new DomainError('No se puede deshacer porque ya existe una receta con ese nombre.', 'RECIPE_RESTORE_DUPLICATED_NAME');
+    }
+
+    normalizeIngredients(recipe.ingredients, pantryItems);
+
+    return this.database.put('recipes', {
+      ...recipe,
+      updatedAt: this.now().toISOString(),
+    });
   },
 
   /**

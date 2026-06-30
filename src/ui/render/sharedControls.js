@@ -86,6 +86,8 @@ export const sharedControlRenderMethods = {
     const icon = getToastIcon(toast);
     const variant = getToastVariant(toast);
     const placement = isToastInModalContext(this.state) ? 'is-top' : 'is-bottom';
+    const action = toast.undo ? 'undo-toast' : 'dismiss-toast';
+    const actionLabel = toast.undo ? 'Deshacer' : 'Cerrar';
 
     return `
       <div class="toast ${escapeAttribute(`${variant} ${placement}`)}" role="${role}" aria-live="${toast.type === 'error' ? 'assertive' : 'polite'}">
@@ -93,8 +95,8 @@ export const sharedControlRenderMethods = {
           <span class="toast-icon" aria-hidden="true">${renderIcon(icon)}</span>
           <span class="toast-message">${escapeHtml(toast.message)}</span>
         </span>
-        <button class="toast-action" type="button" data-action="dismiss-toast" aria-label="Cerrar aviso">
-          Cerrar
+        <button class="toast-action" type="button" data-action="${escapeAttribute(action)}" aria-label="${escapeAttribute(actionLabel)} aviso">
+          ${escapeHtml(actionLabel)}
         </button>
       </div>
     `;

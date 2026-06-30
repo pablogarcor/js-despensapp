@@ -12,7 +12,7 @@ export const recipeClickActionMethods = {
     }
 
     if (action === 'confirm-delete-recipe') {
-      await this.service.deleteRecipe(id);
+      const recipe = await this.service.deleteRecipe(id);
       this.state.deletingRecipeId = null;
       this.state.recipeFormOpen = false;
       this.state.createRecipeDraft = null;
@@ -23,7 +23,9 @@ export const recipeClickActionMethods = {
         this.state.editIngredientRows = [];
       }
 
-      this.showToast('Receta eliminada.');
+      this.showToast('Receta eliminada.', 'success', {
+        undo: { kind: 'deleted-recipe', payload: recipe },
+      });
       return { shouldRefresh: true };
     }
 

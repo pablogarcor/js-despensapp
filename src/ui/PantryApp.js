@@ -187,13 +187,15 @@ export class PantryApp {
    *
    * @param {string} message Mensaje.
    * @param {'success' | 'error'} [type='success'] Tipo visual.
+   * @param {{undo?: {kind: string, payload: unknown}}} [options] Opciones del aviso.
    */
-  showToast(message, type = 'success') {
+  showToast(message, type = 'success', options = {}) {
     this.clearToastTimeout();
     this.state.toast = {
       id: createUiId('toast'),
       message,
       type,
+      undo: options.undo ?? null,
     };
     this.toastTimeoutId = window.setTimeout(() => {
       this.dismissToast();
@@ -287,6 +289,36 @@ export class PantryApp {
     this.state.pendingMealsOmittedDate = today;
     this.state.pendingMealsModalOpen = false;
     writePendingMealsOmittedDate(today);
+  }
+
+  /**
+   * Ejecuta la operacion inversa guardada en un snackbar.
+   *
+   * @param {{kind: string, payload: unknown}} undo Operacion a revertir.
+   * @returns {Promise<void>}
+   */
+  async applyToastUndo(undo) {
+    if (undo.kind === 'created-pantry-item') {
+      await this.service.deletePantryItem(undo.payload.id);
+      return;
+    }
+
+    if (undo.kind === 'deleted-pantry-item') {
+      await this.service.restorePantryItem(undo.payload);
+      return;
+    }
+
+    if (undo.kind === 'created-recipe') {
+      await this.service.deleteRecipe(undo.payload.id);
+      return;
+    }
+
+    if (undo.kind === 'deleted-recipe') {
+      await this.service.restoreRecipe(undo.payload);
+      return;
+    }
+
+    throw new Error(`Accion de deshacer no soportada: ${undo.kind}`);
   }
 }
 

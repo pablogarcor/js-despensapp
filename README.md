@@ -228,19 +228,20 @@ Si el deploy falla con `HttpError: Not Found` y el mensaje `Ensure GitHub Pages 
 4. Usa **Editar** en un alimento para corregir nombre, cantidad total o unidad. Si aparece en recetas, veras esas recetas en el mismo formulario para ajustar sus cantidades.
 5. En **Recetas**, crea recetas usando solo alimentos existentes. Cada ingrediente representa cantidad por racion.
 6. Usa **Editar** en una receta para modificar ingredientes, cantidades, nombre o momentos del dia.
-7. En **Plan**, la app muestra por defecto los huecos de los proximos 7 dias para poder añadir comidas manualmente.
-8. Si prefieres automatizar, indica raciones y pulsa **Planificar semana** para rellenar todos los huecos.
-9. Si eliminas una comida del plan, el hueco vuelve a aparecer dentro de su dia con un selector de recetas compatibles.
-10. Pulsa **Completar huecos** para rellenar automaticamente los huecos restantes sin borrar las comidas ya planificadas.
-11. En un hueco libre, usa **No cocinar** para bloquearlo como `Sobras`, `Comer fuera`, `Congelado` u `Otro motivo` sin crear una receta falsa.
-12. Usa **Editar** en una comida planificada para cambiar receta o raciones, o en **No cocinar** para cambiar motivo y detalle.
-13. En **Plan**, el resumen de compra indica si hay compra pendiente o si el plan esta cubierto, con acceso directo a **Compra**.
-14. Las comidas del plan que no se podrian cocinar quedan marcadas en su tarjeta para verlo de un vistazo.
-15. En **Compra**, puedes marcar alimentos como comprados, ver chips con la primera comida afectada y anadir extras manuales desde una modal.
-16. Pulsa **Finalizar compra** en **Compra** para sumar a la despensa las entradas marcadas. Los faltantes del plan actualizan alimentos existentes; los extras actualizan alimentos con la misma unidad o crean uno nuevo.
-17. Cuando entras en **Plan** con comidas pasadas pendientes, la app abre una modal de confirmacion: si marcas **Si, cocinado**, descuenta ingredientes; si marcas **No cocinado**, solo elimina la planificacion. Puedes omitir la modal durante el dia actual y volvera a mostrarse al dia siguiente si siguen quedando pendientes. Las entradas de **No cocinar** pasadas se resuelven sin tocar despensa.
-18. En **Configuracion**, usa **Exportar copia** para descargar un backup JSON o **Importar y reemplazar** para restaurarlo.
-19. Usa **Borrar todo** en **Configuracion** para reiniciar despensa, recetas, planificacion y compra.
+7. Las insignias de notificacion permiten **Deshacer** al crear o borrar alimentos y recetas, siempre que no se hayan creado dependencias nuevas que bloqueen la operacion inversa.
+8. En **Plan**, la app muestra por defecto los huecos de los proximos 7 dias para poder añadir comidas manualmente.
+9. Si prefieres automatizar, indica raciones y pulsa **Planificar semana** para rellenar todos los huecos.
+10. Si eliminas una comida del plan, el hueco vuelve a aparecer dentro de su dia con un selector de recetas compatibles.
+11. Pulsa **Completar huecos** para rellenar automaticamente los huecos restantes sin borrar las comidas ya planificadas.
+12. En un hueco libre, usa **No cocinar** para bloquearlo como `Sobras`, `Comer fuera`, `Congelado` u `Otro motivo` sin crear una receta falsa.
+13. Usa **Editar** en una comida planificada para cambiar receta o raciones, o en **No cocinar** para cambiar motivo y detalle.
+14. En **Plan**, el resumen de compra indica si hay compra pendiente o si el plan esta cubierto, con acceso directo a **Compra**.
+15. Las comidas del plan que no se podrian cocinar quedan marcadas en su tarjeta para verlo de un vistazo.
+16. En **Compra**, puedes marcar alimentos como comprados, ver chips con la primera comida afectada y anadir extras manuales desde una modal.
+17. Pulsa **Finalizar compra** en **Compra** para sumar a la despensa las entradas marcadas. Los faltantes del plan actualizan alimentos existentes; los extras actualizan alimentos con la misma unidad o crean uno nuevo.
+18. Cuando entras en **Plan** con comidas pasadas pendientes, la app abre una modal de confirmacion: si marcas **Si, cocinado**, descuenta ingredientes; si marcas **No cocinado**, solo elimina la planificacion. Puedes omitir la modal durante el dia actual y volvera a mostrarse al dia siguiente si siguen quedando pendientes. Las entradas de **No cocinar** pasadas se resuelven sin tocar despensa.
+19. En **Configuracion**, usa **Exportar copia** para descargar un backup JSON o **Importar y reemplazar** para restaurarlo.
+20. Usa **Borrar todo** en **Configuracion** para reiniciar despensa, recetas, planificacion y compra.
 
 ## Importar y exportar
 

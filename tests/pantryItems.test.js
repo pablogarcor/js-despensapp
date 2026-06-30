@@ -24,6 +24,19 @@ test('permite vaciar la despensa si ningun alimento se usa en recetas', async ()
   assert.equal(dashboard.pantryItems.length, 0);
 });
 
+test('permite restaurar un alimento eliminado', async () => {
+  const { service } = createTestService();
+  const pantryItem = await service.createPantryItem({ name: 'Tomate', quantity: 4, unit: 'ud' });
+
+  const deletedPantryItem = await service.deletePantryItem(pantryItem.id);
+  await service.restorePantryItem(deletedPantryItem);
+  const dashboard = await service.getDashboard();
+
+  assert.equal(dashboard.pantryItems.length, 1);
+  assert.equal(dashboard.pantryItems[0].id, pantryItem.id);
+  assert.equal(dashboard.pantryItems[0].name, 'Tomate');
+});
+
 test('impide vaciar la despensa si hay recetas que usan alimentos', async () => {
   const { service } = await createServiceWithRecipe();
 

@@ -194,7 +194,7 @@ export const pantryServiceMethods = {
    * Elimina un alimento si no aparece como ingrediente de ninguna receta.
    *
    * @param {string} pantryItemId Identificador del alimento.
-   * @returns {Promise<void>}
+   * @returns {Promise<import('../../domain/types.js').PantryItem>} Alimento eliminado.
    */
   async deletePantryItem(pantryItemId) {
     const [pantryItem, recipes] = await Promise.all([
@@ -223,6 +223,31 @@ export const pantryServiceMethods = {
       (shoppingItem) =>
         shoppingItem.kind === 'generated' && shoppingItem.pantryItemId === pantryItemId,
     );
+
+    return pantryItem;
+  },
+
+  /**
+   * Restaura un alimento eliminado desde una accion de deshacer.
+   *
+   * @param {import('../../domain/types.js').PantryItem} pantryItem Alimento a restaurar.
+   * @returns {Promise<import('../../domain/types.js').PantryItem>} Alimento restaurado.
+   */
+  async restorePantryItem(pantryItem) {
+    const pantryItems = await this.database.getAll('pantryItems');
+
+    if (pantryItems.some((item) => item.id === pantryItem.id)) {
+      throw new DomainError('No se puede deshacer porque el alimento ya existe.', 'PANTRY_RESTORE_DUPLICATED_ID');
+    }
+
+    if (pantryItems.some((item) => normalizeName(item.name) === normalizeName(pantryItem.name))) {
+      throw new DomainError('No se puede deshacer porque ya existe un alimento con ese nombre.', 'PANTRY_RESTORE_DUPLICATED_NAME');
+    }
+
+    return this.database.put('pantryItems', {
+      ...pantryItem,
+      updatedAt: this.now().toISOString(),
+    });
   },
 
   /**

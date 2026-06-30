@@ -7,7 +7,7 @@ export const recipeFormSubmitMethods = {
   async handleRecipeFormSubmit({ form }) {
     if (form.matches('[data-form="recipe"]')) {
       const data = new FormData(form);
-      await this.service.createRecipe({
+      const recipe = await this.service.createRecipe({
         name: data.get('name'),
         mealTypes: data.getAll('mealTypes'),
         ingredients: this.readIngredientsFromForm(data),
@@ -15,7 +15,9 @@ export const recipeFormSubmitMethods = {
       this.state.ingredientRows = [createIngredientRow()];
       this.state.createRecipeDraft = null;
       this.state.recipeFormOpen = false;
-      this.showToast('Receta creada.');
+      this.showToast('Receta creada.', 'success', {
+        undo: { kind: 'created-recipe', payload: recipe },
+      });
       return { shouldRefresh: true };
     }
 

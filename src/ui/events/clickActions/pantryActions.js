@@ -9,7 +9,7 @@ export const pantryClickActionMethods = {
     }
 
     if (action === 'confirm-delete-pantry-item') {
-      await this.service.deletePantryItem(id);
+      const pantryItem = await this.service.deletePantryItem(id);
       this.state.deletingPantryItemId = null;
 
       if (this.state.editingPantryItemId === id) {
@@ -20,7 +20,9 @@ export const pantryClickActionMethods = {
         this.state.expandedPantryItemId = null;
       }
 
-      this.showToast('Alimento eliminado.');
+      this.showToast('Alimento eliminado.', 'success', {
+        undo: { kind: 'deleted-pantry-item', payload: pantryItem },
+      });
       return { shouldRefresh: true };
     }
 

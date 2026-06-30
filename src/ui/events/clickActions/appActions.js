@@ -2,12 +2,28 @@
  * Acciones globales de click que no pertenecen a una pantalla concreta.
  */
 export const appClickActionMethods = {
-  handleAppClickAction({ action }) {
-    if (action !== 'dismiss-toast') {
+  async handleAppClickAction({ action }) {
+    if (action === 'dismiss-toast') {
+      this.dismissToast();
+      return { shouldRefresh: false };
+    }
+
+    if (action !== 'undo-toast') {
       return null;
     }
 
-    this.dismissToast();
-    return { shouldRefresh: false };
+    const undo = this.state.toast?.undo;
+
+    if (!undo) {
+      this.dismissToast();
+      return { shouldRefresh: false };
+    }
+
+    this.clearToastTimeout();
+    this.state.toast = null;
+    await this.applyToastUndo(undo);
+    this.showToast('Accion deshecha.');
+
+    return { shouldRefresh: true };
   },
 };
