@@ -1,0 +1,230 @@
+.pantry-card {
+  align-items: stretch;
+  flex-direction: column;
+  padding: 0;
+  overflow: hidden;
+}
+
+.pantry-card-main {
+  display: flex;
+  align-items: stretch;
+  justify-content: space-between;
+  gap: 14px;
+  min-height: 86px;
+}
+
+.pantry-card-main:hover {
+  background: #fbfcff;
+}
+
+.pantry-card-toggle {
+  display: flex;
+  flex: 1;
+  align-items: flex-start;
+  justify-content: space-between;
+  min-width: 0;
+  gap: 14px;
+  border: 0;
+  background: transparent;
+  padding: 20px 0 16px 24px;
+  color: inherit;
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+
+.pantry-card-toggle:focus-visible {
+  outline: 3px solid rgba(0, 41, 28, 0.16);
+  outline-offset: -3px;
+}
+
+.pantry-card-copy {
+  display: block;
+  min-width: 0;
+}
+
+.pantry-card-quantity {
+  display: block;
+  margin: 4px 0 0;
+  color: var(--color-muted);
+  font-size: 1rem;
+  line-height: 1.25;
+}
+
+.pantry-card-chevron {
+  display: inline-grid;
+  place-items: center;
+  align-self: center;
+  width: 28px;
+  height: 28px;
+  color: var(--color-muted);
+  transition: transform 0.18s ease;
+}
+
+.pantry-card-chevron .ui-icon {
+  width: 20px;
+  height: 20px;
+}
+
+.pantry-card.is-expanded .pantry-card-chevron {
+  transform: rotate(180deg);
+}
+
+.pantry-card-actions {
+  align-items: center;
+  flex-wrap: nowrap;
+  gap: 8px;
+  padding: 20px 24px 16px 0;
+}
+
+.pantry-card .meal-icon-action,
+.pantry-card .icon-button {
+  width: 40px;
+  height: 40px;
+}
+
+.pantry-card .meal-icon-action .ui-icon,
+.pantry-card .icon-button .ui-icon {
+  width: 20px;
+  height: 20px;
+}
+
+.item-title-row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+}
+
+.stock-badge,
+.meal-type-badge,
+.shopping-badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 999px;
+  padding: 4px 10px;
+  font-size: 0.78rem;
+  font-weight: 800;
+  line-height: 1;
+  white-space: nowrap;
+}
+
+.stock-badge.is-empty {
+  background: var(--color-danger-soft);
+  color: #93000a;
+}
+
+.meal-type-breakfast {
+  background: var(--color-breakfast);
+  color: #001f27;
+}
+
+.meal-type-lunch {
+  background: var(--color-lunch);
+  color: #002116;
+}
+
+.meal-type-dinner {
+  background: var(--color-dinner);
+  color: #131f00;
+}
+
+.recipe-usage-editor {
+  display: grid;
+  gap: 10px;
+  border-top: 1px solid var(--color-border);
+  padding-top: 16px;
+}
+
+.recipe-usage-editor .section-heading {
+  margin-bottom: 0;
+}
+
+.recipe-usage-editor .section-heading h3 {
+  color: var(--color-muted);
+  font-size: 1rem;
+  font-weight: 640;
+}
+
+.recipe-usage-row {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: 6px;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-tight);
+  background: #fbfbff;
+  padding: 12px;
+}
+
+.recipe-usage-row span {
+  color: var(--color-muted);
+  font-size: 0.82rem;
+}
+
+.stock-form {
+  display: grid;
+  gap: 12px;
+  border-top: 1px solid var(--color-border);
+  background: var(--color-surface);
+  margin: 0 24px;
+  padding: 18px 0 20px;
+}
+
+.stock-form-heading {
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+  color: var(--color-text);
+  font-size: 1rem;
+  font-weight: 800;
+  line-height: 1.2;
+}
+
+.stock-form-heading small {
+  color: var(--color-muted);
+  font-size: 0.82rem;
+  font-weight: 640;
+}
+
+.stock-adjust-label span {
+  display: block;
+}
+
+.stock-adjust-controls {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  align-items: center;
+  gap: 12px;
+}
+
+.stock-adjust-label input {
+  min-height: 58px;
+  margin: 0;
+  font-size: 1.08rem;
+  text-align: center;
+}
+
+.stock-adjust-controls .button {
+  min-height: 58px;
+  border-radius: var(--radius-tight);
+  font-size: 1rem;
+}
+
+.stock-action-subtract {
+  border-color: var(--color-border-strong);
+  background: #ffffff;
+  color: var(--color-primary);
+}
+
+.stock-action-add {
+  border-color: var(--color-primary);
+  background: var(--color-primary);
+  color: #ffffff;
+}
+.pantry-card-title {
+  color: var(--color-text);
+  font-size: 1.14rem;
+  font-weight: 800;
+  line-height: 1.16;
+}

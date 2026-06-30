@@ -1,0 +1,290 @@
+.meal-edit-sheet {
+  border-radius: 24px 24px 0 0;
+}
+
+.meal-edit-sheet-form {
+  display: grid;
+  gap: 0;
+}
+
+.meal-edit-sheet-body {
+  display: grid;
+  gap: 22px;
+  padding: 30px 16px 20px;
+}
+
+.sheet-context {
+  display: grid;
+  grid-template-columns: 64px minmax(0, 1fr);
+  align-items: center;
+  gap: 14px;
+  min-height: 90px;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius);
+  background: #f9fafb;
+  padding: 14px 16px;
+}
+
+.sheet-context-icon {
+  display: grid;
+  place-items: center;
+  width: 56px;
+  height: 56px;
+  border-radius: var(--radius);
+  background: #d9e3f7;
+  color: #001f27;
+}
+
+.sheet-context-icon .ui-icon {
+  width: 34px;
+  height: 34px;
+  stroke-width: 2.4;
+}
+
+.sheet-context-icon.is-no-cook {
+  background: #fee2e2;
+  color: #991b1b;
+}
+
+.sheet-context-copy {
+  min-width: 0;
+}
+
+.sheet-context-copy span {
+  display: block;
+  margin-bottom: 4px;
+  color: var(--color-muted);
+  font-size: 0.78rem;
+  font-weight: 840;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+.sheet-context-copy strong {
+  display: block;
+  overflow: hidden;
+  color: var(--color-text);
+  font-size: 1.08rem;
+  font-weight: 760;
+  line-height: 1.18;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.sheet-context-copy small {
+  display: block;
+  margin-top: 4px;
+  color: var(--color-muted);
+  font-size: 0.88rem;
+  font-weight: 520;
+  line-height: 1.25;
+}
+
+.sheet-context-select {
+  min-height: 44px;
+  margin: 0;
+  border-color: var(--color-border-strong);
+  background-color: var(--color-surface);
+  font-size: 1rem;
+  font-weight: 720;
+}
+
+.meal-edit-field {
+  display: grid;
+  gap: 8px;
+  color: var(--color-muted);
+  font-size: 1rem;
+  font-weight: 640;
+}
+
+.meal-edit-field select,
+.meal-edit-field input {
+  min-height: 52px;
+  margin: 0;
+  border-color: var(--color-border-strong);
+  font-size: 1rem;
+}
+
+.meal-edit-servings {
+  display: block;
+  margin: 4px 0 -12px;
+  color: var(--color-muted);
+  font-size: 1rem;
+  font-weight: 640;
+}
+
+.meal-servings-stepper {
+  display: grid;
+  grid-template-columns: 56px minmax(0, 1fr) 56px;
+  align-items: center;
+  min-height: 66px;
+  border: 1px solid var(--color-primary);
+  border-radius: var(--radius);
+  background: #fbfbff;
+  overflow: hidden;
+}
+
+.meal-servings-stepper button {
+  display: grid;
+  place-items: center;
+  width: 100%;
+  height: 64px;
+  border: 0;
+  background: transparent;
+  color: var(--color-text);
+}
+
+.meal-servings-stepper button:hover {
+  background: var(--color-surface-raised);
+}
+
+.meal-servings-stepper button .ui-icon {
+  width: 1.7rem;
+  height: 1.7rem;
+  stroke-width: 2.2;
+}
+
+.meal-servings-stepper input {
+  min-height: 64px;
+  margin: 0;
+  border: 0;
+  background: transparent;
+  color: var(--color-text);
+  padding: 0;
+  text-align: center;
+  font-size: 1.45rem;
+  font-weight: 850;
+  appearance: textfield;
+}
+
+.meal-servings-stepper input::-webkit-outer-spin-button,
+.meal-servings-stepper input::-webkit-inner-spin-button {
+  appearance: none;
+  margin: 0;
+}
+
+.meal-edit-no-cook {
+  position: relative;
+  display: grid;
+  grid-template-columns: 48px minmax(0, 1fr) 58px;
+  align-items: center;
+  gap: 14px;
+  min-height: 88px;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius);
+  background: #fbfbff;
+  padding: 14px;
+  cursor: pointer;
+}
+
+.meal-edit-no-cook:hover {
+  border-color: var(--color-border-strong);
+}
+
+.meal-edit-no-cook-icon {
+  display: grid;
+  place-items: center;
+  width: 48px;
+  height: 48px;
+  border-radius: var(--radius);
+  background: #fee2e2;
+  color: #991b1b;
+}
+
+.meal-edit-no-cook-icon .ui-icon {
+  width: 29px;
+  height: 29px;
+}
+
+.meal-edit-no-cook-copy {
+  min-width: 0;
+}
+
+.meal-edit-no-cook-copy strong,
+.meal-edit-no-cook-copy small {
+  display: block;
+}
+
+.meal-edit-no-cook-copy strong {
+  color: var(--color-text);
+  font-size: 1.05rem;
+  font-weight: 680;
+  line-height: 1.24;
+}
+
+.meal-edit-no-cook-copy small {
+  margin-top: 2px;
+  color: var(--color-muted);
+  font-size: 0.96rem;
+}
+
+.meal-edit-no-cook input {
+  position: absolute;
+  opacity: 0;
+  pointer-events: none;
+}
+
+.meal-edit-switch {
+  position: relative;
+  justify-self: end;
+  width: 54px;
+  height: 32px;
+  border-radius: 999px;
+  background: var(--color-border-strong);
+  transition: background 0.18s ease;
+}
+
+.meal-edit-switch::before {
+  position: absolute;
+  top: 4px;
+  left: 4px;
+  width: 24px;
+  height: 24px;
+  border-radius: 999px;
+  background: var(--color-surface);
+  box-shadow: 0 1px 2px rgba(18, 28, 42, 0.22);
+  content: "";
+  transition: transform 0.18s ease;
+}
+
+.meal-edit-no-cook input:checked + .meal-edit-switch {
+  background: var(--color-primary);
+}
+
+.meal-edit-no-cook input:checked + .meal-edit-switch::before {
+  transform: translateX(22px);
+}
+
+.meal-edit-no-cook input:disabled + .meal-edit-switch {
+  opacity: 0.76;
+}
+
+.meal-edit-sheet-actions {
+  display: grid;
+  gap: 14px;
+  padding: 24px 16px 0;
+}
+
+.meal-edit-sheet-actions .button {
+  min-height: 58px;
+  border-radius: var(--radius);
+  font-size: 1.04rem;
+  font-weight: 780;
+}
+
+.meal-edit-cancel {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 54px;
+  border: 0;
+  border-radius: var(--radius);
+  background: transparent;
+  color: var(--color-text);
+  font-size: 1.05rem;
+  font-weight: 520;
+}
+
+.meal-edit-cancel:hover {
+  background: var(--color-surface-raised);
+}
